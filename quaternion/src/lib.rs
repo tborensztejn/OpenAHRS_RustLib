@@ -21,10 +21,10 @@ mod quaternion_tests {
         let mut quat: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
 
         // Define quaternion elements.
-        let qw: f64 = 1.0_f64;
-        let qx: f64 = 2.0_f64;
-        let qy: f64 = 3.0_f64;
-        let qz: f64 = 4.0_f64;
+        let qw: f32 = 1.0_f32;
+        let qx: f32 = 2.0_f32;
+        let qy: f32 = 3.0_f32;
+        let qz: f32 = 4.0_f32;
 
         let result = quat.fill(qw, qx, qy, qz); // Set quaternion elements.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
@@ -54,16 +54,16 @@ mod quaternion_tests {
         let mut pq: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
 
         // Define p quaternion elements.
-        let pw: f64 = 2.0_f64;
-        let px: f64 = 3.0_f64;
-        let py: f64 = 2.0_f64;
-        let pz: f64 = 3.0_f64;
+        let pw: f32 = 2.0_f32;
+        let px: f32 = 3.0_f32;
+        let py: f32 = 2.0_f32;
+        let pz: f32 = 3.0_f32;
 
         // Define q quaternion elements.
-        let qw: f64 = 3.0_f64;
-        let qx: f64 = 2.0_f64;
-        let qy: f64 = 3.0_f64;
-        let qz: f64 = 2.0_f64;
+        let qw: f32 = 3.0_f32;
+        let qx: f32 = 2.0_f32;
+        let qy: f32 = 3.0_f32;
+        let qz: f32 = 2.0_f32;
 
         let mut result = p.fill(pw, px, py, pz); // Set quaternion elements.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
@@ -76,18 +76,18 @@ mod quaternion_tests {
 
         let mut result = pq.get_qw();
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
-        assert_eq!(result.unwrap(), -12.0_f64, "Unexpected element value.");
+        assert_eq!(result.unwrap(), -12.0_f32, "Unexpected element value.");
 
         result = pq.get_qx();
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
-        assert_eq!(result.unwrap(), 8.0_f64, "Unexpected element value.");
+        assert_eq!(result.unwrap(), 8.0_f32, "Unexpected element value.");
 
         result = pq.get_qy();
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
-        assert_eq!(result.unwrap(), 12.0_f64, "Unexpected element value.");
+        assert_eq!(result.unwrap(), 12.0_f32, "Unexpected element value.");
 
         result = pq.get_qz();
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
-        assert_eq!(result.unwrap(), 18.0_f64, "Unexpected element value.");
+        assert_eq!(result.unwrap(), 18.0_f32, "Unexpected element value.");
     }
 }

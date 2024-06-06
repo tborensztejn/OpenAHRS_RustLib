@@ -18,9 +18,9 @@ pub struct Gyroscope {
         measurements on the other axes. The off-diagonal elements of the correction matrix help to correct these potential deviations.
     */
     axes_misalignment_correction: Matrix,
-    static_biases: Vector<f64>,             // Vector which contains static bias of each axis of the three-dimensional gyrometer that should be remove from raw measurements.
-    raw_measurements: Vector<f64>,          // Vector which contains raw measurements of the three-dimensional gyroscope.
-    corrected_measurements: Vector<f64>,    // Vector which contains corrected measurements of the three-dimensional gyroscope.
+    static_biases: Vector<f32>,             // Vector which contains static bias of each axis of the three-dimensional gyrometer that should be remove from raw measurements.
+    raw_measurements: Vector<f32>,          // Vector which contains raw measurements of the three-dimensional gyroscope.
+    corrected_measurements: Vector<f32>,    // Vector which contains corrected measurements of the three-dimensional gyroscope.
     initialized: bool,  // Sensor initialisation flag.
 }
 
@@ -57,18 +57,18 @@ impl Gyroscope {
     // This function is used to initialize a gyroscope.
     pub fn init(
         self: &mut Self,
-        x_axis_scaling_correction_factor: f64,              //
-        y_axis_scaling_correction_factor: f64,              //
-        z_axis_scaling_correction_factor: f64,              //
-        xy_axes_non_orthogonality_correction_factor: f64,   //
-        xz_axes_non_orthogonality_correction_factor: f64,   //
-        yx_axes_non_orthogonality_correction_factor: f64,   //
-        yz_axes_non_orthogonality_correction_factor: f64,   //
-        zx_axes_non_orthogonality_correction_factor: f64,   //
-        zy_axes_non_orthogonality_correction_factor: f64,   //
-        x_axis_static_bias: f64,                            // Static bias on X axis measurements.
-        y_axis_static_bias: f64,                            // Static bias on Y axis measurements.
-        z_axis_static_bias: f64                             // Static bias on Z axis measurements.
+        x_axis_scaling_correction_factor: f32,              //
+        y_axis_scaling_correction_factor: f32,              //
+        z_axis_scaling_correction_factor: f32,              //
+        xy_axes_non_orthogonality_correction_factor: f32,   //
+        xz_axes_non_orthogonality_correction_factor: f32,   //
+        yx_axes_non_orthogonality_correction_factor: f32,   //
+        yz_axes_non_orthogonality_correction_factor: f32,   //
+        zx_axes_non_orthogonality_correction_factor: f32,   //
+        zy_axes_non_orthogonality_correction_factor: f32,   //
+        x_axis_static_bias: f32,                            // Static bias on X axis measurements.
+        y_axis_static_bias: f32,                            // Static bias on Y axis measurements.
+        z_axis_static_bias: f32                             // Static bias on Z axis measurements.
         ) -> Result<(), OpenAHRSError> {
             // Check if the matrix has already been initialized.
             if self.initialized {
@@ -110,7 +110,7 @@ impl Gyroscope {
     }
 
     // This function is used to update gyroscope raw measurements anc correct them.
-    pub fn update(self: &mut Self, gx: f64, gy: f64, gz: f64) -> Result<(), OpenAHRSError> {
+    pub fn update(self: &mut Self, gx: f32, gy: f32, gz: f32) -> Result<(), OpenAHRSError> {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
@@ -128,7 +128,7 @@ impl Gyroscope {
     }
 
     // This function is used to obtain the corrected angulaur rate measurement arround the X axis.
-    pub fn get_x_angular_rate(self: &Self) -> Result<f64, OpenAHRSError> {
+    pub fn get_x_angular_rate(self: &Self) -> Result<f32, OpenAHRSError> {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
@@ -139,7 +139,7 @@ impl Gyroscope {
     }
 
     // This function is used to obtain the corrected angulaur rate measurement arround the Y axis.
-    pub fn get_y_angular_rate(self: &Self) -> Result<f64, OpenAHRSError> {
+    pub fn get_y_angular_rate(self: &Self) -> Result<f32, OpenAHRSError> {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
@@ -150,7 +150,7 @@ impl Gyroscope {
     }
 
     // This function is used to obtain the corrected angulaur rate measurement arround the Z axis.
-    pub fn get_z_angular_rate(self: &Self) -> Result<f64, OpenAHRSError> {
+    pub fn get_z_angular_rate(self: &Self) -> Result<f32, OpenAHRSError> {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.

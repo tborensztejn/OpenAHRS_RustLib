@@ -280,7 +280,7 @@ mod matrix_tests {
     fn fill_matrix_test() {
         let rows: u8 = M_MAX as u8;
         let cols: u8 = N_MAX as u8;
-        let value_to_fill: f64 = 1.0;
+        let value_to_fill: f32 = 1.0;
 
         let mut mat: Matrix = Matrix::new();
         mat.init(rows, cols).unwrap();
@@ -426,7 +426,7 @@ mod matrix_tests {
         let mut mat: Matrix = Matrix::new();
         mat.init(rows, cols).unwrap();
 
-        let mut vect: Vector<f64> = Vector::new();
+        let mut vect: Vector<f32> = Vector::new();
         vect.init(cols).unwrap();
         vect.fill(1.0).unwrap();
 
@@ -448,7 +448,7 @@ mod matrix_tests {
         mat.init(rows, cols).unwrap();
         mat.fill(2.0).unwrap();
 
-        let mut vect: Vector<f64> = Vector::new();
+        let mut vect: Vector<f32> = Vector::new();
         vect.init(cols).unwrap();
         vect.fill(1.0).unwrap();
 
@@ -469,7 +469,7 @@ mod matrix_tests {
         let mut mat: Matrix = Matrix::new();
         mat.init(rows, cols).unwrap();
 
-        let mut vect: Vector<f64> = Vector::new();
+        let mut vect: Vector<f32> = Vector::new();
         vect.init(rows).unwrap();
         vect.fill(1.0).unwrap();
 
@@ -491,7 +491,7 @@ mod matrix_tests {
         mat.init(rows, cols).unwrap();
         mat.fill(2.0).unwrap();
 
-        let mut vect: Vector<f64> = Vector::new();
+        let mut vect: Vector<f32> = Vector::new();
         vect.init(rows).unwrap();
         vect.fill(1.0).unwrap();
 

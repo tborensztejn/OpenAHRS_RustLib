@@ -3,7 +3,7 @@ extern crate utils;
 use utils::utils::is_valid_value;
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
-use libm::sqrt;
+use libm::sqrtf;
 
 #[derive(Debug)]
 pub struct Vector<T> {
@@ -46,15 +46,9 @@ impl<T: Default + Copy> Vector<T> {
         }
     }
 
-    pub fn get_initialized(self: &Self) -> bool {
+    pub fn is_initialized(self: &Self) -> bool {
         // Check if the matrix is initialized or not.
-        if !self.initialized {
-            // The vector is not initialized.
-            false
-        } else {
-            // The vector is initialized.
-            true
-        }
+        self.initialized
     }
 }
 
@@ -90,9 +84,9 @@ impl Vector<u8> {
     }
 }
 
-impl Vector<f64> {
+impl Vector<f32> {
     // This function is used to assign a value to a specific element of a vector of size (m x 1).
-    pub fn set_element(self: &mut Self, row: u8, value: f64) -> Result<(), LinalgError> {
+    pub fn set_element(self: &mut Self, row: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
             // The vector is not initialized.
@@ -108,7 +102,7 @@ impl Vector<f64> {
     }
 
     // This function is used to access a specific element of a vector of size (m x 1).
-    pub fn get_element(self: &Self, row: u8) -> Result<f64, LinalgError> {
+    pub fn get_element(self: &Self, row: u8) -> Result<f32, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
             // The vector is not initialized.
@@ -150,7 +144,7 @@ impl Vector<f64> {
     }
 
     // This function is used to fill an entire vector of size (m x 1) with a given value.
-    pub fn fill(self: &mut Self, value: f64) -> Result<(), LinalgError> {
+    pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the vector.
         for row in 0..self.rows {
             self.set_element(row, value)?;  // Set the value.
@@ -226,15 +220,15 @@ impl Vector<f64> {
     }
 
     // This function is used to calculate the norm of a vector of size (m x 1).
-    pub fn calculate_norm(self: &Self) -> Result<f64, LinalgError> {
-        let mut norm: f64 = 0.0;
+    pub fn calculate_norm(self: &Self) -> Result<f32, LinalgError> {
+        let mut norm: f32 = 0.0;
 
         // Iterate through each element, square it, and accumulate the sum.
         for row in 0..self.rows {
             norm += self.get_element(row)? * self.get_element(row)?;
         }
 
-        norm = sqrt(norm);  // Calculate the square root of the sum to obtain the Euclidean norm.
+        norm = sqrtf(norm);  // Calculate the square root of the sum to obtain the Euclidean norm.
 
         // Check for numerical precision issues and set very small norms to zero.
         if norm <= EPSILON {
@@ -246,12 +240,12 @@ impl Vector<f64> {
 
     // This function is used to normalize a vector of size (m x 1).
     pub fn normalize(self: &mut Self) ->  Result<(), LinalgError> {
-        let norm: f64 = self.calculate_norm()?; // Calculate the norm of the vector.
+        let norm: f32 = self.calculate_norm()?; // Calculate the norm of the vector.
 
         // Normalize the vector.
         for row in 0..self.rows {
             if norm > EPSILON {
-                let element: f64 = self.get_element(row)? / norm;
+                let element: f32 = self.get_element(row)? / norm;
                 self.set_element(row, element)?;
             } else {
                 self.set_element(row, 0.0)?;
@@ -262,7 +256,7 @@ impl Vector<f64> {
     }
 
     // This function is used to multiply by a scalar all elements of a vector of size (m x 1).
-    pub fn mul_by_scalar(self: &mut Self, scalar: f64) -> Result<(), LinalgError> {
+    pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
             let element = self.get_element(row)? * scalar;
@@ -273,14 +267,14 @@ impl Vector<f64> {
     }
 
     // This function is used to perform dot product between two vectors of size (m x 1).
-    pub fn dot_product(self: &Self, other: &Self) -> Result<f64, LinalgError> {
+    pub fn dot_product(self: &Self, other: &Self) -> Result<f32, LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
             // The matrices do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
-        let mut scalar: f64 = 0.0;  // Initialize the result of the dot product to zero.
+        let mut scalar: f32 = 0.0;  // Initialize the result of the dot product to zero.
 
         // Iterate through each element, multiply corresponding elements, and accumulate the sum.
         for row in 0..self.rows {
@@ -292,14 +286,14 @@ impl Vector<f64> {
 }
 
 // This function is used to perform dot product between two vectors of size (m x 1).
-pub fn dot_product(vect1: &Vector<f64>, vect2: &Vector<f64>) -> Result<f64, LinalgError> {
+pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, LinalgError> {
     // Check that the vectors have the same dimensions.
     if !vect1.is_same_size_as(vect2)? {
         // The matrices do not have the same dimensions.
         return Err(LinalgError::NotSameSize)    // Return an error.
     }
 
-    let mut scalar: f64 = 0.0;  // Initialize the result of the dot product to zero.
+    let mut scalar: f32 = 0.0;  // Initialize the result of the dot product to zero.
 
     // Iterate through each element, multiply corresponding elements, and accumulate the sum.
     for row in 0..vect1.get_rows()? {

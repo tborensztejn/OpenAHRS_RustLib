@@ -12,7 +12,7 @@ use linalg::vector::Vector;
 use linalg::common::EPSILON;
 use linalg::linalg::vector_to_matrix;
 //use libm::{cos, sin, exp};
-use libm::{cos, sin};
+use libm::{cosf, sinf};
 use utils::utils::factorial;
 use crate::gyroscope::Gyroscope;
 use crate::common::{CLOSED_FORM, TAYLOR_SERIES, EULER, OpenAHRSError};
@@ -21,7 +21,7 @@ use crate::common::{CLOSED_FORM, TAYLOR_SERIES, EULER, OpenAHRSError};
 pub struct AR {
     gyr: Gyroscope,
     orientation: Quaternion,
-    ts: f64,
+    ts: f32,
     method: u8,
     order: u8,
     initialized: bool,
@@ -44,14 +44,14 @@ impl AR {
     pub fn init(
         self: &mut Self,
         /* Initial orientation. */
-        qw: f64, qx: f64, qy: f64, qz: f64,
+        qw: f32, qx: f32, qy: f32, qz: f32,
         /* Gyroscope settings. */
-        x_axis_scaling_correction_factor: f64, y_axis_scaling_correction_factor: f64, z_axis_scaling_correction_factor: f64,
-        xy_axes_non_orthogonality_correction_factor: f64, xz_axes_non_orthogonality_correction_factor: f64,
-        yx_axes_non_orthogonality_correction_factor: f64, yz_axes_non_orthogonality_correction_factor: f64,
-        zx_axes_non_orthogonality_correction_factor: f64, zy_axes_non_orthogonality_correction_factor: f64,
-        x_axis_static_bias: f64, y_axis_static_bias: f64, z_axis_static_bias: f64,
-        ts: f64,
+        x_axis_scaling_correction_factor: f32, y_axis_scaling_correction_factor: f32, z_axis_scaling_correction_factor: f32,
+        xy_axes_non_orthogonality_correction_factor: f32, xz_axes_non_orthogonality_correction_factor: f32,
+        yx_axes_non_orthogonality_correction_factor: f32, yz_axes_non_orthogonality_correction_factor: f32,
+        zx_axes_non_orthogonality_correction_factor: f32, zy_axes_non_orthogonality_correction_factor: f32,
+        x_axis_static_bias: f32, y_axis_static_bias: f32, z_axis_static_bias: f32,
+        ts: f32,
         method: u8,
         order: u8
         ) -> Result<(), OpenAHRSError> {
@@ -71,7 +71,7 @@ impl AR {
             Ok(())  // Return no error.
     }
 
-    fn calculate_omega_matrix(p: f64, q: f64, r: f64) -> Result<Matrix, OpenAHRSError> {
+    fn calculate_omega_matrix(p: f32, q: f32, r: f32) -> Result<Matrix, OpenAHRSError> {
         // Create the matrix.
         let mut omega: Matrix = Matrix::new();
         omega.init(4, 4)?;
@@ -103,32 +103,32 @@ impl AR {
         Ok(omega)
     }
 
-    pub fn update(self: &mut Self, gx: f64, gy: f64, gz: f64) -> Result<(), OpenAHRSError> {
+    pub fn update(self: &mut Self, gx: f32, gy: f32, gz: f32) -> Result<(), OpenAHRSError> {
         let mut omega: Matrix = Matrix::new();
         omega.init(4, 4)?;
         let mut temp: Matrix = Matrix::new();
         temp.init(4, 4)?;
         temp.fill_identity()?;
-        let mut w: Vector<f64> = Vector::new();
+        let mut w: Vector<f32> = Vector::new();
         w.init(3)?;
 
         self.gyr.update(gx, gy, gz)?;
-        let p: f64 = self.gyr.get_x_angular_rate()?;
-        let q: f64 = self.gyr.get_y_angular_rate()?;
-        let r: f64 = self.gyr.get_z_angular_rate()?;
+        let p: f32 = self.gyr.get_x_angular_rate()?;
+        let q: f32 = self.gyr.get_y_angular_rate()?;
+        let r: f32 = self.gyr.get_z_angular_rate()?;
 
         w.set_element(0, p)?;
         w.set_element(1, q)?;
         w.set_element(2, r)?;
-        let w: f64 = w.calculate_norm()?;
+        let w: f32 = w.calculate_norm()?;
 
         if w > EPSILON {
-            let theta: f64 = w * self.ts / 2.0_f64;
+            let theta: f32 = w * self.ts / 2.0_f32;
             omega.copy_from(&Self::calculate_omega_matrix(p, q, r)?)?;
 
             if self.method == CLOSED_FORM {
-                temp.mul_by_scalar(cos(theta))?;
-                omega.mul_by_scalar(sin(theta) / w)?;
+                temp.mul_by_scalar(cosf(theta))?;
+                omega.mul_by_scalar(sinf(theta) / w)?;
                 temp.add(&omega, &copy_from(&temp)?)?;
             } else if self.method == TAYLOR_SERIES {
                 let mut s: Matrix = Matrix::new();
@@ -139,9 +139,9 @@ impl AR {
                     s.copy_from(&omega)?;
                     s.mul_by_scalar(0.5 * self.ts)?;
                     // A' = S^n / !n
-                    s.power_exponent(n as f64)?;
+                    s.power_exponent(n as f32)?;
                     let factor: u64 = factorial(n);
-                    s.mul_by_scalar(1.0 / factor as f64)?;
+                    s.mul_by_scalar(1.0 / factor as f32)?;
                     // A = A + A'
                     temp.add(&copy_from(&temp)?, &s)?;
                 }
@@ -153,23 +153,23 @@ impl AR {
             }
 
             let orientation: Matrix = mul(&temp, &vector_to_matrix(&self.orientation.get_vect()?)?)?;
-            let qw: f64 = orientation.get_element(0, 0)?;
-            let qx: f64 = orientation.get_element(1, 0)?;
-            let qy: f64 = orientation.get_element(2, 0)?;
-            let qz: f64 = orientation.get_element(3, 0)?;
+            let qw: f32 = orientation.get_element(0, 0)?;
+            let qx: f32 = orientation.get_element(1, 0)?;
+            let qy: f32 = orientation.get_element(2, 0)?;
+            let qz: f32 = orientation.get_element(3, 0)?;
 
             /*
             let mut w: Quaternion = Quaternion::new()?;
-            w.fill(0.0_f64, p, q, r)?;
-            w.mul_by_scalar(0.5_f64 * self.ts)?;
+            w.fill(0.0_f32, p, q, r)?;
+            w.mul_by_scalar(0.5_f32 * self.ts)?;
 
             let mut delta: Quaternion = Quaternion::new()?;
             delta.mul(&w, &self.orientation)?;
 
-            let qw: f64 = self.orientation.get_qw()? + delta.get_qw()?;
-            let qx: f64 = self.orientation.get_qx()? + delta.get_qx()?;
-            let qy: f64 = self.orientation.get_qy()? + delta.get_qy()?;
-            let qz: f64 = self.orientation.get_qz()? + delta.get_qz()?;
+            let qw: f32 = self.orientation.get_qw()? + delta.get_qw()?;
+            let qx: f32 = self.orientation.get_qx()? + delta.get_qx()?;
+            let qy: f32 = self.orientation.get_qy()? + delta.get_qy()?;
+            let qz: f32 = self.orientation.get_qz()? + delta.get_qz()?;
             */
 
             self.orientation.fill(qw, qx, qy, qz)?;

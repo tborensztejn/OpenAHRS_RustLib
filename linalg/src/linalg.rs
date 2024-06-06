@@ -1,10 +1,10 @@
 use crate::matrix::Matrix;
 use crate::vector::Vector;
 use crate::common:: { EPSILON, LinalgError};
-use libm:: { fabs, sqrt };
+use libm:: { fabsf, sqrtf };
 
 // This function in used to replace all elements of specific row of a matrix with those of a vector.
-pub fn set_row(mat: &mut Matrix, vect: &Vector<f64>, row: u8) -> Result<(), LinalgError> {
+pub fn set_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
     // Check that the number of columns in the matrix is the same as the number of rows in the vector.
     if mat.get_cols()? != vect.get_rows()? {
         // The number of columns in the matrix is not the same as the number of rows in the vector.
@@ -19,7 +19,7 @@ pub fn set_row(mat: &mut Matrix, vect: &Vector<f64>, row: u8) -> Result<(), Lina
 }
 
 // This function in used to replace all elements of specific column of a matrix with those of a vector.
-pub fn set_col(mat: &mut Matrix, vect: &Vector<f64>, col: u8) -> Result<(), LinalgError> {
+pub fn set_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
     // Check that the number of rows in the matrix is the same as the number of rows in the vector.
     if mat.get_rows()? != vect.get_rows()? {
         // The number of rows in the matrix is not the same as the number of rows in the vector.
@@ -34,7 +34,7 @@ pub fn set_col(mat: &mut Matrix, vect: &Vector<f64>, col: u8) -> Result<(), Lina
 }
 
 // This function is used to extract all elements of specific row of a matrix and store them into a vector.
-pub fn get_row(mat: &Matrix, vect: &mut Vector<f64>, row: u8) -> Result<(), LinalgError> {
+pub fn get_row(mat: &Matrix, vect: &mut Vector<f32>, row: u8) -> Result<(), LinalgError> {
     // Check that the number of columns in the matrix is the same as the number of rows in the vector.
     if mat.get_cols()? != vect.get_rows()? {
         // The number of columns in the matrix is not the same as the number of rows in the vector.
@@ -49,7 +49,7 @@ pub fn get_row(mat: &Matrix, vect: &mut Vector<f64>, row: u8) -> Result<(), Lina
 }
 
 // This function is used to extract all elements of specific column of a matrix and store them into a vector.
-pub fn get_col(mat: &Matrix, vect: &mut Vector<f64>, col: u8) -> Result<(), LinalgError> {
+pub fn get_col(mat: &Matrix, vect: &mut Vector<f32>, col: u8) -> Result<(), LinalgError> {
     // Check that the number of rows in the matrix is the same as the number of rows in the vector.
     if mat.get_rows()? != vect.get_rows()? {
         // The number of rows in the matrix is not the same as the number of rows in the vector.
@@ -64,8 +64,8 @@ pub fn get_col(mat: &Matrix, vect: &mut Vector<f64>, col: u8) -> Result<(), Lina
 }
 
 // This function is used to extract all elements of specific row of a matrix and store them into a new vector.
-pub fn row_to_vector(mat: &Matrix, row: u8) -> Result<Vector<f64>, LinalgError> {
-    let mut vect: Vector<f64> = Vector::new();
+pub fn row_to_vector(mat: &Matrix, row: u8) -> Result<Vector<f32>, LinalgError> {
+    let mut vect: Vector<f32> = Vector::new();
     vect.init(mat.get_cols()?)?;
 
     for col in 0..mat.get_cols()? {
@@ -76,8 +76,8 @@ pub fn row_to_vector(mat: &Matrix, row: u8) -> Result<Vector<f64>, LinalgError> 
 }
 
 // This function is used to extract all elements of specific column of a matrix and store them into a new vector.
-pub fn col_to_vector(mat: &Matrix, col: u8) -> Result<Vector<f64>, LinalgError> {
-    let mut vect: Vector<f64> = Vector::new();
+pub fn col_to_vector(mat: &Matrix, col: u8) -> Result<Vector<f32>, LinalgError> {
+    let mut vect: Vector<f32> = Vector::new();
     vect.init(mat.get_rows()?)?;
 
     for row in 0..mat.get_rows()? {
@@ -88,7 +88,7 @@ pub fn col_to_vector(mat: &Matrix, col: u8) -> Result<Vector<f64>, LinalgError> 
 }
 
 // This function adds a row to a matrix of size (m x n) from a vector of size (n x 1). The result is a matrix of size (m+1 x n).
-pub fn add_row(mat: &mut Matrix, vect: &Vector<f64>, row: u8) -> Result<(), LinalgError> {
+pub fn add_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
     let rows = mat.get_rows()? + 1;
     let cols = mat.get_cols()?;
 
@@ -106,7 +106,7 @@ pub fn add_row(mat: &mut Matrix, vect: &Vector<f64>, row: u8) -> Result<(), Lina
 }
 
 // This function adds a column to a matrix of size (m x n) from a vector of size (m x 1). The result is a matrix of size (m x n+1).
-pub fn add_col(mat: &mut Matrix, vect: &Vector<f64>, col: u8) -> Result<(), LinalgError> {
+pub fn add_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
     let rows = mat.get_rows()?;
     let cols = mat.get_cols()? + 1;
 
@@ -132,7 +132,7 @@ pub fn add_col(mat: &mut Matrix, vect: &Vector<f64>, col: u8) -> Result<(), Lina
 }
 
 // This function is used to convert a vector into a matrix in order to perform matrix operations.
-pub fn vector_to_matrix(vect: &Vector<f64>) -> Result<Matrix, LinalgError> {
+pub fn vector_to_matrix(vect: &Vector<f32>) -> Result<Matrix, LinalgError> {
     let rows = vect.get_rows()?;
     let mut mat = Matrix::new();
     mat.init(rows, 1)?;
@@ -195,7 +195,7 @@ pub fn lup(mat: &Matrix) -> Result<(Matrix, Vector<u8>), LinalgError> {
         p.set_element(row_max, tmp)?;
 
         // Check if the matrix is singular (up to tolerance).
-        if fabs(lu.get_element(p.get_element(row)?, row)?) < EPSILON {
+        if fabsf(lu.get_element(p.get_element(row)?, row)?) < EPSILON {
             // The matrix is singular (up to tolerance).
             return Err(LinalgError::Singular);  // Return an error.
         }
@@ -215,14 +215,14 @@ pub fn lup(mat: &Matrix) -> Result<(Matrix, Vector<u8>), LinalgError> {
     Ok((lu, p)) // Return the LU matrix and the pivot vector with no error.
 }
 
-pub fn solve(mat: &Matrix, b: &Vector<f64>, p: &Vector<u8>) -> Result<Vector<f64>, LinalgError> {
+pub fn solve(mat: &Matrix, b: &Vector<f32>, p: &Vector<u8>) -> Result<Vector<f32>, LinalgError> {
     // Check that the matrix is square.
     if !mat.is_square()? {
         // The matrix is not square.
         return Err(LinalgError::NotSquare); // Return an error.
     }
 
-    let mut x: Vector<f64> = Vector::new();
+    let mut x: Vector<f32> = Vector::new();
     x.init(mat.get_rows()?)?;
 
     // Forward substitution with pivoting.
@@ -240,7 +240,7 @@ pub fn solve(mat: &Matrix, b: &Vector<f64>, p: &Vector<u8>) -> Result<Vector<f64
             x.set_element(row, x.get_element(row)? - mat.get_element(p.get_element(row)?, col)? * x.get_element(col)?)?;
         }
 
-        if fabs(mat.get_element(p.get_element(row)?, row)?) > EPSILON {
+        if fabsf(mat.get_element(p.get_element(row)?, row)?) > EPSILON {
             x.set_element(row, x.get_element(row)? / mat.get_element(p.get_element(row)?, row)?)?;
         } else {
             // Can't be solved.
@@ -251,7 +251,7 @@ pub fn solve(mat: &Matrix, b: &Vector<f64>, p: &Vector<u8>) -> Result<Vector<f64
     Ok(x)
 }
 
-pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f64>, Matrix), LinalgError> {
+pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Matrix), LinalgError> {
     // Check that the matrix is square.
     if !mat.is_square()? {
         // The matrix is not square.
@@ -284,15 +284,15 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f64>, Ma
     eigenvectors.fill_identity()?;                  // Fill in the identity matrix.
 
     /* Create a vector containing the calculated eigenvalues. */
-    let mut eigenvalues: Vector<f64> = Vector::new();
+    let mut eigenvalues: Vector<f32> = Vector::new();
     eigenvalues.init(m)?;
 
     /* Create a vector containing the eigenvalues calculated in the previous loop. */
-    let mut previous_eigenvalues: Vector<f64> = Vector::new();
+    let mut previous_eigenvalues: Vector<f32> = Vector::new();
     previous_eigenvalues.init(m)?;
 
     /* Create a vector containing the variation of calculated eigenvalues. */
-    let mut delta_eigenvalues: Vector<f64> = Vector::new();
+    let mut delta_eigenvalues: Vector<f32> = Vector::new();
     delta_eigenvalues.init(m)?;
 
     for _iter in 0..niter {
@@ -308,12 +308,12 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f64>, Ma
             let delta = ((a_ - c) / 2.0) * ((a_ - c) / 2.0) + b * b;
 
             #[allow(unused_assignments)]
-            let mut s: f64 = 0.0;
+            let mut s: f32 = 0.0;
 
             if a_ < c {
-                s = c - delta / (fabs(b) + sqrt(delta));
+                s = c - delta / (fabsf(b) + sqrtf(delta));
             } else {
-                s = c + delta / (fabs(b) + sqrt(delta));
+                s = c + delta / (fabsf(b) + sqrtf(delta));
             }
 
             //Q, R = qr_decomposition(A - s*I)
@@ -372,7 +372,7 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f64>, Ma
 }
 
 /*
-pub fn linsolve_lup() -> Result<(Vector<f64>, Matrix), LinalgError> {
+pub fn linsolve_lup() -> Result<(Vector<f32>, Matrix), LinalgError> {
 
 }
 */
