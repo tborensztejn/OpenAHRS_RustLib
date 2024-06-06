@@ -18,6 +18,8 @@ pub enum OpenAHRSError {
     MagNotInit,
     MagAlreadyInit,
     AEMethodError,
+    InvalidQuaternion,
+    InvalidAQUAMode,
     LinalgError(LinalgError),
 }
 

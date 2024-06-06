@@ -5,7 +5,7 @@ pub mod gyroscope;
 pub mod accelerometer;
 pub mod magnetometer;
 pub mod ar;
-//pub mod aqua;
+pub mod aqua;
 
 #[cfg(test)]
 #[cfg(feature = "std")]

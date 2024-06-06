@@ -169,7 +169,7 @@ pub fn swap_cols(mat: &mut Matrix, col1: u8, col2: u8) -> Result<(), LinalgError
 
 pub fn lup(mat: &Matrix) -> Result<(Matrix, Vector<u8>), LinalgError> {
     // Create the LU matrix.
-    let mut lu: Matrix = Matrix::new();
+    let mut lu = Matrix::new();
     lu.init(mat.get_rows()?, mat.get_cols()?)?;
     lu.copy_from(&mat)?;
 
@@ -261,27 +261,27 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Ma
     let m = mat.get_rows()?;
 
     /* Create a copy of the input matrix to avoid modifying it. */
-    let mut a: Matrix = Matrix::new();  // Create a new matrix.
-    a.init(m, m)?;                      // Initialize the new matrix with the same size as the input matrix.
-    a.copy_from(&mat)?;                 // Copy the input matrix into the new one.
+    let mut a = Matrix::new();              // Create a new matrix.
+    a.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
+    a.copy_from(&mat)?;                     // Copy the input matrix into the new one.
 
     /* Create an identity matrix I. */
-    let mut i: Matrix = Matrix::new();  // Create a new matrix.
-    i.init(m, m)?;                      // Initialize the new matrix with the same size as the input matrix.
-    i.fill_identity()?;                 // Fill in the identity matrix.
+    let mut i = Matrix::new();              // Create a new matrix.
+    i.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
+    i.fill_identity()?;                     // Fill in the identity matrix.
 
     /* Create an orthogonal Q matrix to be used for QR decomposition. */
-    let mut q: Matrix = Matrix::new();  // Create a new matrix.
-    q.init(m, m)?;                      // Initialize the new matrix with the same size as the input matrix.
+    let mut q = Matrix::new();              // Create a new matrix.
+    q.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
 
     /* Create an upper triangular R matrix to be used for QR decomposition. */
-    let mut r: Matrix = Matrix::new();  // Create a new matrix.
-    r.init(m, m)?;                      // Initialize the new matrix with the same size as the input matrix.
+    let mut r = Matrix::new();              // Create a new matrix.
+    r.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
 
     /* Create a matrix containing the calculated eigenvectors. */
-    let mut eigenvectors: Matrix = Matrix::new();   // Create a new matrix.
-    eigenvectors.init(m, m)?;                       // Initialize the new matrix with the same size as the input matrix.
-    eigenvectors.fill_identity()?;                  // Fill in the identity matrix.
+    let mut eigenvectors = Matrix::new();   // Create a new matrix.
+    eigenvectors.init(m, m)?;               // Initialize the new matrix with the same size as the input matrix.
+    eigenvectors.fill_identity()?;          // Fill in the identity matrix.
 
     /* Create a vector containing the calculated eigenvalues. */
     let mut eigenvalues: Vector<f32> = Vector::new();
@@ -296,8 +296,8 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Ma
     delta_eigenvalues.init(m)?;
 
     for _iter in 0..niter {
-        let mut tmp: Matrix = Matrix::new();    // Create a new matrix.
-        tmp.init(m, m)?;                        // Initialize the new matrix with the same size as the input matrix.
+        let mut tmp = Matrix::new();    // Create a new matrix.
+        tmp.init(m, m)?;                // Initialize the new matrix with the same size as the input matrix.
 
         if shifted {
             // Apply Wilkinson shift method to determine the shift.

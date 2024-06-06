@@ -40,8 +40,7 @@ impl AR {
         Ok(ar)
     }
 
-    pub fn init(
-        self: &mut Self,
+    pub fn init(self: &mut Self,
         /* Initial orientation. */
         qw: f32, qx: f32, qy: f32, qz: f32,
         /* Gyroscope settings. */
