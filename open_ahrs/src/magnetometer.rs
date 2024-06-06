@@ -26,10 +26,10 @@ pub struct Magnetometer {
     */
     transformation_mat: Matrix, // Transformation matrix which used to correct measurement distorsions (hard-iron and soft-iron effects, scale factors and axes misalignments).
 
-    bias: Vector<f64>,  // Vector which contains static bias of each axis of the sensor that should be remove from raw measurements.
-    raw_measurements: Vector<f64>,
-    corrected_measurements: Vector<f64>,
-    //conversion_factor: f64,
+    bias: Vector<f32>,  // Vector which contains static bias of each axis of the sensor that should be remove from raw measurements.
+    raw_measurements: Vector<f32>,
+    corrected_measurements: Vector<f32>,
+    //conversion_factor: f32,
     initialized: bool,
 }
 
@@ -59,15 +59,15 @@ impl Magnetometer {
 
     pub fn init(
         self: &mut Self,
-        x_axis_scaling_factor: f64,
-        y_axis_scaling_factor: f64,
-        z_axis_scaling_factor: f64,
-        xy_axes_cross_scaling_factor: f64,
-        xz_axes_cross_scaling_factor: f64,
-        yz_axes_cross_scaling_factor: f64,
-        x_axis_bias: f64,
-        y_axis_bias: f64,
-        z_axis_bias: f64
+        x_axis_scaling_factor: f32,
+        y_axis_scaling_factor: f32,
+        z_axis_scaling_factor: f32,
+        xy_axes_cross_scaling_factor: f32,
+        xz_axes_cross_scaling_factor: f32,
+        yz_axes_cross_scaling_factor: f32,
+        x_axis_bias: f32,
+        y_axis_bias: f32,
+        z_axis_bias: f32
         ) -> Result<(), OpenAHRSError> {
             if self.initialized {
                 // The magnetometer has already been configured.
@@ -117,7 +117,7 @@ impl Magnetometer {
         Ok(())
     }
 
-    pub fn update(self: &mut Self, ax: f64, ay: f64, az: f64) -> Result<(), OpenAHRSError> {
+    pub fn update(self: &mut Self, ax: f32, ay: f32, az: f32) -> Result<(), OpenAHRSError> {
         // Check that the magnetometer is configured.
         if !self.initialized {
             // The magnetometer is not initialized.
@@ -133,13 +133,13 @@ impl Magnetometer {
         }
     }
 
-    pub fn get_x_magnetic_field(self: &Self) -> Result<f64, OpenAHRSError> {
+    pub fn get_x_magnetic_field(self: &Self) -> Result<f32, OpenAHRSError> {
         // Check that the magnetometer is configured.
         if !self.initialized {
             // The magnetometer is not initialized.
             Err(OpenAHRSError::MagNotInit)
         } else {
-            let mx: f64 = self.corrected_measurements.get_element(0)?;
+            let mx: f32 = self.corrected_measurements.get_element(0)?;
 
             Ok(mx)
         }

@@ -26,7 +26,7 @@ mod open_ahrs_tests {
     fn ar_series_method_test() {
         /* Generate random attitudes. */
         let niter: u8 = 10; // Number of iterations.
-        let ts: f64 = 0.01;  // Sampling period (s).
+        let ts: f32 = 0.01;  // Sampling period (s).
 
         let attitudes: Matrix = generate_random_attitudes(niter + 1).unwrap();
         /*
@@ -36,51 +36,51 @@ mod open_ahrs_tests {
         let mut attitude: Quaternion = Quaternion::new().unwrap();
 
         // Initial attitude q[t0].
-        //attitude.fill(0.007_f64, 0.598_f64, 0.543_f64, 0.590_f64).unwrap();
-        attitude.fill(0.8616101_f64, 0.0142137_f64, 0.1483934_f64, -0.485186_f64).unwrap();
+        //attitude.fill(0.007_f32, 0.598_f32, 0.543_f32, 0.590_f32).unwrap();
+        attitude.fill(0.8616101_f32, 0.0142137_f32, 0.1483934_f32, -0.485186_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 0).unwrap();
 
         // Attitude at t0 + Δt q[t0 + Δt].
-        //attitude.fill(0.0_f64, -0.539_f64, 0.842_f64, -0.033_f64).unwrap();
-        attitude.fill(0.9710628_f64, 0.0679105_f64, 0.0951136_f64, -0.2082753_f64).unwrap();
+        //attitude.fill(0.0_f32, -0.539_f32, 0.842_f32, -0.033_f32).unwrap();
+        attitude.fill(0.9710628_f32, 0.0679105_f32, 0.0951136_f32, -0.2082753_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 1).unwrap();
         */
 
         /*
         // Attitude at t0 + 2Δt q[t0 + 2Δt].
-        attitude.fill(0.619_f64, 0.360_f64, 0.670_f64, -0.196_f64).unwrap();
+        attitude.fill(0.619_f32, 0.360_f32, 0.670_f32, -0.196_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 2).unwrap();
 
         // Attitude at t0 + 3Δt q[t0 + 3Δt].
-        attitude.fill(0.040_f64, 0.764_f64, -0.548_f64, -0.338_f64).unwrap();
+        attitude.fill(0.040_f32, 0.764_f32, -0.548_f32, -0.338_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 3).unwrap();
 
         // Attitude at t0 + 4Δt q[t0 + 4Δt].
-        attitude.fill(-0.140_f64, -0.928_f64, -0.206_f64, 0.276_f64).unwrap();
+        attitude.fill(-0.140_f32, -0.928_f32, -0.206_f32, 0.276_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 4).unwrap();
 
         // Attitude at t0 + 5Δt q[t0 + 5Δt].
-        attitude.fill(0.332_f64, 0.725_f64, 0.476_f64, 0.371_f64).unwrap();
+        attitude.fill(0.332_f32, 0.725_f32, 0.476_f32, 0.371_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 5).unwrap();
 
         // Attitude at t0 + 6Δt q[t0 + 6Δt].
-        attitude.fill(0.667_f64, 0.064_f64, 0.198_f64, -0.715_f64).unwrap();
+        attitude.fill(0.667_f32, 0.064_f32, 0.198_f32, -0.715_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 6).unwrap();
 
         // Attitude at t0 + 7Δt q[t0 + 7Δt].
-        attitude.fill(0.420_f64, 0.711_f64, -0.119_f64, -0.552_f64).unwrap();
+        attitude.fill(0.420_f32, 0.711_f32, -0.119_f32, -0.552_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 7).unwrap();
 
         // Attitude at t0 + 8Δt q[t0 + 8Δt].
-        attitude.fill(0.212_f64, -0.174_f64, -0.249_f64, 0.929_f64).unwrap();
+        attitude.fill(0.212_f32, -0.174_f32, -0.249_f32, 0.929_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 8).unwrap();
 
         // Attitude at t0 + 9Δt q[t0 + 9Δt].
-        attitude.fill(-0.539_f64, 0.078_f64, -0.579_f64, -0.606_f64).unwrap();
+        attitude.fill(-0.539_f32, 0.078_f32, -0.579_f32, -0.606_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 9).unwrap();
 
         // Attitude at t0 + 10Δt q[t0 + 10Δt].
-        attitude.fill(-0.423_f64, -0.552_f64, 0.469_f64, -0.545_f64).unwrap();
+        attitude.fill(-0.423_f32, -0.552_f32, 0.469_f32, -0.545_f32).unwrap();
         set_col(&mut attitudes, &attitude.get_vect().unwrap(), 10).unwrap();
         */
 
@@ -125,17 +125,17 @@ mod open_ahrs_tests {
             /* Method 1. OK. */
             //Please note that the missing scalar part does not allow you to calculate the derivative of q(t) from w(t).
             /*
-            //let mut w: Vector<f64> = Vector::new();           // Angular rates vector.
+            //let mut w: Vector<f32> = Vector::new();           // Angular rates vector.
             //w.init(3).unwrap();
             let mut w: Quaternion = Quaternion::new().unwrap(); // Angular rates qauternion.
-            let wx: f64 = q_now.get_qw().unwrap()*q_next.get_qx().unwrap() - q_now.get_qx().unwrap()*q_next.get_qw().unwrap() - q_now.get_qy().unwrap()*q_next.get_qz().unwrap() + q_now.get_qz().unwrap()*q_next.get_qy().unwrap();
-            let wy: f64 = q_now.get_qw().unwrap()*q_next.get_qy().unwrap() + q_now.get_qx().unwrap()*q_next.get_qz().unwrap() - q_now.get_qy().unwrap()*q_next.get_qw().unwrap() - q_now.get_qz().unwrap()*q_next.get_qx().unwrap();
-            let wz: f64 = q_now.get_qw().unwrap()*q_next.get_qz().unwrap() - q_now.get_qx().unwrap()*q_next.get_qy().unwrap() + q_now.get_qy().unwrap()*q_next.get_qx().unwrap() - q_now.get_qz().unwrap()*q_next.get_qw().unwrap();
+            let wx: f32 = q_now.get_qw().unwrap()*q_next.get_qx().unwrap() - q_now.get_qx().unwrap()*q_next.get_qw().unwrap() - q_now.get_qy().unwrap()*q_next.get_qz().unwrap() + q_now.get_qz().unwrap()*q_next.get_qy().unwrap();
+            let wy: f32 = q_now.get_qw().unwrap()*q_next.get_qy().unwrap() + q_now.get_qx().unwrap()*q_next.get_qz().unwrap() - q_now.get_qy().unwrap()*q_next.get_qw().unwrap() - q_now.get_qz().unwrap()*q_next.get_qx().unwrap();
+            let wz: f32 = q_now.get_qw().unwrap()*q_next.get_qz().unwrap() - q_now.get_qx().unwrap()*q_next.get_qy().unwrap() + q_now.get_qy().unwrap()*q_next.get_qx().unwrap() - q_now.get_qz().unwrap()*q_next.get_qw().unwrap();
             //w.set_element(0, wx).unwrap();
             //w.set_element(1, wy).unwrap();
             //w.set_element(2, wz).unwrap();
-            w.fill(0.0_f64, wx, wy, wz).unwrap();
-            w.mul_by_scalar(2.0_f64 / ts).unwrap();
+            w.fill(0.0_f32, wx, wy, wz).unwrap();
+            w.mul_by_scalar(2.0_f32 / ts).unwrap();
             w.print().unwrap();
             */
 
@@ -166,12 +166,12 @@ mod open_ahrs_tests {
             transformation_matrix_copy.transpose().unwrap();         // Transpose the matrix Q.
             transformation_matrix_copy.mul_by_scalar(2.0).unwrap();  // Multiply each element by 2.
             // Angular rate vector at time t.
-            let w: Vector<f64> = col_to_vector(&mul(&transformation_matrix_copy, &vector_to_matrix(&q_dot.get_vect().unwrap()).unwrap()).unwrap(), 0).unwrap();
+            let w: Vector<f32> = col_to_vector(&mul(&transformation_matrix_copy, &vector_to_matrix(&q_dot.get_vect().unwrap()).unwrap()).unwrap(), 0).unwrap();
             set_col(&mut angular_rates, &w, n).unwrap();
             //w.print().unwrap();
 
             /* Used to find derivative of q(t) from w(t). */
-            transformation_matrix.mul_by_scalar(1.0_f64 / 2.0_f64).unwrap();    // Divide each element by 2.
+            transformation_matrix.mul_by_scalar(1.0_f32 / 2.0_f32).unwrap();    // Divide each element by 2.
             let w: Matrix = vector_to_matrix(&w).unwrap();
             let q_dot: Matrix = mul(&transformation_matrix, &w).unwrap();
             print!("q_dot (calculated):\n");
@@ -188,14 +188,14 @@ mod open_ahrs_tests {
             let mut q_now_conj: Quaternion = Quaternion::new().unwrap();
             q_now_conj.copy_from(&q_now).unwrap();
             q_now_conj.conjugate().unwrap();
-            q_now_conj.mul_by_scalar(2.0_f64).unwrap();
+            q_now_conj.mul_by_scalar(2.0_f32).unwrap();
             w.mul(&q_now_conj, &q_dot).unwrap();
 
             let wx = w.get_qx().unwrap();
             let wy = w.get_qy().unwrap();
             let wz = w.get_qz().unwrap();
 
-            let mut w_vect: Vector<f64> = Vector::new();
+            let mut w_vect: Vector<f32> = Vector::new();
             w_vect.init(3).unwrap();
             w_vect.set_element(0, wx).unwrap();
             w_vect.set_element(1, wy).unwrap();
@@ -205,7 +205,7 @@ mod open_ahrs_tests {
 
             /* Used to find derivative of q(t) from w(t). */
             q_dot.mul(&q_now, &w).unwrap();
-            q_dot.mul_by_scalar(1.0_f64 / 2.0_f64).unwrap();
+            q_dot.mul_by_scalar(1.0_f32 / 2.0_f32).unwrap();
             //print!("q_dot (calculated):\n");
             //q_dot.print().unwrap();
         }
@@ -225,11 +225,11 @@ mod open_ahrs_tests {
             // Initial orientation.
             qw, qx, qy, qz,
             // Gyroscope settings.
-            1.0_f64, 1.0_f64, 1.0_f64,
-            0.0_f64, 0.0_f64,
-            0.0_f64, 0.0_f64,
-            0.0_f64, 0.0_f64,
-            0.0_f64, 0.0_f64, 0.0_f64,
+            1.0_f32, 1.0_f32, 1.0_f32,
+            0.0_f32, 0.0_f32,
+            0.0_f32, 0.0_f32,
+            0.0_f32, 0.0_f32,
+            0.0_f32, 0.0_f32, 0.0_f32,
             ts,
             CLOSED_FORM,
             1_u8

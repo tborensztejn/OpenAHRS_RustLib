@@ -2,7 +2,7 @@ extern crate utils;
 extern crate libm;
 
 use utils::utils::{is_valid_value, close_all, min};
-use libm::{pow, sqrt};
+use libm::{powf, sqrtf};
 use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
 use crate::linalg::{lup, solve};
@@ -12,7 +12,7 @@ use crate::vector::Vector;
 pub struct Matrix {
     rows: u8,                       // Number of rows in the matrix.
     cols: u8,                       // Number of columns in the matrix.
-    elements: [f64; M_MAX * N_MAX], // All the elements of the 2D matrix in a linear array.
+    elements: [f32; M_MAX * N_MAX], // All the elements of the 2D matrix in a linear array.
     initialized: bool,              // This variable is used to identify whether or not a matrix has already been initialized. An uninitialized matrix cannot be manipulated.
 }
 
@@ -116,23 +116,12 @@ impl Matrix {
     }
 
     // This function is used to verify if the matrix is initialized or not.
-    pub fn get_initialized(self: &Self) -> bool {
-        /*
-        // Check if the matrix is initialized or not.
-        if !self.initialized {
-            // The matrix is not initialized.
-            false
-        } else {
-            // The matrix is initialized.
-            true
-        }
-        */
-
+    pub fn is_initialized(self: &Self) -> bool {
         self.initialized
     }
 
     // This function is used to assign a value to a specific element of a matrix of size (m x n).
-    pub fn set_element(self: &mut Self, row: u8, col: u8, value: f64) -> Result<(), LinalgError> {
+    pub fn set_element(self: &mut Self, row: u8, col: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
@@ -151,7 +140,7 @@ impl Matrix {
     }
 
     // This function is used to access a specific element of a matrix of size (m x n).
-    pub fn get_element(self: &Self, row: u8, col: u8) -> Result<f64, LinalgError> {
+    pub fn get_element(self: &Self, row: u8, col: u8) -> Result<f32, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
@@ -170,7 +159,7 @@ impl Matrix {
     }
 
     // This function is used to fill an entire matrix of size (m x n) with a given value.
-    pub fn fill(self: &mut Self, value: f64) -> Result<(), LinalgError> {
+    pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the matrix.
         for row in 0..self.rows {
             for col in 0..self.cols {
@@ -249,7 +238,7 @@ impl Matrix {
     }
 
     // This function is used to check if two matrices are identical/equal or not.
-    pub fn is_equal_to(self: &Self, other: &Matrix, deviation: f64) -> Result<bool, LinalgError> {
+    pub fn is_equal_to(self: &Self, other: &Matrix, deviation: f32) -> Result<bool, LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
             // The matrices do not have the same dimensions.
@@ -353,7 +342,7 @@ impl Matrix {
 
         for row in 0..matrix1.rows {
             for col2 in 0..matrix2.cols {
-                let mut element: f64 = 0.0;
+                let mut element: f32 = 0.0;
 
                 for col1 in 0..matrix1.cols {
                     element += matrix1.get_element(row, col1)? * matrix2.get_element(col1, col2)?;
@@ -415,7 +404,7 @@ impl Matrix {
             return Err(LinalgError::NotSquare); // Return an error.
         }
 
-        let mut tmp_vec: Vector<f64> = Vector::new();
+        let mut tmp_vec: Vector<f32> = Vector::new();
         tmp_vec.init(self.rows)?;
 
 
@@ -446,7 +435,7 @@ impl Matrix {
     }
 
     // This function is used to multiply by a scalar all elements of a matrix of size (m x n).
-    pub fn mul_by_scalar(self: &mut Self, scalar: f64) -> Result<(), LinalgError> {
+    pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
             for col in 0..self.cols {
@@ -459,11 +448,11 @@ impl Matrix {
     }
 
     // This function is used to apply an exponent to all elements of a matrix of size (m x n).
-    pub fn power_exponent(self: &mut Self, exponent: f64) -> Result<(), LinalgError> {
+    pub fn power_exponent(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
         // Iterate through each element and apply exponent.
         for row in 0..self.rows {
             for col in 0..self.cols {
-                let element = pow(self.get_element(row, col)?, exponent);
+                let element = powf(self.get_element(row, col)?, exponent);
                 self.set_element(row, col, element)?;
             }
         }
@@ -480,8 +469,8 @@ impl Matrix {
     */
 
     // This function is used to calculate the trace of a matrix of size (m x n).
-    pub fn trace(self: &Self) -> Result<f64, LinalgError> {
-        let mut trace: f64 = 0.0;
+    pub fn trace(self: &Self) -> Result<f32, LinalgError> {
+        let mut trace: f32 = 0.0;
 
         // Loop through the minimum of m and n and accumulate diagonal elements to trace.
         for i in 0..min(self.rows, self.cols) {
@@ -515,7 +504,7 @@ impl Matrix {
         // Apply the Gram-Schmidt method to orthogonalise the columns and obtain the Q matrix.
         for col in 0..self.cols {
             for row in 0..col {
-                let mut dot_product: f64 = 0.0;
+                let mut dot_product: f32 = 0.0;
 
                 for k in 0..self.rows {
                     dot_product += q.get_element(k, row)? * q.get_element(k, col)?;
@@ -528,13 +517,13 @@ impl Matrix {
             }
 
             // Normalize the column.
-            let mut norm: f64 = 0.0;
+            let mut norm: f32 = 0.0;
 
             for row in 0..self.rows {
                 norm += q.get_element(row, col)? * q.get_element(row, col)?;
             }
 
-            norm = sqrt(norm);
+            norm = sqrtf(norm);
 
             if norm > EPSILON {
                 for k in 0..self.rows {
@@ -589,8 +578,8 @@ impl Matrix {
         Ok(true)    // Return the result with no error.
     }
 
-    pub fn calculate_frobenius_norm(self: &Self) -> Result<f64, LinalgError> {
-        let mut frobenius_norm: f64 = 0.0;
+    pub fn calculate_frobenius_norm(self: &Self) -> Result<f32, LinalgError> {
+        let mut frobenius_norm: f32 = 0.0;
 
         // Iterate through each element, square it, and accumulate the sum.
         for row in 0..self.rows {
@@ -599,13 +588,13 @@ impl Matrix {
             }
         }
 
-        frobenius_norm = sqrt(frobenius_norm);
+        frobenius_norm = sqrtf(frobenius_norm);
 
         Ok(frobenius_norm)
     }
 
-    pub fn det(self: &Self) -> Result<f64, LinalgError> {
-        let mut determinant: f64 = 1.0;
+    pub fn det(self: &Self) -> Result<f32, LinalgError> {
+        let mut determinant: f32 = 1.0;
 
         // Check that the matrix is square.
         if !self.is_square()? {
@@ -695,7 +684,7 @@ impl Matrix {
         // Method 1.
         for row in 0..self.rows {
             for col in 0..=row {
-                let mut s: f64 = 0.0;
+                let mut s: f32 = 0.0;
 
                 for k in 0..col {
                     s *= l.get_element(row, k)? * l.get_element(col, k)?;
@@ -710,7 +699,7 @@ impl Matrix {
                     row,
                     col,
                     if row == col {
-                        sqrt(self.get_element(row, row)? - s)
+                        sqrtf(self.get_element(row, row)? - s)
                     } else {
                         1.0 / l.get_element(col, col)? * (self.get_element(row, col)? - s)
                     }
@@ -721,7 +710,7 @@ impl Matrix {
 
         // Method 2.
         for col in 0..self.cols {
-            let mut s1: f64 = 0.0;
+            let mut s1: f32 = 0.0;
 
             for k in 0..col {
                 s1 += l.get_element(col, k)? * l.get_element(col, k)?;
@@ -733,7 +722,7 @@ impl Matrix {
             }
 
             for row in 0..self.rows {
-                let mut s2: f64 = 0.0;
+                let mut s2: f32 = 0.0;
 
                 for k in 0..col {
                     s2 += l.get_element(row, k)? * l.get_element(col, k)?;
@@ -743,7 +732,7 @@ impl Matrix {
                     row,
                     col,
                     if row == col {
-                        sqrt(self.get_element(row, col)? - s1)
+                        sqrtf(self.get_element(row, col)? - s1)
                     } else {
                         1.0 / l.get_element(col, col)? * (self.get_element(row, col)? - s2)
                     },

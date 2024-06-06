@@ -1,7 +1,7 @@
 #![no_std]
 
 pub mod utils {
-    use libm::fabs;
+    use libm::fabsf;
 
     #[derive(Debug)]
     #[derive(PartialEq)]
@@ -10,7 +10,7 @@ pub mod utils {
         Inf,
     }
 
-    pub fn is_valid_value(value: f64) -> Result<(), UtilsError> {
+    pub fn is_valid_value(value: f32) -> Result<(), UtilsError> {
         if value.is_nan() {
             Err(UtilsError::Nan)
         } else if value.is_infinite() {
@@ -20,13 +20,13 @@ pub mod utils {
         }
     }
 
-    pub fn close_all(x: f64, y: f64, deviation: f64) -> Result<bool, UtilsError> {
+    pub fn close_all(x: f32, y: f32, deviation: f32) -> Result<bool, UtilsError> {
         if x.is_nan() || y.is_nan() {
             Err(UtilsError::Nan)
         } else if x.is_infinite() || y.is_infinite() {
             Err(UtilsError::Inf)
         } else {
-            let result = fabs(x - y);
+            let result = fabsf(x - y);
 
             Ok(result <= deviation)
         }

@@ -8,10 +8,10 @@ use crate::common::OpenAHRSError;
 #[derive(Debug)]
 pub struct Accelerometer {
     transformation_mat: Matrix,
-    bias: Vector<f64>,
-    raw_measurements: Vector<f64>,
-    corrected_measurements: Vector<f64>,
-    //conversion_factor: f64,
+    bias: Vector<f32>,
+    raw_measurements: Vector<f32>,
+    corrected_measurements: Vector<f32>,
+    //conversion_factor: f32,
     initialized: bool,
 }
 
@@ -40,15 +40,15 @@ impl Accelerometer {
 
     pub fn init(
         self: &mut Self,
-        x_axis_scaling_factor: f64,
-        y_axis_scaling_factor: f64,
-        z_axis_scaling_factor: f64,
-        xy_axes_cross_scaling_factor: f64,
-        xz_axes_cross_scaling_factor: f64,
-        yz_axes_cross_scaling_factor: f64,
-        x_axis_bias: f64,
-        y_axis_bias: f64,
-        z_axis_bias: f64
+        x_axis_scaling_factor: f32,
+        y_axis_scaling_factor: f32,
+        z_axis_scaling_factor: f32,
+        xy_axes_cross_scaling_factor: f32,
+        xz_axes_cross_scaling_factor: f32,
+        yz_axes_cross_scaling_factor: f32,
+        x_axis_bias: f32,
+        y_axis_bias: f32,
+        z_axis_bias: f32
         ) -> Result<(), OpenAHRSError> {
             if self.initialized {
                 // The accelerometer has already been configured.
@@ -98,7 +98,7 @@ impl Accelerometer {
         Ok(())
     }
 
-    pub fn update(self: &mut Self, ax: f64, ay: f64, az: f64) -> Result<(), OpenAHRSError> {
+    pub fn update(self: &mut Self, ax: f32, ay: f32, az: f32) -> Result<(), OpenAHRSError> {
         // Check that the accelerometer is configured.
         if !self.initialized {
             // The accelerometer is not initialized.
@@ -114,13 +114,13 @@ impl Accelerometer {
         }
     }
 
-    pub fn get_x_acceleration(self: &Self) -> Result<f64, OpenAHRSError> {
+    pub fn get_x_acceleration(self: &Self) -> Result<f32, OpenAHRSError> {
         // Check that the accelerometer is configured.
         if !self.initialized {
             // The accelerometer is not initialized.
             Err(OpenAHRSError::AccNotInit)
         } else {
-            let ax: f64 = self.corrected_measurements.get_element(0)?;
+            let ax: f32 = self.corrected_measurements.get_element(0)?;
 
             Ok(ax)
         }
