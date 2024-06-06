@@ -45,6 +45,20 @@ impl Matrix {
         }
     }
 
+    // This function is used to reinitialize a matrix of size (m x n).
+    pub fn reinit(self: &mut Self, rows: u8, cols: u8) -> Result<(), LinalgError> {
+        // Check that the matrix is initialized.
+        if !self.initialized {
+            // The matrix is not initialized.
+            Err(LinalgError::NotInit)   // Return an error.
+        } else {
+            self.initialized = false;   // Set the initialization flag to false.
+            self.init(rows, cols)?;     // Reinitialize the matrix.
+
+            Ok(())  // Return no error.
+        }
+    }
+
     // This function is used to get the number of rows (m) of the matrix of size (m x n).
     pub fn get_rows(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
@@ -229,8 +243,8 @@ impl Matrix {
 
         for row in 0..self.rows {
             for col in 0..self.cols {
-                let element = other.get_element(row, col)?;
-                self.set_element(row, col, element)?;
+                let element = other.get_element(row, col)?; // Retrieve the element from the reference matrix.
+                self.set_element(row, col, element)?;       // Put it inside the target matrix.
             }
         }
 
@@ -269,6 +283,7 @@ impl Matrix {
         for row in 0..self.rows {
             for col in 0..self.cols {
                 let element = self.get_element(row, col)?;  // Retrieve the value of the specified element from the matrix.
+
                 print!("{:.3}\t", element);                 // Print the value of the element.
             }
             print!("\n");   // Move to the next row with a newline character.
@@ -280,6 +295,7 @@ impl Matrix {
     }
 
     // This function is used to perform the matrix addition operation of two matrices of size (m x n).
+    // A = B + C.
     pub fn add(&mut self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(matrix1)? {
@@ -297,6 +313,29 @@ impl Matrix {
             for col in 0..self.cols {
                 let element1 = matrix1.get_element(row, col)?;
                 let element2 = matrix2.get_element(row, col)?;
+
+                let sum = element1 + element2;
+
+                self.set_element(row, col, sum)?;
+            }
+        }
+
+        Ok(()) // Return no error.
+    }
+
+    // This function is used to add another matrix to itself.
+    pub fn add_in_place(&mut self, other: &Self) -> Result<(), LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element1 = self.get_element(row, col)?;
+                let element2 = other.get_element(row, col)?;
+
                 let sum = element1 + element2;
 
                 self.set_element(row, col, sum)?;
@@ -324,6 +363,7 @@ impl Matrix {
             for col in 0..self.cols {
                 let element1 = matrix1.get_element(row, col)?;
                 let element2 = matrix2.get_element(row, col)?;
+
                 let difference = element1 - element2;
 
                 self.set_element(row, col, difference)?;
@@ -331,6 +371,28 @@ impl Matrix {
         }
 
         Ok(())  // Return no error.
+    }
+
+    // This function is used to subtract another matrix to itself.
+    pub fn sub_in_place(&mut self, other: &Self) -> Result<(), LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element1 = self.get_element(row, col)?;
+                let element2 = other.get_element(row, col)?;
+
+                let difference = element1 - element2;
+
+                self.set_element(row, col, difference)?;
+            }
+        }
+
+        Ok(()) // Return no error.
     }
 
     // This function is used to perform the matrix multiplication operation on two matrices of sizes (m x n) and (n x k) respectively.
@@ -345,7 +407,11 @@ impl Matrix {
                 let mut element: f32 = 0.0;
 
                 for col1 in 0..matrix1.cols {
-                    element += matrix1.get_element(row, col1)? * matrix2.get_element(col1, col2)?;
+                    let element1 = matrix1.get_element(row, col1)?;
+                    let element2 = matrix2.get_element(col1, col2)?;
+
+                    element += element1 * element2;
+
                     self.set_element(row, col2, element)?;
                 }
             }
@@ -368,6 +434,7 @@ impl Matrix {
             for row in 0..self.rows {
                 for col in (row + 1)..self.cols {
                     let temp_element = self.get_element(row, col)?;
+
                     self.set_element(row, col, self.get_element(col, row)?)?;
                     self.set_element(col, row, temp_element)?;
                 }

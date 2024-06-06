@@ -5,11 +5,13 @@ pub struct PID {
     ki: f32,            // Gain of the integral action.
     kd: f32,            // Gain of the derivative action.
     ts: f32,            // Sampling period.
+    /*
     fc: f32,            // Low-pass filter cutoff frequency of the derivative action.
     tau: f32,           // Low-pass filter time constant.
     sat_min: f32,       // Minimum saturator output value.
     sat_max: f32,       // Maximum saturator output value.
     initialized: bool,  // Initialization flag.
+    */
 }
 
 impl PID {

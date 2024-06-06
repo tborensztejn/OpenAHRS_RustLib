@@ -1,6 +1,4 @@
 extern crate linalg;
-extern crate quaternion;
-extern crate libm;
 
 use linalg::common::{LinalgError};
 
@@ -39,21 +37,20 @@ use quaternion::quaternion::Quaternion;
 use linalg::vector::dot_product;
 
 #[cfg(feature = "std")]
-//pub fn generate_random_attitudes(number: u8, ts: f32) -> Result<Matrix, OpenAHRSError> {
-pub fn generate_random_attitudes(number: u8) -> Result<Matrix, OpenAHRSError> {
-    //extern crate quaternion;
+pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
+    extern crate quaternion;
     extern crate rand;
     extern crate libm;
 
     use rand::prelude::*;
     use linalg::common::PI;
-    use libm::{sqrt, cos, sin, acos, fabs};
+    use libm::{sqrtf, cosf, sinf, acosf, fabsf};
 
     is_valid_cols_number(number)?;
 
-    let mut attitudes: Matrix = Matrix::new();
+    let mut attitudes = Matrix::new();
     attitudes.init(4, number)?;
-    let mut previous_quat: Quaternion = Quaternion::new()?;
+    let mut previous_quat = Quaternion::new()?;
     previous_quat.fill_identity()?;
 
     for n in 0..number {
@@ -61,17 +58,17 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, OpenAHRSError> {
         let u2: f32 = rand::thread_rng().gen();  // Generates a random number between 0 and 1.
         let u3: f32 = rand::thread_rng().gen();  // Generates a random number between 0 and 1.
 
-        let s1: f32 = sqrt(1.0 - u1);
-        let s2: f32 = sqrt(u1);
-        let t1: f32 = 2.0 * PI * u2;
-        let t2: f32 = 2.0 * PI * u3;
+        let s1 = sqrtf(1.0_f32 - u1);
+        let s2 = sqrtf(u1);
+        let t1 = 2.0_f32 * PI * u2;
+        let t2 = 2.0_f32 * PI * u3;
 
-        let mut qw: f32 = s2 * cos(t2);
-        let mut qx: f32 = s1 * sin(t1);
-        let mut qy: f32 = s1 * cos(t1);
-        let mut qz: f32 = s2 * sin(t2);
+        let mut qw = s2 * cosf(t2);
+        let mut qx = s1 * sinf(t1);
+        let mut qy = s1 * cosf(t1);
+        let mut qz = s2 * sinf(t2);
 
-        let mut actual_quat: Quaternion = Quaternion::new()?;
+        let mut actual_quat = Quaternion::new()?;
         actual_quat.fill(qw, qx, qy, qz)?;
 
 
@@ -89,19 +86,19 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, OpenAHRSError> {
 
 
         // Perform scalar product.
-        let scalar: f32 = dot_product(&actual_quat.get_vect()?, &previous_quat.get_vect()?)?;
-        let theta: f32 = acos(scalar);  // Angle between the axis of the current quaternion and that of the previous quaternion.
+        let scalar = dot_product(&actual_quat.get_vect()?, &previous_quat.get_vect()?)?;
+        let theta = acosf(scalar);  // Angle between the axis of the current quaternion and that of the previous quaternion.
 
         /*
             If the angle between the two axes of rotation of the quaternions is too great, an intermediate quaternion must be determined by spherical interpolation,
             ensuring that theangle between the preceding quaternion and the interpolated quaternion does not exceed the maximum angle.
         */
 
-        let max_angle: f32 = PI / 32.0_f32;
+        let max_angle = PI / 64.0_f32;
 
-        if fabs(theta) > max_angle {
-            let scale: f32 = max_angle / fabs(theta);
-            let mut interpolated_quat: Quaternion = Quaternion::new()?;
+        if fabsf(theta) > max_angle {
+            let scale = max_angle / fabsf(theta);
+            let mut interpolated_quat = Quaternion::new()?;
             interpolated_quat.slerp(&previous_quat, &actual_quat, scale)?;
             qw = interpolated_quat.get_qw()?;
             qx = interpolated_quat.get_qx()?;

@@ -120,7 +120,7 @@ impl Accelerometer {
             // The accelerometer is not initialized.
             Err(OpenAHRSError::AccNotInit)
         } else {
-            let ax: f32 = self.corrected_measurements.get_element(0)?;
+            let ax = self.corrected_measurements.get_element(0)?;
 
             Ok(ax)
         }

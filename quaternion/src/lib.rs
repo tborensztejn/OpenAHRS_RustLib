@@ -21,10 +21,10 @@ mod quaternion_tests {
         let mut quat: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
 
         // Define quaternion elements.
-        let qw: f32 = 1.0_f32;
-        let qx: f32 = 2.0_f32;
-        let qy: f32 = 3.0_f32;
-        let qz: f32 = 4.0_f32;
+        let qw: f32 = 1.0;
+        let qx: f32 = 2.0;
+        let qy: f32 = 3.0;
+        let qz: f32 = 4.0;
 
         let result = quat.fill(qw, qx, qy, qz); // Set quaternion elements.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
@@ -54,16 +54,16 @@ mod quaternion_tests {
         let mut pq: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
 
         // Define p quaternion elements.
-        let pw: f32 = 2.0_f32;
-        let px: f32 = 3.0_f32;
-        let py: f32 = 2.0_f32;
-        let pz: f32 = 3.0_f32;
+        let pw: f32 = 2.0;
+        let px: f32 = 3.0;
+        let py: f32 = 2.0;
+        let pz: f32 = 3.0;
 
         // Define q quaternion elements.
-        let qw: f32 = 3.0_f32;
-        let qx: f32 = 2.0_f32;
-        let qy: f32 = 3.0_f32;
-        let qz: f32 = 2.0_f32;
+        let qw: f32 = 3.0;
+        let qx: f32 = 2.0;
+        let qy: f32 = 3.0;
+        let qz: f32 = 2.0;
 
         let mut result = p.fill(pw, px, py, pz); // Set quaternion elements.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);

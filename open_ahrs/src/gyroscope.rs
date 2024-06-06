@@ -102,7 +102,7 @@ impl Gyroscope {
     // This function is used to correct the raw measurements.
     fn correct(self: &mut Self) -> Result<(), OpenAHRSError> {
         self.corrected_measurements.sub(&self.raw_measurements, &self.static_biases)?;                          // Remove static biases from raw measurements.
-        let mut corrected_measurements: Matrix = vector_to_matrix(&self.corrected_measurements)?;               // Convert this vector into a matrix to perform matrix operations.
+        let mut corrected_measurements = vector_to_matrix(&self.corrected_measurements)?;               // Convert this vector into a matrix to perform matrix operations.
         corrected_measurements.mul(&self.axes_misalignment_correction, &copy_from(&corrected_measurements)?)?;  // Correct axes non-orthonormality.
         get_col(&corrected_measurements, &mut self.corrected_measurements, 0)?;                                 // Perform matrix-to-vector conversion to store the corrected measurements.
 

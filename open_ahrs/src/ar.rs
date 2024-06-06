@@ -11,7 +11,6 @@ use linalg::matrix::{Matrix, copy_from, mul};
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
 use linalg::linalg::vector_to_matrix;
-//use libm::{cos, sin, exp};
 use libm::{cosf, sinf};
 use utils::utils::factorial;
 use crate::gyroscope::Gyroscope;
@@ -32,9 +31,9 @@ impl AR {
         let ar = Self {
             gyr: Gyroscope::new()?,
             orientation: Quaternion::new()?,
-            ts: 0.01,
-            method: 0,
-            order: 1,
+            ts: 0.01_f32,
+            method: 0_u8,
+            order: 1_u8,
             initialized: false,
         };
 
@@ -73,7 +72,7 @@ impl AR {
 
     fn calculate_omega_matrix(p: f32, q: f32, r: f32) -> Result<Matrix, OpenAHRSError> {
         // Create the matrix.
-        let mut omega: Matrix = Matrix::new();
+        let mut omega = Matrix::new();
         omega.init(4, 4)?;
 
         // Set elements of the first column.
@@ -104,79 +103,85 @@ impl AR {
     }
 
     pub fn update(self: &mut Self, gx: f32, gy: f32, gz: f32) -> Result<(), OpenAHRSError> {
-        let mut omega: Matrix = Matrix::new();
-        omega.init(4, 4)?;
-        let mut temp: Matrix = Matrix::new();
-        temp.init(4, 4)?;
-        temp.fill_identity()?;
-        let mut w: Vector<f32> = Vector::new();
-        w.init(3)?;
+        let mut temp = Matrix::new();   // Create a temporary matrix
+        temp.init(4, 4)?;               // Initialize it.
+        temp.fill_identity()?;          // Configuring it into an identity matrix.
 
-        self.gyr.update(gx, gy, gz)?;
-        let p: f32 = self.gyr.get_x_angular_rate()?;
-        let q: f32 = self.gyr.get_y_angular_rate()?;
-        let r: f32 = self.gyr.get_z_angular_rate()?;
+        self.gyr.update(gx, gy, gz)?;   // Update the gyroscope with raw measurements to correct them.
 
+        // Retrieve corrected measurements.
+        let p = self.gyr.get_x_angular_rate()?;
+        let q = self.gyr.get_y_angular_rate()?;
+        let r = self.gyr.get_z_angular_rate()?;
+
+        let mut qw = self.orientation.get_qw()?;
+        let mut qx = self.orientation.get_qx()?;
+        let mut qy = self.orientation.get_qy()?;
+        let mut qz = self.orientation.get_qz()?;
+
+        let mut w: Vector<f32> = Vector::new(); // Create the angular velocity pseudovector.
+        w.init(3)?;                             // Initialize it.
+
+        // Fill it with gyro-corrected measurements.
         w.set_element(0, p)?;
         w.set_element(1, q)?;
         w.set_element(2, r)?;
-        let w: f32 = w.calculate_norm()?;
 
-        if w > EPSILON {
-            let theta: f32 = w * self.ts / 2.0_f32;
-            omega.copy_from(&Self::calculate_omega_matrix(p, q, r)?)?;
+        let w_norm = w.calculate_norm()?;   // Calculate its norm.
 
-            if self.method == CLOSED_FORM {
-                temp.mul_by_scalar(cosf(theta))?;
-                omega.mul_by_scalar(sinf(theta) / w)?;
-                temp.add(&omega, &copy_from(&temp)?)?;
-            } else if self.method == TAYLOR_SERIES {
-                let mut s: Matrix = Matrix::new();
-                s.init(4, 4)?;
+        // Check that the norm is not zero.
+        if w_norm > EPSILON {
+            let theta = w_norm * self.ts / 2.0_f32;
+            let mut omega = Self::calculate_omega_matrix(p, q, r)?; // Calculate the transformation matrix Ω(ω).
 
-                for n in 0..self.order {
-                    // S = 0.5 * dt * Omega
-                    s.copy_from(&omega)?;
-                    s.mul_by_scalar(0.5 * self.ts)?;
-                    // A' = S^n / !n
-                    s.power_exponent(n as f32)?;
-                    let factor: u64 = factorial(n);
-                    s.mul_by_scalar(1.0 / factor as f32)?;
-                    // A = A + A'
-                    temp.add(&copy_from(&temp)?, &s)?;
+            // Closed form method (not very suitable for numerical implementations).
+            if self.method == CLOSED_FORM || self.method == TAYLOR_SERIES {
+                if self.method == CLOSED_FORM {
+                    temp.mul_by_scalar(cosf(theta))?;
+                    omega.mul_by_scalar(sinf(theta) / w_norm)?;
+                    temp.add_in_place(&omega)?;
+                } else if self.method == TAYLOR_SERIES {
+                    omega.mul_by_scalar(0.5_f32 * self.ts)?;
+
+                    for n in 1..=self.order {
+                        // S = 0.5 * dt * Omega
+                        let mut s = copy_from(&omega)?;
+                        // A' = S^n / !n
+                        s.power_exponent(n as f32)?;
+                        let factor = factorial(n);
+                        s.mul_by_scalar(1.0_f32 / factor as f32)?;
+                        // A = A + A'
+                        temp.add_in_place(&s)?;
+                    }
                 }
+
+                let orientation = mul(&temp, &vector_to_matrix(&self.orientation.get_vect()?)?)?;
+
+                qw = orientation.get_element(0, 0)?;
+                qx = orientation.get_element(1, 0)?;
+                qy = orientation.get_element(2, 0)?;
+                qz = orientation.get_element(3, 0)?;
             } else if self.method == EULER {
-                // Some code here.
+                let mut w = Quaternion::new()?;
+                w.fill(0.0_f32, p, q, r)?;
+                w.mul_by_scalar(0.5_f32 * self.ts)?;
+
+                let mut delta = Quaternion::new()?;
+                delta.mul(&w, &self.orientation)?;
+
+                qw += delta.get_qw()?;
+                qx += delta.get_qx()?;
+                qy += delta.get_qy()?;
+                qz += delta.get_qz()?;
             } else {
                 // The chosen method is not correct.
                 return Err(OpenAHRSError::AEMethodError);   // Return an error.
             }
 
-            let orientation: Matrix = mul(&temp, &vector_to_matrix(&self.orientation.get_vect()?)?)?;
-            let qw: f32 = orientation.get_element(0, 0)?;
-            let qx: f32 = orientation.get_element(1, 0)?;
-            let qy: f32 = orientation.get_element(2, 0)?;
-            let qz: f32 = orientation.get_element(3, 0)?;
-
-            /*
-            let mut w: Quaternion = Quaternion::new()?;
-            w.fill(0.0_f32, p, q, r)?;
-            w.mul_by_scalar(0.5_f32 * self.ts)?;
-
-            let mut delta: Quaternion = Quaternion::new()?;
-            delta.mul(&w, &self.orientation)?;
-
-            let qw: f32 = self.orientation.get_qw()? + delta.get_qw()?;
-            let qx: f32 = self.orientation.get_qx()? + delta.get_qx()?;
-            let qy: f32 = self.orientation.get_qy()? + delta.get_qy()?;
-            let qz: f32 = self.orientation.get_qz()? + delta.get_qz()?;
-            */
-
             self.orientation.fill(qw, qx, qy, qz)?;
             self.orientation.normalize()?;
         } else {
             // The system is not moving (rotating) so the attitude doesn't change.
-            //self.orientation.fill_identity()?;
         }
 
         Ok(())  // Return no error.

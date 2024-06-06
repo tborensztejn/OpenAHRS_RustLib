@@ -47,7 +47,6 @@ impl<T: Default + Copy> Vector<T> {
     }
 
     pub fn is_initialized(self: &Self) -> bool {
-        // Check if the matrix is initialized or not.
         self.initialized
     }
 }
@@ -186,6 +185,27 @@ impl Vector<f32> {
         for row in 0..self.rows {
             let element1 = vector1.get_element(row)?;
             let element2 = vector2.get_element(row)?;
+
+            let sum = element1 + element2;
+
+            self.set_element(row, sum)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to add another vector to itself.
+    pub fn add_in_place(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            let element1 = self.get_element(row)?;
+            let element2 = other.get_element(row)?;
+
             let sum = element1 + element2;
 
             self.set_element(row, sum)?;
@@ -211,6 +231,27 @@ impl Vector<f32> {
         for row in 0..self.rows {
             let element1 = vector1.get_element(row)?;
             let element2 = vector2.get_element(row)?;
+
+            let difference = element1 - element2;
+
+            self.set_element(row, difference)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to subtract another vector to itself.
+    pub fn sub_in_place(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            let element1 = self.get_element(row)?;
+            let element2 = other.get_element(row)?;
+
             let difference = element1 - element2;
 
             self.set_element(row, difference)?;

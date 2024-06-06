@@ -10,9 +10,9 @@ pub mod linalg;
 mod matrix_tests {
     use crate::matrix::Matrix;
     use crate::vector::Vector;
-    use crate::common:: { M_MAX, N_MAX, LinalgError };
+    use crate::common:: {M_MAX, N_MAX, LinalgError};
     //use crate::linalg::eigen;
-    use crate::linalg:: { set_row, set_col, add_row, add_col };
+    use crate::linalg:: {set_row, set_col, add_row, add_col};
 
     // This test function is used to check that there are no errors in the correct creation of a matrix. No error expected.
     #[test]
