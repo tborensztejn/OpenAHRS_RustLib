@@ -55,7 +55,7 @@ pub struct AQUA {
     t_mag: f32,
     mode: Mode,
     order: u8,
-    
+
     initialized: bool,
 }
 
