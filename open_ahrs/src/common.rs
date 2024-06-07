@@ -1,5 +1,6 @@
 extern crate linalg;
 
+use linalg::matrix::Matrix;
 use linalg::common::{LinalgError};
 
 pub const CLOSED_FORM:      u8 = 1;
@@ -18,8 +19,10 @@ pub enum OpenAHRSError {
     MagNotInit,
     MagAlreadyInit,
     AEMethodError,
+    AQUAFilterNotInit,
     InvalidQuaternion,
     InvalidAQUAMode,
+    InvalidGyroRawMeasurements,
     LinalgError(LinalgError),
 }
 
@@ -29,8 +32,8 @@ impl From<LinalgError> for OpenAHRSError {
     }
 }
 
-#[cfg(feature = "std")]
-use linalg::matrix::Matrix;
+//#[cfg(feature = "std")]
+//use linalg::matrix::Matrix;
 #[cfg(feature = "std")]
 use linalg::common::is_valid_cols_number;
 #[cfg(feature = "std")]
@@ -119,4 +122,37 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
     }
 
     Ok(attitudes)
+}
+
+// This function is used to calculate the transformation matrix Ω(ω) from components of the angular velocity pseudovector.
+pub(crate) fn calculate_omega_matrix(p: f32, q: f32, r: f32) -> Result<Matrix, OpenAHRSError> {
+    // Create the matrix.
+    let mut omega = Matrix::new();
+    omega.init(4, 4)?;
+
+    // Set elements of the first column.
+    omega.set_element(0, 0, 0.0_f32)?;
+    omega.set_element(1, 0, p)?;
+    omega.set_element(2, 0, q)?;
+    omega.set_element(3, 0, r)?;
+
+    // Set elements of the second column.
+    omega.set_element(0, 1, -p)?;
+    omega.set_element(1, 1, 0.0_f32)?;
+    omega.set_element(2, 1, -r)?;
+    omega.set_element(3, 1, q)?;
+
+    // Set elements of the third column.
+    omega.set_element(0, 2, -q)?;
+    omega.set_element(1, 2, r)?;
+    omega.set_element(2, 2, 0.0_f32)?;
+    omega.set_element(3, 2, -p)?;
+
+    // Set elements of the fourth column.
+    omega.set_element(0, 3, -r)?;
+    omega.set_element(1, 3, -q)?;
+    omega.set_element(2, 3, p)?;
+    omega.set_element(3, 3, 0.0_f32)?;
+
+    Ok(omega)
 }

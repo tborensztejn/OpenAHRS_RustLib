@@ -1,4 +1,4 @@
-//find . -name "*.rs" -print0 | while IFS= read -r -d '' file; do lines=$(wc -l < "$file"); echo "$file: $lines"; done
+// find . -name "*.rs" -print0 | while IFS= read -r -d '' file; do lines=$(wc -l < "$file"); echo "$file: $lines"; done
 // total_lines=$(find . -name "*.rs" -print0 | xargs -0 cat | wc -l); echo "Total des lignes de code: $total_lines"
 
 extern crate quaternion;
@@ -14,30 +14,43 @@ use linalg::linalg::vector_to_matrix;
 use libm::{cosf, sinf};
 use utils::utils::factorial;
 use crate::gyroscope::Gyroscope;
-use crate::common::{CLOSED_FORM, TAYLOR_SERIES, EULER, OpenAHRSError};
+use crate::common::{
+    CLOSED_FORM,
+    TAYLOR_SERIES,
+    EULER,
+    OpenAHRSError,
+    calculate_omega_matrix
+};
 
 #[derive(Debug)]
 pub struct AR {
     gyr: Gyroscope,
+
     orientation: Quaternion,
+
     ts: f32,
     method: u8,
     order: u8,
+
     initialized: bool,
 }
 
 impl AR {
     pub fn new() -> Result<Self, OpenAHRSError> {
         let ar = Self {
-            gyr: Gyroscope::new()?,
-            orientation: Quaternion::new()?,
-            ts: 0.01_f32,
-            method: 0_u8,
-            order: 1_u8,
-            initialized: false,
+            gyr: Gyroscope::new()?,             // Filter sensor (only a gyroscope, no drift correction).
+
+            orientation: Quaternion::new()?,    // Estimated attitude by the filter.
+
+            // Filter settings.
+            ts: 0.01_f32,                       // Sampling period.
+            method: 0_u8,                       // Numerical integration method.
+            order: 1_u8,                        // Order of the numerical integration method.
+
+            initialized: false,                 // Initialization status.
         };
 
-        Ok(ar)
+        Ok(ar)  // Return the structure with no error.
     }
 
     pub fn init(self: &mut Self,
@@ -67,38 +80,6 @@ impl AR {
             self.initialized = true;
 
             Ok(())  // Return no error.
-    }
-
-    fn calculate_omega_matrix(p: f32, q: f32, r: f32) -> Result<Matrix, OpenAHRSError> {
-        // Create the matrix.
-        let mut omega = Matrix::new();
-        omega.init(4, 4)?;
-
-        // Set elements of the first column.
-        omega.set_element(0, 0, 0.0)?;
-        omega.set_element(1, 0, p)?;
-        omega.set_element(2, 0, q)?;
-        omega.set_element(3, 0, r)?;
-
-        // Set elements of the second column.
-        omega.set_element(0, 1, -p)?;
-        omega.set_element(1, 1, 0.0)?;
-        omega.set_element(2, 1, -r)?;
-        omega.set_element(3, 1, q)?;
-
-        // Set elements of the third column.
-        omega.set_element(0, 2, -q)?;
-        omega.set_element(1, 2, r)?;
-        omega.set_element(2, 2, 0.0)?;
-        omega.set_element(3, 2, -p)?;
-
-        // Set elements of the fourth column.
-        omega.set_element(0, 3, -r)?;
-        omega.set_element(1, 3, -q)?;
-        omega.set_element(2, 3, p)?;
-        omega.set_element(3, 3, 0.0)?;
-
-        Ok(omega)
     }
 
     pub fn update(self: &mut Self, gx: f32, gy: f32, gz: f32) -> Result<(), OpenAHRSError> {
@@ -131,7 +112,7 @@ impl AR {
         // Check that the norm is not zero.
         if w_norm > EPSILON {
             let theta = w_norm * self.ts / 2.0_f32;
-            let mut omega = Self::calculate_omega_matrix(p, q, r)?; // Calculate the transformation matrix Ω(ω).
+            let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
 
             // Closed form method (not very suitable for numerical implementations).
             if self.method == CLOSED_FORM || self.method == TAYLOR_SERIES {

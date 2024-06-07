@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::vector::Vector;
-use crate::common:: { EPSILON, LinalgError};
-use libm:: {fabsf, sqrtf};
+use crate::common::{EPSILON, LinalgError};
+use libm::{fabsf, sqrtf};
 
 // This function in used to replace all elements of specific row of a matrix with those of a vector.
 pub fn set_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
