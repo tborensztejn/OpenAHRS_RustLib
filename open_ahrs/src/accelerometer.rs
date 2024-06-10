@@ -5,6 +5,53 @@ use linalg::vector::Vector;
 use linalg::linalg::{vector_to_matrix, get_col, set_col};
 use crate::common::OpenAHRSError;
 
+// Accelerometer configuration.
+pub struct AccelerometerConfig {
+    // Scaling correction factors.
+    pub x_axis_scale_correction: f32,
+    pub y_axis_scale_correction: f32,
+    pub z_axis_scale_correction: f32,
+
+    // Axes misalignment and non-orthogonality correction factors.
+    pub xy_axes_misalignment_correction: f32,
+    pub xz_axes_misalignment_correction: f32,
+    pub yx_axes_misalignment_correction: f32,
+    pub yz_axes_misalignment_correction: f32,
+    pub zx_axes_misalignment_correction: f32,
+    pub zy_axes_misalignment_correction: f32,
+
+    // Static biases.
+    pub x_axis_static_bias: f32,
+    pub y_axis_static_bias: f32,
+    pub z_axis_static_bias: f32
+}
+
+// Default accelerometer configuration.
+impl Default for AccelerometerConfig {
+    // This function is used to generate a default accelerometer configuration.
+    fn default() -> Self {
+        Self {
+            // Default scaling correction factors.
+            x_axis_scale_correction: 1.0,
+            y_axis_scale_correction: 1.0,
+            z_axis_scale_correction: 1.0,
+
+            // Default axes misalignment and non-orthogonality correction factors.
+            xy_axes_misalignment_correction: 0.0,
+            xz_axes_misalignment_correction: 0.0,
+            yx_axes_misalignment_correction: 0.0,
+            yz_axes_misalignment_correction: 0.0,
+            zx_axes_misalignment_correction: 0.0,
+            zy_axes_misalignment_correction: 0.0,
+
+            // Default static biases.
+            x_axis_static_bias: 0.0,
+            y_axis_static_bias: 0.0,
+            z_axis_static_bias: 0.0,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Accelerometer {
     transformation_mat: Matrix,

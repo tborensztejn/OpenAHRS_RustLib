@@ -854,6 +854,15 @@ pub fn add(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
     Ok(result_matrix)
 }
 
+// This function is used to perform the matrix subtraction operation of two matrices of size (m x n).
+pub fn sub(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
+    let mut result_matrix: Matrix = Matrix::new();
+    result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
+    result_matrix.sub(&matrix1, &matrix2)?;
+
+    Ok(result_matrix)
+}
+
 // This function is used to perform the matrix multiplication operation on two matrices of sizes (m x n) and (n x k) respectively.
 // Naive implementation, as it is not very efficient for large matrices (for larger matrices, use the "divide and conquer" strategy).
 pub fn mul(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {

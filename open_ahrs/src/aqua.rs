@@ -3,9 +3,9 @@ extern crate linalg;
 extern crate utils;
 extern crate libm;
 
-use crate::gyroscope::Gyroscope;
-use crate::accelerometer::Accelerometer;
-use crate::magnetometer::Magnetometer;
+use crate::gyroscope::{GyroscopeConfig, Gyroscope};
+use crate::accelerometer::{AccelerometerConfig, Accelerometer};
+use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, calculate_omega_matrix};
 
 use quaternion::quaternion::Quaternion;
@@ -63,7 +63,7 @@ impl AQUA {
     // This function is used to create a new AQUA filter.
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
-            // Filter sensors (gyroscope (optionnal), accelerometer and magnetomter (used to perform gyro drift correction)).
+            // Filter sensors (gyroscope (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
             gyr: Gyroscope::new()?,
             acc: Accelerometer::new()?,
             mag: Magnetometer::new()?,
@@ -91,19 +91,12 @@ impl AQUA {
     }
 
     pub fn init(self: &mut Self,
-        // Mode of the filter.
         //mode: u8,
-        mode: Mode,
-
-        // Initial attitude (optionnal).
-        qw: Option<f32>, qx: Option<f32>, qy: Option<f32>, qz: Option<f32>,
-
-        // Gyroscope settings.
-        x_axis_scaling_correction_factor: Option<f32>, y_axis_scaling_correction_factor: Option<f32>, z_axis_scaling_correction_factor: Option<f32>,
-        xy_axes_non_orthogonality_correction_factor: Option<f32>, xz_axes_non_orthogonality_correction_factor: Option<f32>,
-        yx_axes_non_orthogonality_correction_factor: Option<f32>, yz_axes_non_orthogonality_correction_factor: Option<f32>,
-        zx_axes_non_orthogonality_correction_factor: Option<f32>, zy_axes_non_orthogonality_correction_factor: Option<f32>,
-        x_axis_static_bias: Option<f32>, y_axis_static_bias: Option<f32>, z_axis_static_bias: Option<f32>,
+        mode: Mode,                                                         // Mode of the filter.
+        qw: Option<f32>, qx: Option<f32>, qy: Option<f32>, qz: Option<f32>, // Initial attitude (optionnal).
+        gyroscope_config: GyroscopeConfig,                                  // Gyroscope configuration.
+        accelerometer_config: AccelerometerConfig,                          // Accelerometer configuration.
+        magnetometer_config: MagnetometerConfig,                            // Magnetometer configuration.
 
     ) -> Result<(), OpenAHRSError> {
         /*
@@ -127,47 +120,12 @@ impl AQUA {
         */
 
         if mode == Mode::MARG {
-            /* Initialize the gyroscope */
-
-            // Axes scaling factors.
-            let x_axis_scaling_correction_factor = x_axis_scaling_correction_factor.unwrap_or(1.0_f32);
-            let y_axis_scaling_correction_factor = y_axis_scaling_correction_factor.unwrap_or(1.0_f32);
-            let z_axis_scaling_correction_factor = z_axis_scaling_correction_factor.unwrap_or(1.0_f32);
-
-            // Axes non-orthogonality correction factors.
-            let xy_axes_non_orthogonality_correction_factor = xy_axes_non_orthogonality_correction_factor.unwrap_or(0.0_f32);
-            let xz_axes_non_orthogonality_correction_factor = xz_axes_non_orthogonality_correction_factor.unwrap_or(0.0_f32);
-            let yx_axes_non_orthogonality_correction_factor = yx_axes_non_orthogonality_correction_factor.unwrap_or(0.0_f32);
-            let yz_axes_non_orthogonality_correction_factor = yz_axes_non_orthogonality_correction_factor.unwrap_or(0.0_f32);
-            let zx_axes_non_orthogonality_correction_factor = zx_axes_non_orthogonality_correction_factor.unwrap_or(0.0_f32);
-            let zy_axes_non_orthogonality_correction_factor = zy_axes_non_orthogonality_correction_factor.unwrap_or(0.0_f32);
-
-            // Axes static biases correction factors.
-            let x_axis_static_bias = x_axis_static_bias.unwrap_or(0.0_f32);
-            let y_axis_static_bias = y_axis_static_bias.unwrap_or(0.0_f32);
-            let z_axis_static_bias = z_axis_static_bias.unwrap_or(0.0_f32);
-
-            /*
-            self.gyr.init(
-                x_axis_scaling_correction_factor, y_axis_scaling_correction_factor, z_axis_scaling_correction_factor,
-                xy_axes_non_orthogonality_correction_factor, xz_axes_non_orthogonality_correction_factor,
-                yx_axes_non_orthogonality_correction_factor, yz_axes_non_orthogonality_correction_factor,
-                zx_axes_non_orthogonality_correction_factor, zy_axes_non_orthogonality_correction_factor,
-                x_axis_static_bias, y_axis_static_bias, z_axis_static_bias
-            )?;
-            */
-
-            /* Initialize the accelerometer. */
-            // Add some code here.
-
-            /* Initialize the magnetometer. */
-            // Add some code here.
+            self.gyr.init(gyroscope_config)?;       // Initialize the gyroscope.
+            self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
+            self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
         } else if mode == Mode::AM {
-            /* Initialize the accelerometer. */
-            // Add some code here.
-
-            /* Initialize the magnetometer. */
-            // Add some code here.
+            self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
+            self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
         } else {
             return Err(OpenAHRSError::InvalidAQUAMode);
         }
@@ -265,7 +223,7 @@ impl AQUA {
             let ay = self.acc.get_y_acceleration()?;
             let az = self.acc.get_z_acceleration()?;
 
-            // Retrieve corrected magnetomter measurements.
+            // Retrieve corrected magnetometer measurements.
             let mx = self.mag.get_x_magnetic_field()?;
             let my = self.mag.get_y_magnetic_field()?;
             let mz = self.mag.get_z_magnetic_field()?;

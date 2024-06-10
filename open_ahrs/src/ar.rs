@@ -57,12 +57,13 @@ impl AR {
         method: u8,                         // Numerical integration method.
         order: u8                           // Order of the numerical integration method.
         ) -> Result<(), OpenAHRSError> {
-            self.gyr.init(gyroscope_config)?;
-            self.orientation.fill(qw, qx, qy, qz)?;
-            self.ts = ts;
-            self.method = method;
-            self.order = order;
-            self.initialized = true;
+            self.gyr.init(gyroscope_config)?;       // Initialize the gyroscope.
+            self.orientation.fill(qw, qx, qy, qz)?; // Set initial attitude.
+            self.ts = ts;                           // Set sampling rate.
+            self.method = method;                   // Set the numerical integration method that will be used to estimate the attitude.
+            self.order = order;                     // Set the order of the method
+
+            self.initialized = true;    // Set initialization status flag to true.
 
             Ok(())  // Return no error.
     }
