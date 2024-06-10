@@ -5,7 +5,7 @@ pub mod gyroscope;
 pub mod accelerometer;
 pub mod magnetometer;
 pub mod ar;
-pub mod aqua;
+//pub mod aqua;
 
 #[cfg(test)]
 #[cfg(feature = "std")]
@@ -14,6 +14,7 @@ mod open_ahrs_tests {
     extern crate quaternion;
 
     use crate::ar::AR;
+    use crate::gyroscope::GyroscopeConfig;
     //use crate::aqua::AQUA;
     //use crate::common::{CLOSED_FORM, generate_random_attitudes};
     //use crate::common::{TAYLOR_SERIES, generate_random_attitudes};
@@ -165,15 +166,36 @@ mod open_ahrs_tests {
         let qy = attitudes.get_element(2, 0).unwrap();
         let qz = attitudes.get_element(3, 0).unwrap();
 
+        let default_gyroscope_config = GyroscopeConfig::default();
+
+        /*
+        let custom_config = GyroscopeConfig {
+            x_axis_scaling_correction_factor: 1.1,
+            y_axis_scaling_correction_factor: 1.2,
+            z_axis_scaling_correction_factor: 1.3,
+            xy_axes_non_orthogonality_correction_factor: 0.01,
+            xz_axes_non_orthogonality_correction_factor: 0.02,
+            yx_axes_non_orthogonality_correction_factor: 0.01,
+            yz_axes_non_orthogonality_correction_factor: 0.02,
+            zx_axes_non_orthogonality_correction_factor: 0.01,
+            zy_axes_non_orthogonality_correction_factor: 0.02,
+            x_axis_static_bias: 0.1,
+            y_axis_static_bias: 0.2,
+            z_axis_static_bias: 0.3,
+        };
+
+        let partial_custom_config = GyroscopeConfig {
+            x_axis_scaling_correction_factor: 1.1,
+            y_axis_scaling_correction_factor: 1.2,
+            ..GyroscopeConfig::default()
+        };
+        */
+
         ar_filter.init(
             // Initial orientation.
             qw, qx, qy, qz,
-            // Gyroscope settings.
-            1.0_f32, 1.0_f32, 1.0_f32,
-            0.0_f32, 0.0_f32,
-            0.0_f32, 0.0_f32,
-            0.0_f32, 0.0_f32,
-            0.0_f32, 0.0_f32, 0.0_f32,
+            // Gyroscope configuration.
+            default_gyroscope_config,
             ts,
             EULER,
             3_u8

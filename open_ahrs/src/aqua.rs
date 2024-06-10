@@ -147,6 +147,7 @@ impl AQUA {
             let y_axis_static_bias = y_axis_static_bias.unwrap_or(0.0_f32);
             let z_axis_static_bias = z_axis_static_bias.unwrap_or(0.0_f32);
 
+            /*
             self.gyr.init(
                 x_axis_scaling_correction_factor, y_axis_scaling_correction_factor, z_axis_scaling_correction_factor,
                 xy_axes_non_orthogonality_correction_factor, xz_axes_non_orthogonality_correction_factor,
@@ -154,6 +155,7 @@ impl AQUA {
                 zx_axes_non_orthogonality_correction_factor, zy_axes_non_orthogonality_correction_factor,
                 x_axis_static_bias, y_axis_static_bias, z_axis_static_bias
             )?;
+            */
 
             /* Initialize the accelerometer. */
             // Add some code here.

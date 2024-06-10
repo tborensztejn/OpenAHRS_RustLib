@@ -14,6 +14,8 @@ pub const RUNGE_KUTTA:      u8 = 5;
 pub enum OpenAHRSError {
     GyrNotInit,
     GyrAlreadyInit,
+    InvalidCorrectionMatrix,
+    InvalidStaticBiases,
     AccNotInit,
     AccAlreadyInit,
     MagNotInit,

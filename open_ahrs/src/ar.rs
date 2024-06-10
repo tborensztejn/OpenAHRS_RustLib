@@ -1,6 +1,3 @@
-// find . -name "*.rs" -print0 | while IFS= read -r -d '' file; do lines=$(wc -l < "$file"); echo "$file: $lines"; done
-// total_lines=$(find . -name "*.rs" -print0 | xargs -0 cat | wc -l); echo "Total des lignes de code: $total_lines"
-
 extern crate quaternion;
 extern crate linalg;
 extern crate utils;
@@ -13,13 +10,13 @@ use linalg::common::EPSILON;
 use linalg::linalg::vector_to_matrix;
 use libm::{cosf, sinf};
 use utils::utils::factorial;
-use crate::gyroscope::Gyroscope;
+use crate::gyroscope::{GyroscopeConfig, Gyroscope};
 use crate::common::{
     CLOSED_FORM,
     TAYLOR_SERIES,
     EULER,
     OpenAHRSError,
-    calculate_omega_matrix
+    calculate_omega_matrix,
 };
 
 #[derive(Debug)]
@@ -54,25 +51,13 @@ impl AR {
     }
 
     pub fn init(self: &mut Self,
-        /* Initial orientation. */
-        qw: f32, qx: f32, qy: f32, qz: f32,
-        /* Gyroscope settings. */
-        x_axis_scaling_correction_factor: f32, y_axis_scaling_correction_factor: f32, z_axis_scaling_correction_factor: f32,
-        xy_axes_non_orthogonality_correction_factor: f32, xz_axes_non_orthogonality_correction_factor: f32,
-        yx_axes_non_orthogonality_correction_factor: f32, yz_axes_non_orthogonality_correction_factor: f32,
-        zx_axes_non_orthogonality_correction_factor: f32, zy_axes_non_orthogonality_correction_factor: f32,
-        x_axis_static_bias: f32, y_axis_static_bias: f32, z_axis_static_bias: f32,
-        ts: f32,
-        method: u8,
-        order: u8
+        qw: f32, qx: f32, qy: f32, qz: f32, // Initial orientation (quaternion coordinates).
+        gyroscope_config: GyroscopeConfig,  // Gyroscope configuration.
+        ts: f32,                            // Sampling period.
+        method: u8,                         // Numerical integration method.
+        order: u8                           // Order of the numerical integration method.
         ) -> Result<(), OpenAHRSError> {
-            self.gyr.init(
-                x_axis_scaling_correction_factor, y_axis_scaling_correction_factor, z_axis_scaling_correction_factor,
-                xy_axes_non_orthogonality_correction_factor, xz_axes_non_orthogonality_correction_factor,
-                yx_axes_non_orthogonality_correction_factor, yz_axes_non_orthogonality_correction_factor,
-                zx_axes_non_orthogonality_correction_factor, zy_axes_non_orthogonality_correction_factor,
-                x_axis_static_bias, y_axis_static_bias, z_axis_static_bias
-            )?;
+            self.gyr.init(gyroscope_config)?;
             self.orientation.fill(qw, qx, qy, qz)?;
             self.ts = ts;
             self.method = method;

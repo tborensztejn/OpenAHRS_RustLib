@@ -5,6 +5,52 @@ use linalg::vector::Vector;
 use linalg::linalg::{vector_to_matrix, get_col};
 use crate::common::OpenAHRSError;
 
+// Gyroscope configuration.
+pub struct GyroscopeConfig {
+    // Scaling correction factors.
+    pub x_axis_scaling_correction_factor: f32,
+    pub y_axis_scaling_correction_factor: f32,
+    pub z_axis_scaling_correction_factor: f32,
+
+    // Axes misalignment and non-orthogonality correction factors.
+    pub xy_axes_non_orthogonality_correction_factor: f32,
+    pub xz_axes_non_orthogonality_correction_factor: f32,
+    pub yx_axes_non_orthogonality_correction_factor: f32,
+    pub yz_axes_non_orthogonality_correction_factor: f32,
+    pub zx_axes_non_orthogonality_correction_factor: f32,
+    pub zy_axes_non_orthogonality_correction_factor: f32,
+
+    // Static biases.
+    pub x_axis_static_bias: f32,
+    pub y_axis_static_bias: f32,
+    pub z_axis_static_bias: f32
+}
+
+// Default gyroscope configuration.
+impl Default for GyroscopeConfig {
+    fn default() -> Self {
+        Self {
+            // Default scaling correction factors.
+            x_axis_scaling_correction_factor: 1.0,
+            y_axis_scaling_correction_factor: 1.0,
+            z_axis_scaling_correction_factor: 1.0,
+
+            // Default axes misalignment and non-orthogonality correction factors.
+            xy_axes_non_orthogonality_correction_factor: 0.0,
+            xz_axes_non_orthogonality_correction_factor: 0.0,
+            yx_axes_non_orthogonality_correction_factor: 0.0,
+            yz_axes_non_orthogonality_correction_factor: 0.0,
+            zx_axes_non_orthogonality_correction_factor: 0.0,
+            zy_axes_non_orthogonality_correction_factor: 0.0,
+
+            // Default static biases.
+            x_axis_static_bias: 0.0,
+            y_axis_static_bias: 0.0,
+            z_axis_static_bias: 0.0,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Gyroscope {
     /* Axis misalignment and non-orthogonality correction matrix. */
@@ -17,22 +63,25 @@ pub struct Gyroscope {
         The various axes of the three-dimensional gyrometer may not be completely orthogonal. This introduces errors where rotation around one axis influences
         measurements on the other axes. The off-diagonal elements of the correction matrix help to correct these potential deviations.
     */
-    axes_misalignment_correction: Matrix,
+    axes_misalignment_correction: Matrix,   // Matrix used to correct axes misalignment and scale errors.
     static_biases: Vector<f32>,             // Vector which contains static bias of each axis of the three-dimensional gyrometer that should be remove from raw measurements.
     raw_measurements: Vector<f32>,          // Vector which contains raw measurements of the three-dimensional gyroscope.
     corrected_measurements: Vector<f32>,    // Vector which contains corrected measurements of the three-dimensional gyroscope.
-    initialized: bool,  // Sensor initialisation flag.
+
+    initialized: bool,                      // Sensor initialisation flag.
 }
 
 impl Gyroscope {
     // This function is used to create a new gyroscope.
     pub fn new() -> Result<Self, OpenAHRSError> {
+        // Create
         let mut gyr = Self {
-            axes_misalignment_correction: Matrix::new(),
-            static_biases: Vector::new(),
-            raw_measurements: Vector::new(),
-            corrected_measurements: Vector::new(),
-            initialized: false,
+            axes_misalignment_correction: Matrix::new(),    // Create the matrix that will be used to correct the scale error of each of the gyroscope axes, misalignment and non-orthogonality problems.
+            static_biases: Vector::new(),                   // Create the vector containing the static bias of each of the gyrometer axes.
+            raw_measurements: Vector::new(),                // Create the vector containing the angular velocity raw measurement of each of the gyrometer axes.
+            corrected_measurements: Vector::new(),          // Create the vector containing the angular velocity corrected measurement of each of the gyrometer axes.
+
+            initialized: false, // Set initialisation flag to false (by default, the gyro is not initialised).
         };
 
         // Default correction matrix (identity matrix).
@@ -51,58 +100,41 @@ impl Gyroscope {
         gyr.corrected_measurements.init(3)?;
         gyr.corrected_measurements.fill(0.0)?;
 
-        Ok(gyr)
+        Ok(gyr) // Return the new structure with no error.
     }
 
     // This function is used to initialize a gyroscope.
-    pub fn init(
-        self: &mut Self,
-        x_axis_scaling_correction_factor: f32,              //
-        y_axis_scaling_correction_factor: f32,              //
-        z_axis_scaling_correction_factor: f32,              //
-        xy_axes_non_orthogonality_correction_factor: f32,   //
-        xz_axes_non_orthogonality_correction_factor: f32,   //
-        yx_axes_non_orthogonality_correction_factor: f32,   //
-        yz_axes_non_orthogonality_correction_factor: f32,   //
-        zx_axes_non_orthogonality_correction_factor: f32,   //
-        zy_axes_non_orthogonality_correction_factor: f32,   //
-        x_axis_static_bias: f32,                            // Static bias on X axis measurements.
-        y_axis_static_bias: f32,                            // Static bias on Y axis measurements.
-        z_axis_static_bias: f32                             // Static bias on Z axis measurements.
-        ) -> Result<(), OpenAHRSError> {
-            // Check if the matrix has already been initialized.
-            if self.initialized {
-                // The gyroscope has already been configured.
-                Err(OpenAHRSError::GyrAlreadyInit)
-            } else {
-                // Set the scaling correction factors.
-                self.axes_misalignment_correction.set_element(0, 0, x_axis_scaling_correction_factor)?;
-                self.axes_misalignment_correction.set_element(1, 1, y_axis_scaling_correction_factor)?;
-                self.axes_misalignment_correction.set_element(2, 2, z_axis_scaling_correction_factor)?;
+    pub fn init(self: &mut Self, config: GyroscopeConfig) -> Result<(), OpenAHRSError> {
+        // Check if the matrix has already been initialized.
+        if self.initialized {
+            // The gyroscope has already been configured.
+            Err(OpenAHRSError::GyrAlreadyInit)  // Return an error.
+        } else {    // Apply the configuration to the gyroscope.
+            self.axes_misalignment_correction.set_element(0, 0, config.x_axis_scaling_correction_factor)?;
+            self.axes_misalignment_correction.set_element(1, 1, config.y_axis_scaling_correction_factor)?;
+            self.axes_misalignment_correction.set_element(2, 2, config.z_axis_scaling_correction_factor)?;
 
-                // Set the cross-axes non-orthogonality correction factors.
-                self.axes_misalignment_correction.set_element(1, 0, xy_axes_non_orthogonality_correction_factor)?;
-                self.axes_misalignment_correction.set_element(2, 0, xz_axes_non_orthogonality_correction_factor)?;
-                self.axes_misalignment_correction.set_element(0, 1, yx_axes_non_orthogonality_correction_factor)?;
-                self.axes_misalignment_correction.set_element(2, 1, yz_axes_non_orthogonality_correction_factor)?;
-                self.axes_misalignment_correction.set_element(0, 2, zx_axes_non_orthogonality_correction_factor)?;
-                self.axes_misalignment_correction.set_element(1, 2, zy_axes_non_orthogonality_correction_factor)?;
+            self.axes_misalignment_correction.set_element(1, 0, config.xy_axes_non_orthogonality_correction_factor)?;
+            self.axes_misalignment_correction.set_element(2, 0, config.xz_axes_non_orthogonality_correction_factor)?;
+            self.axes_misalignment_correction.set_element(0, 1, config.yx_axes_non_orthogonality_correction_factor)?;
+            self.axes_misalignment_correction.set_element(2, 1, config.yz_axes_non_orthogonality_correction_factor)?;
+            self.axes_misalignment_correction.set_element(0, 2, config.zx_axes_non_orthogonality_correction_factor)?;
+            self.axes_misalignment_correction.set_element(1, 2, config.zy_axes_non_orthogonality_correction_factor)?;
 
-                // Set the axes static biases.
-                self.static_biases.set_element(0, x_axis_static_bias)?;
-                self.static_biases.set_element(1, y_axis_static_bias)?;
-                self.static_biases.set_element(2, z_axis_static_bias)?;
+            self.static_biases.set_element(0, config.x_axis_static_bias)?;
+            self.static_biases.set_element(1, config.y_axis_static_bias)?;
+            self.static_biases.set_element(2, config.z_axis_static_bias)?;
 
-                self.initialized = true;    // Set the initialization flag to true.
+            self.initialized = true;    // Set the initialization flag to true.
 
-                Ok(())  // Return no error.
-            }
+            Ok(())  // Return no error.
+        }
     }
 
     // This function is used to correct the raw measurements.
     fn correct(self: &mut Self) -> Result<(), OpenAHRSError> {
         self.corrected_measurements.sub(&self.raw_measurements, &self.static_biases)?;                          // Remove static biases from raw measurements.
-        let mut corrected_measurements = vector_to_matrix(&self.corrected_measurements)?;               // Convert this vector into a matrix to perform matrix operations.
+        let mut corrected_measurements = vector_to_matrix(&self.corrected_measurements)?;                       // Convert this vector into a matrix to perform matrix operations.
         corrected_measurements.mul(&self.axes_misalignment_correction, &copy_from(&corrected_measurements)?)?;  // Correct axes non-orthonormality.
         get_col(&corrected_measurements, &mut self.corrected_measurements, 0)?;                                 // Perform matrix-to-vector conversion to store the corrected measurements.
 
@@ -114,7 +146,7 @@ impl Gyroscope {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
-            Err(OpenAHRSError::GyrNotInit)
+            Err(OpenAHRSError::GyrNotInit)  // Retrurn an error.
         } else {
             // Store the gyroscope raw measurements.
             self.raw_measurements.set_element(0, gx)?;
@@ -123,7 +155,7 @@ impl Gyroscope {
 
             self.correct()?;    // Correct raw measurements.
 
-            Ok(())
+            Ok(())  // Return no error.
         }
     }
 
@@ -132,9 +164,11 @@ impl Gyroscope {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
-            Err(OpenAHRSError::GyrNotInit)
+            Err(OpenAHRSError::GyrNotInit)  // Return an error.
         } else {
-            Ok(self.corrected_measurements.get_element(0)?) // Return p value.
+            let p = self.corrected_measurements.get_element(0)?;    // Retrieve the value.
+
+            Ok(p)   // Return p value with no error.
         }
     }
 
@@ -143,9 +177,10 @@ impl Gyroscope {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
-            Err(OpenAHRSError::GyrNotInit)
+            Err(OpenAHRSError::GyrNotInit)  // Return an error.
         } else {
-            Ok(self.corrected_measurements.get_element(1)?) // Return q value.
+            let q = self.corrected_measurements.get_element(1)?;    // Retrieve the value.
+            Ok(q)   // Return q value with no error.
         }
     }
 
@@ -154,9 +189,10 @@ impl Gyroscope {
         // Check that the gyroscope is configured.
         if !self.initialized {
             // The gyroscope is not initialized.
-            Err(OpenAHRSError::GyrNotInit)
+            Err(OpenAHRSError::GyrNotInit)  // Return an error.
         } else {
-            Ok(self.corrected_measurements.get_element(2)?) // Return r value.
+            let r = self.corrected_measurements.get_element(2)?;    // Retrieve the value.
+            Ok(r)   // Return r value with no error.
         }
     }
 }
