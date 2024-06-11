@@ -3,7 +3,7 @@ extern crate linalg;
 extern crate utils;
 extern crate libm;
 
-use crate::gyroscope::{GyroscopeConfig, Gyroscope};
+use crate::gyrometer::{GyrometerConfig, Gyrometer};
 use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, calculate_omega_matrix};
@@ -14,7 +14,7 @@ use linalg::vector::Vector;
 use linalg::common::EPSILON;
 
 /*
-pub const MARG: u8 = 1; // This mode uses the gyroscope, the accelerometer and the magnetometer.
+pub const MARG: u8 = 1; // This mode uses the gyrometer, the accelerometer and the magnetometer.
 pub const AM:   u8 = 2; // This mode uses only the accelerometer and the magnetometer.
 */
 
@@ -39,7 +39,7 @@ impl Mode {
 
 #[derive(Debug)]
 pub struct AQUA {
-    gyr: Gyroscope,
+    gyr: Gyrometer,
     acc: Accelerometer,
     mag: Magnetometer,
 
@@ -63,8 +63,8 @@ impl AQUA {
     // This function is used to create a new AQUA filter.
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
-            // Filter sensors (gyroscope (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
-            gyr: Gyroscope::new()?,
+            // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
+            gyr: Gyrometer::new()?,
             acc: Accelerometer::new()?,
             mag: Magnetometer::new()?,
 
@@ -94,7 +94,7 @@ impl AQUA {
         //mode: u8,
         mode: Mode,                                                         // Mode of the filter.
         qw: Option<f32>, qx: Option<f32>, qy: Option<f32>, qz: Option<f32>, // Initial attitude (optionnal).
-        gyroscope_config: GyroscopeConfig,                                  // Gyroscope configuration.
+        gyrometer_config: GyrometerConfig,                                  // Gyrometer configuration.
         accelerometer_config: AccelerometerConfig,                          // Accelerometer configuration.
         magnetometer_config: MagnetometerConfig,                            // Magnetometer configuration.
 
@@ -107,7 +107,7 @@ impl AQUA {
 
         match valid_mode {
             Mode::MARG => {
-                // Initialize the gyroscope.
+                // Initialize the gyrometer.
                 // Initialize the accelerometer.
                 // Initialize the magnetometer.
             }
@@ -120,7 +120,7 @@ impl AQUA {
         */
 
         if mode == Mode::MARG {
-            self.gyr.init(gyroscope_config)?;       // Initialize the gyroscope.
+            self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
             self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
             self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
         } else if mode == Mode::AM {
@@ -148,7 +148,7 @@ impl AQUA {
     }
 
     pub fn update(self: &mut Self,
-        gx: Option<f32>, gy: Option<f32>, gz: Option<f32>,  // Gyroscope raw measurements.
+        gx: Option<f32>, gy: Option<f32>, gz: Option<f32>,  // Gyrometer raw measurements.
         ax: f32, ay: f32, az: f32,                          // Accelerometer raw measurements.
         mx: f32, my: f32, mz: f32                           // Magnetometer raw measurements.
     ) -> Result<(), OpenAHRSError> {
@@ -164,7 +164,7 @@ impl AQUA {
 
             // Check the type of mode.
             if self.mode == Mode::MARG {
-                // Check if all gyroscope measurement are present or absent.
+                // Check if all gyrometer measurement are present or absent.
                 let gyro_raw_measurements = match (gx, gy, gz) {
                     (Some(gx), Some(gy), Some(gz)) => Some((gx, gy, gz)),
                     (None, None, None) => None,
@@ -172,7 +172,7 @@ impl AQUA {
                 };
 
                 if let Some((gx, gy, gz)) = gyro_raw_measurements {
-                    self.gyr.update(gx, gy, gz)?;   // Update the gyroscope with raw measurements to correct them.
+                    self.gyr.update(gx, gy, gz)?;   // Update the gyrometer with raw measurements to correct them.
                 } else {    // Attempt to use MARG mode without providing raw gyro readings.
                     //return Err(OpenAHRSError::);  // Return an error.
                 }
@@ -196,10 +196,10 @@ impl AQUA {
 
 
 
-            // Retrieve corrected gyroscope measurements.
-            let p = self.gyr.get_x_angular_rate()?;
-            let q = self.gyr.get_y_angular_rate()?;
-            let r = self.gyr.get_z_angular_rate()?;
+            // Retrieve corrected gyrometer measurements.
+            let mut p = self.gyr.get_x_angular_rate()?;
+            let mut q = self.gyr.get_y_angular_rate()?;
+            let mut r = self.gyr.get_z_angular_rate()?;
 
             let mut w: Vector<f32> = Vector::new(); // Create the angular velocity pseudovector.
             w.init(3)?;                             // Initialize it.
@@ -217,17 +217,28 @@ impl AQUA {
             }
 
 
-            /*
+
             // Retrieve corrected accelerometer measurements.
             let ax = self.acc.get_x_acceleration()?;
             let ay = self.acc.get_y_acceleration()?;
             let az = self.acc.get_z_acceleration()?;
 
+
+
+
+
+
+
+
+
+
+
+
+
             // Retrieve corrected magnetometer measurements.
             let mx = self.mag.get_x_magnetic_field()?;
             let my = self.mag.get_y_magnetic_field()?;
             let mz = self.mag.get_z_magnetic_field()?;
-            */
 
 
             if gyr_ok && acc_ok && mag_ok {

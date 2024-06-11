@@ -73,9 +73,9 @@ pub struct Magnetometer {
     */
 
     scale_and_soft_iron_correction: Matrix, // Matrix which used to correct measurement distorsions (soft-iron effects, scale factors, axes misalignments and non-orthogonality).
-    hard_iron_biases: Vector<f32>,          // Vector which contains static bias (hard-iron effects) of each axis of the three-dimensional gyrometer that should be remove from raw measurements.
-    raw_measurements: Vector<f32>,          // Vector which contains raw measurements of the three-dimensional gyroscope.
-    corrected_measurements: Vector<f32>,    // Vector which contains corrected measurements of the three-dimensional gyroscope.
+    hard_iron_biases: Vector<f32>,          // Vector which contains static bias (hard-iron effects) of each axis of the three-dimensional magnetometer that should be remove from raw measurements.
+    raw_measurements: Vector<f32>,          // Vector which contains raw measurements of the three-dimensional magnetometer.
+    corrected_measurements: Vector<f32>,    // Vector which contains corrected measurements of the three-dimensional magnetometer.
     //conversion_factor: f32,
 
     initialized: bool,                      // Sensor initialisation flag.
@@ -90,7 +90,7 @@ impl Magnetometer {
             raw_measurements: Vector::new(),                // Create the vector containing the magnetic field intensity raw measurement of each of the magnetometer axes.
             corrected_measurements: Vector::new(),          // Create the vector containing the magnetic field intensity corrected measurement of each of the magnetometer axes.
 
-            initialized: false, // Set initialisation flag to false (by default, the gyroscope is not initialised).
+            initialized: false, // Set initialisation flag to false (by default, the magnetometer is not initialised).
         };
 
         // Default correction matrix (identity matrix).

@@ -1,9 +1,10 @@
 extern crate linalg;
 extern crate libm;
 
-use linalg::vector::{Vector, dot_product};
+//use linalg::vector::{Vector, dot_product};
+use linalg::vector::Vector;
 use linalg::common::{EPSILON, LinalgError};
-use libm::{acosf, sinf};
+//use libm::{acosf, sinf};
 
 #[derive(Debug)]
 pub struct Quaternion {
@@ -150,6 +151,7 @@ impl Quaternion {
         Ok(vect)
     }
 
+    /*
     // This function is used to perform the spherical interpolation (SLERP) of two quaternions.
     pub fn slerp(self: &mut Self, quat1: &Self, quat2: &Self, alpha: f32) -> Result<(), LinalgError> {
         // Perform scalar product.
@@ -166,9 +168,19 @@ impl Quaternion {
 
         q1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
         q2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
+
         self.add(&q1, &q2)?;
 
         Ok(())    // Return no error.
+    }
+    */
+
+    // This function is used to perform the spherical interpolation (SLERP) of two quaternions.
+    pub fn slerp(self: &mut Self, quat1: &Self, quat2: &Self, alpha: f32) -> Result<(), LinalgError> {
+        //self.vect.slerp(&quat1.get_vect()?, &quat2.get_vect()?, alpha)?;
+        self.vect.slerp(&quat1.vect, &quat2.vect, alpha)?;
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to obtain the qw value of a quaternion.
@@ -199,6 +211,7 @@ impl Quaternion {
     }
 }
 
+/*
 // This function is used to perform the spherical interpolation (SLERP) of two quaternions.
 pub fn slerp(quat1: &Quaternion, quat2: &Quaternion, alpha: f32) -> Result<Quaternion, LinalgError> {
     // Perform scalar product.
@@ -220,4 +233,13 @@ pub fn slerp(quat1: &Quaternion, quat2: &Quaternion, alpha: f32) -> Result<Quate
     q.add(&q1, &q2)?;
 
     Ok(q)   // Return the interpolated quaternion with no error.
+}
+*/
+
+pub fn slerp(quat1: &Quaternion, quat2: &Quaternion, alpha: f32) -> Result<Quaternion, LinalgError> {
+    let mut quat: Quaternion = Quaternion::new()?;
+    //quat.vect.slerp(&quat1.get_vect()?, &quat2.get_vect()?, alpha)?;
+    quat.vect.slerp(&quat1.vect, &quat2.vect, alpha)?;
+
+    Ok(quat)    // Return the interpolated quaternion with no error.
 }

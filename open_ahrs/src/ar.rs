@@ -10,7 +10,7 @@ use linalg::common::EPSILON;
 use linalg::linalg::vector_to_matrix;
 use libm::{cosf, sinf};
 use utils::utils::factorial;
-use crate::gyroscope::{GyroscopeConfig, Gyroscope};
+use crate::gyrometer::{GyrometerConfig, Gyrometer};
 use crate::common::{
     CLOSED_FORM,
     TAYLOR_SERIES,
@@ -21,7 +21,7 @@ use crate::common::{
 
 #[derive(Debug)]
 pub struct AR {
-    gyr: Gyroscope,
+    gyr: Gyrometer,
 
     orientation: Quaternion,
 
@@ -35,7 +35,7 @@ pub struct AR {
 impl AR {
     pub fn new() -> Result<Self, OpenAHRSError> {
         let ar = Self {
-            gyr: Gyroscope::new()?,             // Filter sensor (only a gyroscope, no drift correction).
+            gyr: Gyrometer::new()?,             // Filter sensor (only a gyrometer, no drift correction).
 
             orientation: Quaternion::new()?,    // Estimated attitude by the filter.
 
@@ -52,12 +52,12 @@ impl AR {
 
     pub fn init(self: &mut Self,
         qw: f32, qx: f32, qy: f32, qz: f32, // Initial orientation (quaternion coordinates).
-        gyroscope_config: GyroscopeConfig,  // Gyroscope configuration.
+        gyrometer_config: GyrometerConfig,  // Gyrometer configuration.
         ts: f32,                            // Sampling period.
         method: u8,                         // Numerical integration method.
         order: u8                           // Order of the numerical integration method.
         ) -> Result<(), OpenAHRSError> {
-            self.gyr.init(gyroscope_config)?;       // Initialize the gyroscope.
+            self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
             self.orientation.fill(qw, qx, qy, qz)?; // Set initial attitude.
             self.ts = ts;                           // Set sampling rate.
             self.method = method;                   // Set the numerical integration method that will be used to estimate the attitude.
@@ -73,7 +73,7 @@ impl AR {
         temp.init(4, 4)?;               // Initialize it.
         temp.fill_identity()?;          // Configuring it into an identity matrix.
 
-        self.gyr.update(gx, gy, gz)?;   // Update the gyroscope with raw measurements to correct them.
+        self.gyr.update(gx, gy, gz)?;   // Update the gyrometer with raw measurements to correct them.
 
         // Retrieve corrected measurements.
         let p = self.gyr.get_x_angular_rate()?;

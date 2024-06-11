@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod common;
-pub mod gyroscope;
+pub mod gyrometer;
 pub mod accelerometer;
 pub mod magnetometer;
 pub mod ar;
@@ -14,7 +14,7 @@ mod open_ahrs_tests {
     extern crate quaternion;
 
     use crate::ar::AR;
-    use crate::gyroscope::GyroscopeConfig;
+    use crate::gyrometer::GyrometerConfig;
     //use crate::aqua::AQUA;
     //use crate::common::{CLOSED_FORM, generate_random_attitudes};
     //use crate::common::{TAYLOR_SERIES, generate_random_attitudes};
@@ -166,10 +166,10 @@ mod open_ahrs_tests {
         let qy = attitudes.get_element(2, 0).unwrap();
         let qz = attitudes.get_element(3, 0).unwrap();
 
-        let default_gyroscope_config = GyroscopeConfig::default();
+        let default_gyrometer_config = GyrometerConfig::default();
 
         /*
-        let custom_config = GyroscopeConfig {
+        let custom_config = GyrometerConfig {
             x_axis_scale_correction: 1.1,
             y_axis_scale_correction: 1.2,
             z_axis_scale_correction: 1.3,
@@ -184,18 +184,18 @@ mod open_ahrs_tests {
             z_axis_static_bias: 0.3,
         };
 
-        let partial_custom_config = GyroscopeConfig {
+        let partial_custom_config = GyrometerConfig {
             x_axis_scale_correction: 1.1,
             y_axis_scale_correction: 1.2,
-            ..GyroscopeConfig::default()
+            ..GyrometerConfig::default()
         };
         */
 
         ar_filter.init(
             // Initial orientation.
             qw, qx, qy, qz,
-            // Gyroscope configuration.
-            default_gyroscope_config,
+            // Gyrometer configuration.
+            default_gyrometer_config,
             ts,
             EULER,
             3_u8

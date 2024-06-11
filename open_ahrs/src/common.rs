@@ -132,29 +132,29 @@ pub(crate) fn calculate_omega_matrix(p: f32, q: f32, r: f32) -> Result<Matrix, O
     let mut omega = Matrix::new();
     omega.init(4, 4)?;
 
-    // Set elements of the first column.
-    omega.set_element(0, 0, 0.0_f32)?;
+    // Set elements of the first column of the Ω(ω) matrix.
+    omega.set_element(0, 0, 0.0)?;
     omega.set_element(1, 0, p)?;
     omega.set_element(2, 0, q)?;
     omega.set_element(3, 0, r)?;
 
-    // Set elements of the second column.
+    // Set elements of the second column of the Ω(ω) matrix.
     omega.set_element(0, 1, -p)?;
-    omega.set_element(1, 1, 0.0_f32)?;
+    omega.set_element(1, 1, 0.0)?;
     omega.set_element(2, 1, -r)?;
     omega.set_element(3, 1, q)?;
 
-    // Set elements of the third column.
+    // Set elements of the third column of the Ω(ω) matrix.
     omega.set_element(0, 2, -q)?;
     omega.set_element(1, 2, r)?;
-    omega.set_element(2, 2, 0.0_f32)?;
+    omega.set_element(2, 2, 0.0)?;
     omega.set_element(3, 2, -p)?;
 
-    // Set elements of the fourth column.
+    // Set elements of the fourth column of the Ω(ω) matrix.
     omega.set_element(0, 3, -r)?;
     omega.set_element(1, 3, -q)?;
     omega.set_element(2, 3, p)?;
-    omega.set_element(3, 3, 0.0_f32)?;
+    omega.set_element(3, 3, 0.0)?;
 
     Ok(omega)
 }

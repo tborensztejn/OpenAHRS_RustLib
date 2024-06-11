@@ -3,7 +3,7 @@ extern crate utils;
 use utils::utils::is_valid_value;
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
-use libm::sqrtf;
+use libm::{acosf, sinf, sqrtf};
 
 #[derive(Debug)]
 pub struct Vector<T> {
@@ -308,10 +308,10 @@ impl Vector<f32> {
     }
 
     // This function is used to perform dot product between two vectors of size (m x 1).
-    pub fn dot_product(self: &Self, other: &Self) -> Result<f32, LinalgError> {
+    pub fn dot_product(self: &mut Self, other: &Self) -> Result<f32, LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
-            // The matrices do not have the same dimensions.
+            // The vectors do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
@@ -324,13 +324,43 @@ impl Vector<f32> {
 
         Ok(scalar)  // Return the result with no error.
     }
+
+    // This function is used to perform the spherical interpolation (SLERP) of two vectors.
+    pub fn slerp(self: &mut Self, vect1: &Self, vect2: &Self, alpha: f32) -> Result<(), LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(vect1)? || !self.is_same_size_as(vect2)?{
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        // Perform scalar product.
+        let scalar = dot_product(&vect1, &vect2)?;
+        let theta = acosf(scalar);  // Angle between the axis of the first vector and the second one.
+
+        // Create a copy of the first vector.
+        let mut v1 = Self::new();
+        v1.init(self.get_rows()?)?;
+        v1.copy_from(&vect1)?;
+
+        // Create a copy of the second vector.
+        let mut v2 = Self::new();
+        v2.init(self.get_rows()?)?;
+        v2.copy_from(&vect2)?;
+
+        v1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
+        v2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
+
+        self.add(&v1, &v2)?;
+
+        Ok(())    // Return no error.
+    }
 }
 
 // This function is used to perform dot product between two vectors of size (m x 1).
 pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, LinalgError> {
     // Check that the vectors have the same dimensions.
     if !vect1.is_same_size_as(vect2)? {
-        // The matrices do not have the same dimensions.
+        // The vectors do not have the same dimensions.
         return Err(LinalgError::NotSameSize)    // Return an error.
     }
 
@@ -342,4 +372,30 @@ pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, Lina
     }
 
     Ok(scalar)  // Return the result with no error.
+}
+
+// This function is used to perform the spherical interpolation (SLERP) of two vectors.
+pub fn slerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vector<f32>, LinalgError> {
+    // Perform scalar product.
+    let scalar = dot_product(&vect1, &vect2)?;
+    let theta = acosf(scalar);  // Angle between the axis of the first vector and the second one.
+
+    // Create a copy of the first vector.
+    let mut v1: Vector<f32> = Vector::new();
+    v1.init(vect1.get_rows()?)?;
+    v1.copy_from(&vect1)?;
+
+    // Create a copy of the second vector.
+    let mut v2: Vector<f32> = Vector::new();
+    v2.init(vect1.get_rows()?)?;
+    v2.copy_from(&vect2)?;
+
+    v1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
+    v2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
+
+    let mut v: Vector<f32> = Vector::new();
+    v.init(vect1.get_rows()?)?;
+    v.add(&v1, &v2)?;
+
+    Ok(v)   // Return the interpolated vector with no error.
 }
