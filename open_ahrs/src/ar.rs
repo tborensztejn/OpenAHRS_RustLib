@@ -50,6 +50,7 @@ impl AR {
         Ok(ar)  // Return the structure with no error.
     }
 
+    // This function is used to initialize the AR filter.
     pub fn init(self: &mut Self,
         qw: f32, qx: f32, qy: f32, qz: f32, // Initial orientation (quaternion coordinates).
         gyrometer_config: GyrometerConfig,  // Gyrometer configuration.
@@ -68,6 +69,7 @@ impl AR {
             Ok(())  // Return no error.
     }
 
+    // This function is used to update the AR filter.
     pub fn update(self: &mut Self, gx: f32, gy: f32, gz: f32) -> Result<(), OpenAHRSError> {
         let mut temp = Matrix::new();   // Create a temporary matrix
         temp.init(4, 4)?;               // Initialize it.

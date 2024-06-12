@@ -32,6 +32,14 @@ pub mod utils {
         }
     }
 
+    pub fn in_range<T: PartialOrd + Sized>(value: T, start: T, end: T) -> bool {
+        if value >= start && value <= end {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn min<T: Ord + Sized>(x: T, y: T) -> T {
         if x < y {
             x

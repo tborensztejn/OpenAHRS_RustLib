@@ -1,6 +1,6 @@
 extern crate utils;
 
-use utils::utils::is_valid_value;
+use utils::utils::{is_valid_value, in_range};
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
 use libm::{acosf, sinf, sqrtf};
@@ -327,8 +327,14 @@ impl Vector<f32> {
 
     // This function is used to perform the spherical interpolation (SLERP) of two vectors.
     pub fn slerp(self: &mut Self, vect1: &Self, vect2: &Self, alpha: f32) -> Result<(), LinalgError> {
+        // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
+        if !in_range(alpha, 0.0_f32, 1.0_f32) {
+            // Alpha is not valid.
+            return Err(LinalgError::InvalidAlpha)   // Return an error.
+        }
+
         // Check that the vectors have the same dimensions.
-        if !self.is_same_size_as(vect1)? || !self.is_same_size_as(vect2)?{
+        if !self.is_same_size_as(vect1)? || !self.is_same_size_as(vect2)? {
             // The vectors do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
@@ -349,6 +355,38 @@ impl Vector<f32> {
 
         v1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
         v2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
+
+        self.add(&v1, &v2)?;
+
+        Ok(())    // Return no error.
+    }
+
+    // This function is used to perform the linear interpolation (LERP) of two vectors.
+    pub fn lerp(self: &mut Self, vect1: &Self, vect2: &Self, alpha: f32) -> Result<(), LinalgError> {
+        // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
+        if !in_range(alpha, 0.0_f32, 1.0_f32) {
+            // Alpha is not valid.
+            return Err(LinalgError::InvalidAlpha)   // Return an error.
+        }
+        
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(vect1)? || !self.is_same_size_as(vect2)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        // Create a copy of the first vector.
+        let mut v1 = Self::new();
+        v1.init(self.get_rows()?)?;
+        v1.copy_from(&vect1)?;
+
+        // Create a copy of the second vector.
+        let mut v2 = Self::new();
+        v2.init(self.get_rows()?)?;
+        v2.copy_from(&vect2)?;
+
+        v1.mul_by_scalar(1.0_f32 - alpha)?;
+        v2.mul_by_scalar(alpha)?;
 
         self.add(&v1, &v2)?;
 
@@ -376,6 +414,12 @@ pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, Lina
 
 // This function is used to perform the spherical interpolation (SLERP) of two vectors.
 pub fn slerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vector<f32>, LinalgError> {
+    // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
+    if !in_range(alpha, 0.0_f32, 1.0_f32) {
+        // Alpha is not valid.
+        return Err(LinalgError::InvalidAlpha)   // Return an error.
+    }
+
     // Perform scalar product.
     let scalar = dot_product(&vect1, &vect2)?;
     let theta = acosf(scalar);  // Angle between the axis of the first vector and the second one.
@@ -392,6 +436,40 @@ pub fn slerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vec
 
     v1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
     v2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
+
+    let mut v: Vector<f32> = Vector::new();
+    v.init(vect1.get_rows()?)?;
+    v.add(&v1, &v2)?;
+
+    Ok(v)   // Return the interpolated vector with no error.
+}
+
+// This function is used to perform the linear interpolation (LERP) of two vectors.
+pub fn lerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vector<f32>, LinalgError> {
+    // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
+    if !in_range(alpha, 0.0_f32, 1.0_f32) {
+        // Alpha is not valid.
+        return Err(LinalgError::InvalidAlpha)   // Return an error.
+    }
+
+    // Check that the vectors have the same dimensions.
+    if !vect1.is_same_size_as(vect2)? {
+        // The vectors do not have the same dimensions.
+        return Err(LinalgError::NotSameSize)    // Return an error.
+    }
+
+    // Create a copy of the first vector.
+    let mut v1: Vector<f32> = Vector::new();
+    v1.init(vect1.get_rows()?)?;
+    v1.copy_from(&vect1)?;
+
+    // Create a copy of the second vector.
+    let mut v2: Vector<f32> = Vector::new();
+    v2.init(vect1.get_rows()?)?;
+    v2.copy_from(&vect2)?;
+
+    v1.mul_by_scalar(1.0_f32 - alpha)?;
+    v2.mul_by_scalar(alpha)?;
 
     let mut v: Vector<f32> = Vector::new();
     v.init(vect1.get_rows()?)?;

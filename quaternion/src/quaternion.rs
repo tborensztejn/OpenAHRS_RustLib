@@ -183,6 +183,14 @@ impl Quaternion {
         Ok(())  // Return no error.
     }
 
+    // This function is used to perform the linear interpolation (LERP) of two quaternions.
+    pub fn lerp(self: &mut Self, quat1: &Self, quat2: &Self, alpha: f32) -> Result<(), LinalgError> {
+        //self.vect.lerp(&quat1.get_vect()?, &quat2.get_vect()?, alpha)?;
+        self.vect.lerp(&quat1.vect, &quat2.vect, alpha)?;
+
+        Ok(())  // Return no error.
+    }
+
     // This function is used to obtain the qw value of a quaternion.
     pub fn get_qw(self: &Self) -> Result<f32, LinalgError> {
         Ok(self.vect.get_element(0)?)
@@ -236,10 +244,28 @@ pub fn slerp(quat1: &Quaternion, quat2: &Quaternion, alpha: f32) -> Result<Quate
 }
 */
 
+// This function is used to perform the spherical interpolation (SLERP) of two quaternions.
 pub fn slerp(quat1: &Quaternion, quat2: &Quaternion, alpha: f32) -> Result<Quaternion, LinalgError> {
     let mut quat: Quaternion = Quaternion::new()?;
     //quat.vect.slerp(&quat1.get_vect()?, &quat2.get_vect()?, alpha)?;
     quat.vect.slerp(&quat1.vect, &quat2.vect, alpha)?;
 
     Ok(quat)    // Return the interpolated quaternion with no error.
+}
+
+// This function is used to perform the linear interpolation (LERP) of two quaternions.
+pub fn lerp(quat1: &Quaternion, quat2: &Quaternion, alpha: f32) -> Result<Quaternion, LinalgError> {
+    let mut quat: Quaternion = Quaternion::new()?;
+    //quat.vect.lerp(&quat1.get_vect()?, &quat2.get_vect()?, alpha)?;
+    quat.vect.lerp(&quat1.vect, &quat2.vect, alpha)?;
+
+    Ok(quat)    // Return the interpolated quaternion with no error.
+}
+
+// This function is used to duplicate/copy a quaternion.
+pub fn copy_from(quat: &Quaternion) -> Result<Quaternion, LinalgError> {
+    let mut copied_quat = Quaternion::new()?;
+    copied_quat.vect.copy_from(&quat.vect)?;
+
+    Ok(copied_quat) // Return the copy of the original quaternion with no error.
 }

@@ -7,8 +7,10 @@ use crate::gyrometer::{GyrometerConfig, Gyrometer};
 use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, calculate_omega_matrix};
+use utils::utils::in_range;
 
-use quaternion::quaternion::Quaternion;
+use quaternion::quaternion::{Quaternion, copy_from};
+//use quaternion::quaternion::copy_from as copy_from_quaternion;
 use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
@@ -90,6 +92,7 @@ impl AQUA {
         Ok(aqua)    // Return the structure with no error.
     }
 
+    // This function is used to initialize the AQUA filter.
     pub fn init(self: &mut Self,
         //mode: u8,
         mode: Mode,                                                         // Mode of the filter.
@@ -147,6 +150,32 @@ impl AQUA {
         Ok(())
     }
 
+    // This function is used to perform adaptive quaternion interpolation based on LERP and SLERP.
+    fn interpolate(quat: &Quaternion, alpha: f32, treshold: f32) -> Result<Quaternion, OpenAHRSError> {
+        // Check that the interpolation parameter is valid (it must be between 0 and 1 inclusive).
+        if !in_range(treshold, 0.0_f32, 1.0_f32) {
+            // The interpolation parameter is not valid.
+            return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold) // Return an error.
+        }
+
+        let mut idendity_quat = Quaternion::new()?;     // Create the identity quaternion.
+        idendity_quat.fill_identity()?;                 // Fill it.
+
+        let mut interpolated_quat = Quaternion::new()?; // Create the interpolated quaternion.
+
+        if quat.get_qw()? > treshold {  // Use the LERP algorithm because it's more computationally efficient.
+            interpolated_quat.lerp(&idendity_quat, &quat, alpha)?;
+            interpolated_quat.normalize()?; // Normalize the interpolated quaternion.
+        } else {    // Use the SLERP algorithm (otherwise the approximation error would be too great).
+            interpolated_quat.slerp(&idendity_quat, &quat, alpha)?;
+        }
+
+        //interpolated_quat.normalize()?; // Normalize the interpolated quaternion.
+
+        Ok(interpolated_quat)
+    }
+
+    // This function is used to update the AQUA filter.
     pub fn update(self: &mut Self,
         gx: Option<f32>, gy: Option<f32>, gz: Option<f32>,  // Gyrometer raw measurements.
         ax: f32, ay: f32, az: f32,                          // Accelerometer raw measurements.
@@ -194,8 +223,6 @@ impl AQUA {
 
 
 
-
-
             // Retrieve corrected gyrometer measurements.
             let mut p = self.gyr.get_x_angular_rate()?;
             let mut q = self.gyr.get_y_angular_rate()?;
@@ -204,41 +231,86 @@ impl AQUA {
             let mut w: Vector<f32> = Vector::new(); // Create the angular velocity pseudovector.
             w.init(3)?;                             // Initialize it.
 
-            // Fill it with gyro-corrected measurements.
+            // Fill it with gyrometer corrected measurements.
             w.set_element(0, p)?;
             w.set_element(1, q)?;
             w.set_element(2, r)?;
 
-            // Normalize it.
-            w.normalize()?;
-
+            // Check that the measurements are valid.
             if w.calculate_norm()? > EPSILON {
                 gyr_ok = true;
             }
 
-
-
             // Retrieve corrected accelerometer measurements.
-            let ax = self.acc.get_x_acceleration()?;
-            let ay = self.acc.get_y_acceleration()?;
-            let az = self.acc.get_z_acceleration()?;
+            let mut ax = self.acc.get_x_acceleration()?;
+            let mut ay = self.acc.get_y_acceleration()?;
+            let mut az = self.acc.get_z_acceleration()?;
 
+            let mut a: Vector<f32> = Vector::new(); // Create the acceleration vector.
+            a.init(3)?;                             // Initialize it.
 
+            // Fill it with accelerometer corrected measurements.
+            a.set_element(0, p)?;
+            a.set_element(1, q)?;
+            a.set_element(2, r)?;
 
+            // Check that the measurements are valid.
+            if a.calculate_norm()? > EPSILON {
+                acc_ok = true;
+            }
 
+            a.normalize()?; // Normalize it.
 
-
-
-
-
-
-
-
+            ax = a.get_element(0)?;
+            ay = a.get_element(1)?;
+            az = a.get_element(2)?;
 
             // Retrieve corrected magnetometer measurements.
-            let mx = self.mag.get_x_magnetic_field()?;
-            let my = self.mag.get_y_magnetic_field()?;
-            let mz = self.mag.get_z_magnetic_field()?;
+            let mut mx = self.mag.get_x_magnetic_field()?;
+            let mut my = self.mag.get_y_magnetic_field()?;
+            let mut mz = self.mag.get_z_magnetic_field()?;
+
+            let mut m: Vector<f32> = Vector::new(); // Create the magnetic field intensity vector.
+            m.init(3)?;                             // Initialize it.
+
+            // Fill it with magnetometer corrected measurements.
+            m.set_element(0, p)?;
+            m.set_element(1, q)?;
+            m.set_element(2, r)?;
+
+            // Check that the measurements are valid.
+            if m.calculate_norm()? > EPSILON {
+                mag_ok = true;
+            }
+
+            m.normalize()?; // Normalize it.
+
+            mx = m.get_element(0)?;
+            my = m.get_element(1)?;
+            mz = m.get_element(2)?;
+
+
+            if gyr_ok && acc_ok && mag_ok {
+                // Prediction step.
+
+            } else if acc_ok && mag_ok {
+                // Add some code here.
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
             if gyr_ok && acc_ok && mag_ok {

@@ -24,6 +24,7 @@ pub enum OpenAHRSError {
     AQUAFilterNotInit,
     InvalidQuaternion,
     InvalidAQUAMode,
+    InvalidAQUAInterpolationTreshold,
     InvalidGyroRawMeasurements,
     LinalgError(LinalgError),
 }

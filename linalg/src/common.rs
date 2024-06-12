@@ -27,6 +27,7 @@ pub enum LinalgError {
     NotPositiveDefinite,
     NotSymetric,
     NotInversible,
+    InvalidAlpha,
     UtilsError(UtilsError),
 }
 
