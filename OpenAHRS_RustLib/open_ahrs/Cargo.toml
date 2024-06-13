@@ -1,0 +1,18 @@
+[package]
+name = "open_ahrs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+utils = {path = "../utils" }
+linalg = {path = "../linalg", default-features = false}
+quaternion = {path = "../quaternion", default-features = false}
+libm = "0.2.8"
+rand = "0.8.5"
+
+[features]
+default = ["no_std"]
+std = ["linalg/std", "quaternion/std", "rand/std"]
+no_std = ["linalg/no_std", "quaternion/no_std"]
