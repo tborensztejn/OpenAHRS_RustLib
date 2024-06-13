@@ -15,7 +15,7 @@ pub fn set_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), Lina
         mat.set_element(row, col, vect.get_element(col)?)?;
     }
 
-    Ok(())
+    Ok(())  // Return no error.
 }
 
 // This function in used to replace all elements of specific column of a matrix with those of a vector.
@@ -30,7 +30,7 @@ pub fn set_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), Lina
         mat.set_element(row, col, vect.get_element(row)?)?;
     }
 
-    Ok(())
+    Ok(())  // Return no error.
 }
 
 // This function is used to extract all elements of specific row of a matrix and store them into a vector.
@@ -45,7 +45,7 @@ pub fn get_row(mat: &Matrix, vect: &mut Vector<f32>, row: u8) -> Result<(), Lina
         vect.set_element(col, mat.get_element(row, col)?)?;
     }
 
-    Ok(())
+    Ok(())  // Return no error.
 }
 
 // This function is used to extract all elements of specific column of a matrix and store them into a vector.
@@ -60,7 +60,7 @@ pub fn get_col(mat: &Matrix, vect: &mut Vector<f32>, col: u8) -> Result<(), Lina
         vect.set_element(row, mat.get_element(row, col)?)?;
     }
 
-    Ok(())
+    Ok(())  // Return no error.
 }
 
 // This function is used to extract all elements of specific row of a matrix and store them into a new vector.
@@ -72,7 +72,7 @@ pub fn row_to_vector(mat: &Matrix, row: u8) -> Result<Vector<f32>, LinalgError> 
         vect.set_element(col, mat.get_element(row, col)?)?;
     }
 
-    Ok(vect)
+    Ok(vect)    // Return the vector with no error.
 }
 
 // This function is used to extract all elements of specific column of a matrix and store them into a new vector.
@@ -84,7 +84,7 @@ pub fn col_to_vector(mat: &Matrix, col: u8) -> Result<Vector<f32>, LinalgError> 
         vect.set_element(row, mat.get_element(row, col)?)?;
     }
 
-    Ok(vect)
+    Ok(vect)    // Return the vector with no error.
 }
 
 // This function adds a row to a matrix of size (m x n) from a vector of size (n x 1). The result is a matrix of size (m+1 x n).
@@ -102,7 +102,7 @@ pub fn add_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), Lina
 
     set_row(mat, &vect, row)?;
 
-    Ok(())
+    Ok(())  // Return no error.
 }
 
 // This function adds a column to a matrix of size (m x n) from a vector of size (m x 1). The result is a matrix of size (m x n+1).
@@ -128,7 +128,7 @@ pub fn add_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), Lina
 
     set_col(mat, &vect, col)?;
 
-    Ok(())
+    Ok(())  // Return no error.
 }
 
 // This function is used to convert a vector into a matrix in order to perform matrix operations.
@@ -146,7 +146,7 @@ pub fn vector_to_matrix(vect: &Vector<f32>) -> Result<Matrix, LinalgError> {
 
     set_col(&mut mat, &vect, 0)?;
 
-    Ok(mat)
+    Ok(mat) // Return the matrix with no error.
 }
 
 /*

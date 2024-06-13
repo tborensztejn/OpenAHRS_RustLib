@@ -33,6 +33,13 @@ impl Quaternion {
         Ok(())  // Return no error.
     }
 
+    // This function is used to fill a quaternion from a vector of size (4 x 1).
+    pub fn fill_from_vector(self: &mut Self, vect: &Vector<f32>) -> Result<(), LinalgError> {
+        self.vect.copy_from(&vect)?;
+
+        Ok(())  // Return no error.
+    }
+
     // This function is used to duplicate/copy a quaternion.
     pub fn copy_from(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
         self.vect.copy_from(&other.vect)?;
@@ -127,7 +134,7 @@ impl Quaternion {
         self.conjugate()?;  // Conjugate the quaternion.
 
         if norm > EPSILON {
-            self.vect.mul_by_scalar(1.0 / (norm * norm))?;
+            self.vect.mul_by_scalar(1.0_f32 / (norm * norm))?;
         } else {
             self.fill(0.0, 0.0, 0.0, 0.0)?;
         }
@@ -142,7 +149,7 @@ impl Quaternion {
         Ok(())  // Return no error.
     }
 
-    // This function is used to extract the vector from the quaternion object (can be used to convert a quaternion to a vector of size (4 x 1).).
+    // This function is used to extract the vector from the quaternion object (can be used to convert a quaternion to a vector of size (4 x 1).
     pub fn get_vect(self: &Self) -> Result<Vector<f32>, LinalgError> {
         let mut vect: Vector<f32> = Vector::new();
         vect.init(4)?;
@@ -191,10 +198,28 @@ impl Quaternion {
         Ok(())  // Return no error.
     }
 
+    /*
+    // This function is used to set the qw value of a quaternion.
+    pub fn set_qw(self: &Self, qw: f32) -> Result<(), LinalgError> {
+        self.vect.set_element(0, qw)?;  // Set the qw value.
+
+        Ok(())  // Return no error.
+    }
+    */
+
     // This function is used to obtain the qw value of a quaternion.
     pub fn get_qw(self: &Self) -> Result<f32, LinalgError> {
         Ok(self.vect.get_element(0)?)
     }
+
+    /*
+    // This function is used to set the qx value of a quaternion.
+    pub fn set_qx(self: &Self, qx: f32) -> Result<(), LinalgError> {
+        self.vect.set_element(0, qx)?;  // Set the qx value.
+
+        Ok(())  // Return no error.
+    }
+    */
 
     // This function is used to obtain the qx value of a quaternion.
     pub fn get_qx(self: &Self) -> Result<f32, LinalgError> {
@@ -268,4 +293,35 @@ pub fn copy_from(quat: &Quaternion) -> Result<Quaternion, LinalgError> {
     copied_quat.vect.copy_from(&quat.vect)?;
 
     Ok(copied_quat) // Return the copy of the original quaternion with no error.
+}
+
+// This function is used to convert a quaternion from a vector of size (4 x 1).
+pub fn vector_to_quaternion(vect: &Vector<f32>) -> Result<Quaternion, LinalgError> {
+    let mut quat = Quaternion::new()?;  // Create the quaternion.
+    quat.fill_from_vector(&vect)?;      // Fill it using the vector components.
+
+    Ok(quat)    // Return the quaternion with no error.
+}
+
+// This function is used to calculate the rotation matrix (Direct Cosine Matrix - DCM) from a quaternion.
+pub fn convert_to_dcm(quat: &Quaternion) -> Result<Matrix, LinalgError> {
+    let mut dcm = Matrix::new();    // Create the rotation matrix.
+    dcm.init(3, 3)?;                // Initialize it.
+
+    let mut element = 0.0_f32;       // Create a temporary variable to store an element of the matrix.
+
+    let qw = quat.get_qw()?;        // Retrieve qw component from the quaternion.
+    let qx = quat.get_qx()?;        // Retrieve qx component from the quaternion.
+    let qy = quat.get_qy()?;        // Retrieve qy component from the quaternion.
+    let qz = quat.get_qz()?;        // Retrieve qz component from the quaternion.
+
+    // Fill the first column of the rotation matrix.
+    //element = 1.0 - 2.0*(qy * qy + qz * qz);
+    element = qw*qw + qx*qx - qy*qy - qz*qz;
+    dcm.set_element(0, 0, element)?;
+    element = 
+
+
+
+    Ok(dcm) // Return the rotation matrix with no error.
 }

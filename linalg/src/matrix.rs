@@ -53,6 +53,7 @@ impl Matrix {
             Err(LinalgError::NotInit)   // Return an error.
         } else {
             self.initialized = false;   // Set the initialization flag to false.
+
             self.init(rows, cols)?;     // Reinitialize the matrix.
 
             Ok(())  // Return no error.

@@ -7,13 +7,15 @@ use crate::gyrometer::{GyrometerConfig, Gyrometer};
 use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, calculate_omega_matrix};
-use utils::utils::in_range;
 
-use quaternion::quaternion::{Quaternion, copy_from};
+use quaternion::quaternion::{Quaternion, copy_from, vector_to_quaternion};
 //use quaternion::quaternion::copy_from as copy_from_quaternion;
-use linalg::matrix::Matrix;
+use linalg::linalg::{vector_to_matrix, col_to_vector};
+use linalg::matrix::{Matrix, mul};
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
+use utils::utils::in_range;
+use libm::sqrtf;
 
 /*
 pub const MARG: u8 = 1; // This mode uses the gyrometer, the accelerometer and the magnetometer.
@@ -45,7 +47,7 @@ pub struct AQUA {
     acc: Accelerometer,
     mag: Magnetometer,
 
-    orientation: Quaternion,
+    attitude: Quaternion,
 
     ts: f32,                    // Sampling period.
     adaptive: bool,             // Activate or not the adaptive gain.
@@ -70,7 +72,7 @@ impl AQUA {
             acc: Accelerometer::new()?,
             mag: Magnetometer::new()?,
 
-            orientation: Quaternion::new()?,    // Estimated attitude by the filter.
+            attitude: Quaternion::new()?,       // Estimated attitude by the filter.
 
             // Filter settings.
             ts:         0.01_f32,               // Default sampling period.
@@ -79,8 +81,8 @@ impl AQUA {
             beta:       0.01_f32,               // ...
             t1:         0.1_f32,                // Adaptative gain first treshold.
             t2:         0.2_f32,                // Adaptative gain second treshold.
-            t_acc:      0.9_f32,                // Interpolation treshold for the partial orientation (quaternion) determined from accelerometer measurements.
-            t_mag:      0.9_f32,                // Interpolation treshold for the partial orientation (quaternion) determined from magnetometer measurements.
+            t_acc:      0.9_f32,                // Interpolation treshold for the partial attitude (quaternion) determined from accelerometer measurements.
+            t_mag:      0.9_f32,                // Interpolation treshold for the partial attitude (quaternion) determined from magnetometer measurements.
             //mode:       MARG,                   // Mode of the filter.
             mode:       Mode::MARG,             // Mode of the filter.
             order:      2_u8,                   // Order of the numerical integration method.
@@ -140,10 +142,10 @@ impl AQUA {
             _ => return Err(OpenAHRSError::InvalidQuaternion),
         };
 
-        // Set initial orientation manually.
+        // Set initial attitude manually.
         if let Some((qw, qx, qy, qz)) = quat {
-            self.orientation.fill(qw, qx, qy, qz)?;
-        } else {    // Automatically initialize orientation.
+            self.attitude.fill(qw, qx, qy, qz)?;
+        } else {    // Automatically initialize attitude.
             // Add some code here.
         }
 
@@ -172,7 +174,12 @@ impl AQUA {
 
         //interpolated_quat.normalize()?; // Normalize the interpolated quaternion.
 
-        Ok(interpolated_quat)
+        Ok(interpolated_quat)   // Return interpolated quaternion with no error.
+    }
+
+    // This function is used to calculate adaptative gain.
+    fn calculate_adaptative_gain() -> Result<(), OpenAHRSError> {
+        Ok(())
     }
 
     // This function is used to update the AQUA filter.
@@ -292,6 +299,29 @@ impl AQUA {
 
             if gyr_ok && acc_ok && mag_ok {
                 // Prediction step.
+                // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
+                let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
+                omega.mul_by_scalar(0.5)?;
+                let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude.get_vect()?)?)?;
+                derivative_quat.mul_by_scalar(self.ts)?;
+
+                /*
+                let derivative_quat = col_to_vector(&derivative_quat, 0)?;
+                let derivative_quat = vector_to_quaternion(&derivative_quat)?;
+                */
+
+                let mut gyr_quat = Quaternion::new()?;
+                gyr_quat.add(&self.attitude, &vector_to_quaternion(&col_to_vector(&derivative_quat)?)?)?;
+                //gyr_quat.add(&self.attitude, &derivative_quat);
+                gyr_quat.normalize()?;  // Normalize the quaternion to ensure is remains unitary.
+
+
+
+
+
+
+
+
 
             } else if acc_ok && mag_ok {
                 // Add some code here.
@@ -312,11 +342,6 @@ impl AQUA {
 
 
 
-
-            if gyr_ok && acc_ok && mag_ok {
-                // Prediction step.
-                let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
-            }
 
 
 
