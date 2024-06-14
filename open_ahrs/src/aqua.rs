@@ -322,8 +322,9 @@ impl AQUA {
                 gyr_quat.add(&self.attitude, &derivative_quat);
                 gyr_quat.normalize()?;  // Normalize the quaternion to ensure is remains unitary.
 
-
-
+                // Accelerometer-based correction step.
+                let mut dcm_local_to_global = qGyr.convert_to_dcm()?;
+                dcm_local_to_global.transpose()?;
 
 
 
