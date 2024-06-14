@@ -71,7 +71,7 @@ pub struct Gyrometer {
     corrected_measurements: Vector<f32>,            // Vector which contains corrected measurements of the three-dimensional gyrometer.
     //conversion_factor: f32,
 
-    initialized: bool,                      // Sensor initialisation flag.
+    initialized: bool,                      // Sensor initialization flag.
 }
 
 impl Gyrometer {
@@ -83,7 +83,7 @@ impl Gyrometer {
             raw_measurements: Vector::new(),                        // Create the vector containing the angular velocity raw measurement of each of the gyrometer axes.
             corrected_measurements: Vector::new(),                  // Create the vector containing the angular velocity corrected measurement of each of the gyrometer axes.
 
-            initialized: false, // Set initialisation flag to false (by default, the gyrometer is not initialised).
+            initialized: false, // Set initialization flag to false (by default, the gyrometer is not initialized).
         };
 
         // Default correction matrix (identity matrix).

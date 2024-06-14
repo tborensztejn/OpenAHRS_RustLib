@@ -25,6 +25,7 @@ mod open_ahrs_tests {
     //use linalg::linalg::{vector_to_matrix, col_to_vector, set_col};
     use linalg::linalg::set_col;
     use quaternion::quaternion::Quaternion;
+    //use quaternion::quaternion::Quat;
 
     #[test]
     fn ar_series_method_test() {
@@ -209,5 +210,14 @@ mod open_ahrs_tests {
             ar_filter.update(gx, gy, gz).unwrap();
             ar_filter.print_attitude().unwrap();
         }
+
+        /*
+        let mut quat: Vector<f32> = Vector::new();
+        quat.init(3).unwrap();
+        //quat.fill(0.5, 5.5, 56.2, 89.8).unwrap();
+        //Quat::fillq(&mut quat, 0.5, 0.5, 0.5, 0.5).unwrap();   // Appel non implicite.
+        //quat.set_qw(0.5).unwrap();  // Appel implicite de la fonction.
+        quat.fillq(0.5, 0.5, 0.5, 0.5).unwrap();
+        */
     }
 }

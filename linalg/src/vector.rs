@@ -13,6 +13,7 @@ pub struct Vector<T> {
 }
 
 impl<T: Default + Copy> Vector<T> {
+    // This function is used to create a new vector of size m x 1.
     pub fn new() -> Self {
         Self {
             rows: 0,
@@ -21,6 +22,7 @@ impl<T: Default + Copy> Vector<T> {
         }
     }
 
+    // This function is used to initialize a vector of size m x 1.
     pub fn init(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check if the vector has already been initialized.
         if self.initialized {
@@ -31,6 +33,21 @@ impl<T: Default + Copy> Vector<T> {
 
             self.rows = rows;               // Set the number of rows in the vector.
             self.initialized = true;        // Set the initialization flag to true.
+
+            Ok(())  // Return no error.
+        }
+    }
+
+    // This function is used to reinitialize a vector of size m x 1.
+    pub fn reinit(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
+        // Check that the vector is initialized.
+        if !self.initialized {
+            // The vector is not initialized.
+            Err(LinalgError::NotInit)   // Return an error.
+        } else {
+            self.initialized = false;   // Set the initialization flag to false.
+
+            self.init(rows)?;           // Reinitialize the vector.
 
             Ok(())  // Return no error.
         }
@@ -52,7 +69,7 @@ impl<T: Default + Copy> Vector<T> {
 }
 
 impl Vector<u8> {
-    // This function is used to assign a value to a specific element of a vector of size (m x 1).
+    // This function is used to assign a value to a specific element of a vector of size m x 1.
     pub fn set_element(self: &mut Self, row: u8, value: u8) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -67,7 +84,7 @@ impl Vector<u8> {
         }
     }
 
-    // This function is used to access a specific element of a vector of size (m x 1).
+    // This function is used to access a specific element of a vector of size m x 1.
     pub fn get_element(self: &Self, row: u8) -> Result<u8, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -84,7 +101,7 @@ impl Vector<u8> {
 }
 
 impl Vector<f32> {
-    // This function is used to assign a value to a specific element of a vector of size (m x 1).
+    // This function is used to assign a value to a specific element of a vector of size m x 1.
     pub fn set_element(self: &mut Self, row: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -100,7 +117,7 @@ impl Vector<f32> {
         }
     }
 
-    // This function is used to access a specific element of a vector of size (m x 1).
+    // This function is used to access a specific element of a vector of size m x 1.
     pub fn get_element(self: &Self, row: u8) -> Result<f32, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -116,7 +133,7 @@ impl Vector<f32> {
     }
 
     #[cfg(feature = "std")]
-    // This function is used to diplay a vector of size (m x 1).
+    // This function is used to diplay a vector of size m x 1.
     pub fn print(self: &Self) -> Result<(), LinalgError> {
         // Iterate through each element and print it and move to the next row with a newline character.
         for row in 0..self.rows {
@@ -142,7 +159,7 @@ impl Vector<f32> {
         }
     }
 
-    // This function is used to fill an entire vector of size (m x 1) with a given value.
+    // This function is used to fill an entire vector of size m x 1 with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the vector.
         for row in 0..self.rows {
@@ -152,7 +169,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to duplicate/copy a vector of size (m x 1).
+    // This function is used to duplicate/copy a vector of size m x 1.
     pub fn copy_from(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -168,7 +185,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform the vector addition operation of two vectors of size (m x 1).
+    // This function is used to perform the vector addition operation of two vectors of size m x 1.
     pub fn add(self: &mut Self, vector1: &Self, vector2: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(vector1)? {
@@ -214,7 +231,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform the vector subtraction operation of two vectors of size (m x 1).
+    // This function is used to perform the vector subtraction operation of two vectors of size m x 1.
     pub fn sub(self: &mut Self, vector1: &Self, vector2: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(vector1)? {
@@ -260,7 +277,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to calculate the norm of a vector of size (m x 1).
+    // This function is used to calculate the norm of a vector of size m x 1.
     pub fn calculate_norm(self: &Self) -> Result<f32, LinalgError> {
         let mut norm: f32 = 0.0;
 
@@ -279,7 +296,7 @@ impl Vector<f32> {
         Ok(norm)    // Return the calculated Euclidean norm with no error.
     }
 
-    // This function is used to normalize a vector of size (m x 1).
+    // This function is used to normalize a vector of size m x 1.
     pub fn normalize(self: &mut Self) ->  Result<(), LinalgError> {
         let norm: f32 = self.calculate_norm()?; // Calculate the norm of the vector.
 
@@ -296,7 +313,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to multiply by a scalar all elements of a vector of size (m x 1).
+    // This function is used to multiply by a scalar all elements of a vector of size m x 1.
     pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
@@ -307,7 +324,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform dot product between two vectors of size (m x 1).
+    // This function is used to perform dot product between two vectors of size m x 1.
     pub fn dot_product(self: &mut Self, other: &Self) -> Result<f32, LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -368,7 +385,7 @@ impl Vector<f32> {
             // Alpha is not valid.
             return Err(LinalgError::InvalidAlpha)   // Return an error.
         }
-        
+
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(vect1)? || !self.is_same_size_as(vect2)? {
             // The vectors do not have the same dimensions.
@@ -394,7 +411,7 @@ impl Vector<f32> {
     }
 }
 
-// This function is used to perform dot product between two vectors of size (m x 1).
+// This function is used to perform dot product between two vectors of size m x 1.
 pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, LinalgError> {
     // Check that the vectors have the same dimensions.
     if !vect1.is_same_size_as(vect2)? {

@@ -28,6 +28,7 @@ pub enum LinalgError {
     NotSymetric,
     NotInversible,
     InvalidAlpha,
+    QuaternionSizeMismatch, // Remove it from linalg lib.
     UtilsError(UtilsError),
 }
 

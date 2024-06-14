@@ -8,7 +8,8 @@ use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, calculate_omega_matrix};
 
-use quaternion::quaternion::{Quaternion, copy_from, vector_to_quaternion};
+//use quaternion::quaternion::{Quaternion, copy_from, vector_to_quaternion};
+use quaternion::quaternion::Quat;
 //use quaternion::quaternion::copy_from as copy_from_quaternion;
 use linalg::linalg::{vector_to_matrix, col_to_vector};
 use linalg::matrix::{Matrix, mul};
@@ -47,7 +48,8 @@ pub struct AQUA {
     acc: Accelerometer,
     mag: Magnetometer,
 
-    attitude: Quaternion,
+    //attitude: Quaternion,
+    attitude: Vector<f32>,
 
     ts: f32,                    // Sampling period.
     adaptive: bool,             // Activate or not the adaptive gain.
@@ -72,7 +74,8 @@ impl AQUA {
             acc: Accelerometer::new()?,
             mag: Magnetometer::new()?,
 
-            attitude: Quaternion::new()?,       // Estimated attitude by the filter.
+            //attitude: Quaternion::new()?,       // Estimated attitude by the filter.
+            attitude: Vector::new(),            // Estimated attitude by the filter.
 
             // Filter settings.
             ts:         0.01_f32,               // Default sampling period.
@@ -144,7 +147,8 @@ impl AQUA {
 
         // Set initial attitude manually.
         if let Some((qw, qx, qy, qz)) = quat {
-            self.attitude.fill(qw, qx, qy, qz)?;
+            //self.attitude.fill(qw, qx, qy, qz)?;
+            self.attitude.fillq(qw, qx, qy, qz)?;
         } else {    // Automatically initialize attitude.
             // Add some code here.
         }
@@ -153,17 +157,21 @@ impl AQUA {
     }
 
     // This function is used to perform adaptive quaternion interpolation based on LERP and SLERP.
-    fn interpolate(quat: &Quaternion, alpha: f32, treshold: f32) -> Result<Quaternion, OpenAHRSError> {
+    //fn interpolate(quat: &Quaternion, alpha: f32, treshold: f32) -> Result<Quaternion, OpenAHRSError> {
+    fn interpolate(quat: &Vector<f32>, alpha: f32, treshold: f32) -> Result<Vector<f32>, OpenAHRSError> {
         // Check that the interpolation parameter is valid (it must be between 0 and 1 inclusive).
         if !in_range(treshold, 0.0_f32, 1.0_f32) {
             // The interpolation parameter is not valid.
             return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold) // Return an error.
         }
 
-        let mut idendity_quat = Quaternion::new()?;     // Create the identity quaternion.
-        idendity_quat.fill_identity()?;                 // Fill it.
+        //let mut idendity_quat = Quaternion::new()?;         // Create the identity quaternion.
+        let mut idendity_quat: Vector<f32> = Vector::new(); // Create the identity quaternion.
+        idendity_quat.init(4)?;
+        idendity_quat.fill_identity()?;                     // Fill it.
 
-        let mut interpolated_quat = Quaternion::new()?; // Create the interpolated quaternion.
+        //let mut interpolated_quat = Quaternion::new()?; // Create the interpolated quaternion.
+        let mut interpolated_quat: Vector<f32> = Vector::new(); // Create the interpolated quaternion.
 
         if quat.get_qw()? > treshold {  // Use the LERP algorithm because it's more computationally efficient.
             interpolated_quat.lerp(&idendity_quat, &quat, alpha)?;
@@ -296,23 +304,22 @@ impl AQUA {
             my = m.get_element(1)?;
             mz = m.get_element(2)?;
 
-
             if gyr_ok && acc_ok && mag_ok {
                 // Prediction step.
                 // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
                 let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
                 omega.mul_by_scalar(0.5)?;
-                let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude.get_vect()?)?)?;
+                //let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude.get_vect()?)?)?;
+                let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude)?)?;
                 derivative_quat.mul_by_scalar(self.ts)?;
 
-                /*
                 let derivative_quat = col_to_vector(&derivative_quat, 0)?;
-                let derivative_quat = vector_to_quaternion(&derivative_quat)?;
-                */
+                //let derivative_quat = vector_to_quaternion(&derivative_quat)?;
 
-                let mut gyr_quat = Quaternion::new()?;
-                gyr_quat.add(&self.attitude, &vector_to_quaternion(&col_to_vector(&derivative_quat)?)?)?;
-                //gyr_quat.add(&self.attitude, &derivative_quat);
+                //let mut gyr_quat = Quaternion::new()?;
+                let mut gyr_quat: Vector<f32> = Vector::new();
+                //gyr_quat.add(&self.attitude, &vector_to_quaternion(&col_to_vector(&derivative_quat, 0)?)?)?;
+                gyr_quat.add(&self.attitude, &derivative_quat);
                 gyr_quat.normalize()?;  // Normalize the quaternion to ensure is remains unitary.
 
 

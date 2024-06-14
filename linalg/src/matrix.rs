@@ -17,7 +17,7 @@ pub struct Matrix {
 }
 
 impl Matrix {
-    // This function is used to create a new matrix.
+    // This function is used to create a new matrix of size m x n.
     pub fn new() -> Self {
         Self {
             rows: 0,
@@ -27,7 +27,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to initialize a matrix of size (m x n).
+    // This function is used to initialize a matrix of size m x n.
     pub fn init(self: &mut Self, rows: u8, cols: u8) -> Result<(), LinalgError> {
         // Check if the matrix has already been initialized.
         if self.initialized {
@@ -45,7 +45,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to reinitialize a matrix of size (m x n).
+    // This function is used to reinitialize a matrix of size m x n.
     pub fn reinit(self: &mut Self, rows: u8, cols: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -60,7 +60,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to get the number of rows (m) of the matrix of size (m x n).
+    // This function is used to get the number of rows (m) of the matrix of size m x n.
     pub fn get_rows(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -71,7 +71,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to set the number of rows (m) of the matrix of size (m x n).
+    // This function is used to set the number of rows (m) of the matrix of size m x n.
     pub(crate) fn set_rows(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -87,7 +87,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to get the number of columns (n) of the matrix of size (m x n).
+    // This function is used to get the number of columns (n) of the matrix of size m x n.
     pub fn get_cols(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -98,7 +98,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to set the number of columns (n) of the matrix of size (m x n).
+    // This function is used to set the number of columns (n) of the matrix of size m x n.
     pub(crate) fn set_cols(self: &mut Self, cols: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -135,7 +135,7 @@ impl Matrix {
         self.initialized
     }
 
-    // This function is used to assign a value to a specific element of a matrix of size (m x n).
+    // This function is used to assign a value to a specific element of a matrix of size m x n.
     pub fn set_element(self: &mut Self, row: u8, col: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -154,7 +154,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to access a specific element of a matrix of size (m x n).
+    // This function is used to access a specific element of a matrix of size m x n.
     pub fn get_element(self: &Self, row: u8, col: u8) -> Result<f32, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -173,7 +173,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to fill an entire matrix of size (m x n) with a given value.
+    // This function is used to fill an entire matrix of size m x n with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the matrix.
         for row in 0..self.rows {
@@ -234,7 +234,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to duplicate/copy a matrix of size (m x n).
+    // This function is used to duplicate/copy a matrix of size m x n.
     pub fn copy_from(self: &mut Self, other: &Matrix) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -278,7 +278,7 @@ impl Matrix {
     }
 
     #[cfg(feature = "std")]
-    // This function is used to diplay a matrix of size (m x n).
+    // This function is used to diplay a matrix of size m x n.
     pub fn print(self: &Self) -> Result<(), LinalgError> {
         // Iterate through each element and print it and move to the next row with a newline character.
         for row in 0..self.rows {
@@ -295,7 +295,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform the matrix addition operation of two matrices of size (m x n).
+    // This function is used to perform the matrix addition operation of two matrices of size m x n.
     // A = B + C.
     pub fn add(&mut self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
@@ -346,7 +346,7 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
-    // This function is used to perform the matrix subtraction operation of two matrices of size (m x n).
+    // This function is used to perform the matrix subtraction operation of two matrices of size m x n.
     pub fn sub(self: &mut Self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(matrix1)? {
@@ -396,7 +396,7 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
-    // This function is used to perform the matrix multiplication operation on two matrices of sizes (m x n) and (n x k) respectively.
+    // This function is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
     // Naive implementation, as it is not very efficient for large matrices (for larger matrices, use the "divide and conquer" strategy).
     pub fn mul(self: &mut Self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         if matrix1.cols != matrix2.rows || self.rows != matrix1.rows || self.cols != matrix2.cols {
@@ -421,7 +421,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to transpose a matrix of size (m x n).
+    // This function is used to transpose a matrix of size m x n.
     pub fn transpose(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -502,7 +502,7 @@ impl Matrix {
         Ok(())
     }
 
-    // This function is used to multiply by a scalar all elements of a matrix of size (m x n).
+    // This function is used to multiply by a scalar all elements of a matrix of size m x n.
     pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
@@ -515,7 +515,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to apply an exponent to all elements of a matrix of size (m x n).
+    // This function is used to apply an exponent to all elements of a matrix of size m x n.
     pub fn power_exponent(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
         // Iterate through each element and apply exponent.
         for row in 0..self.rows {
@@ -536,7 +536,7 @@ impl Matrix {
     }
     */
 
-    // This function is used to calculate the trace of a matrix of size (m x n).
+    // This function is used to calculate the trace of a matrix of size m x n.
     pub fn trace(self: &Self) -> Result<f32, LinalgError> {
         let mut trace: f32 = 0.0;
 
@@ -555,7 +555,7 @@ impl Matrix {
         One (Q) is orthogonal (or unitary in the complex case) and the other (R) is upper triangular (or upper triangular in the complex case).
         The matrix Q is of size (m x m) and orthogonal (or unitary) which means that for the real case: Trans(Q).Q = I and for the complex case: Q*.Q = I.
         Where Trans(Q) is the transpose of Q and Q* is its transposed conjugate.
-        The matrix R is upper triangular (or tri-superior) of size (m x n) which means that all elements below the main diagonal of R are zero.
+        The matrix R is upper triangular (or tri-superior) of size m x n which means that all elements below the main diagonal of R are zero.
     */
 
     pub fn qr_decomp(self: &Self) -> Result<(Self, Self), LinalgError> {
@@ -837,7 +837,7 @@ impl Matrix {
     }
 }
 
-// This function is used to duplicate/copy a matrix of size (m x n).
+// This function is used to duplicate/copy a matrix of size m x n.
 pub fn copy_from(matrix: &Matrix) -> Result<Matrix, LinalgError> {
     let mut copied_matrix: Matrix = Matrix::new();
     copied_matrix.init(matrix.get_rows()?, matrix.get_cols()?)?;
@@ -846,7 +846,7 @@ pub fn copy_from(matrix: &Matrix) -> Result<Matrix, LinalgError> {
     Ok(copied_matrix)
 }
 
-// This function is used to perform the matrix addition operation of two matrices of size (m x n).
+// This function is used to perform the matrix addition operation of two matrices of size m x n.
 pub fn add(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
     let mut result_matrix: Matrix = Matrix::new();
     result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
@@ -855,7 +855,7 @@ pub fn add(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
     Ok(result_matrix)
 }
 
-// This function is used to perform the matrix subtraction operation of two matrices of size (m x n).
+// This function is used to perform the matrix subtraction operation of two matrices of size m x n.
 pub fn sub(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
     let mut result_matrix: Matrix = Matrix::new();
     result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
@@ -864,7 +864,7 @@ pub fn sub(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
     Ok(result_matrix)
 }
 
-// This function is used to perform the matrix multiplication operation on two matrices of sizes (m x n) and (n x k) respectively.
+// This function is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
 // Naive implementation, as it is not very efficient for large matrices (for larger matrices, use the "divide and conquer" strategy).
 pub fn mul(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
     let mut result_matrix: Matrix = Matrix::new();

@@ -71,7 +71,7 @@ pub struct Accelerometer {
     corrected_measurements: Vector<f32>,            // Vector which contains corrected measurements of the three-dimensional accelerometer.
     //conversion_factor: f32,
 
-    initialized: bool,                      // Sensor initialisation flag.
+    initialized: bool,                      // Sensor initialization flag.
 }
 
 impl Accelerometer {
@@ -83,7 +83,7 @@ impl Accelerometer {
             raw_measurements: Vector::new(),                        // Create the vector containing the angular velocity raw measurement of each of the accelerometer axes.
             corrected_measurements: Vector::new(),                  // Create the vector containing the angular velocity corrected measurement of each of the accelerometer axes.
 
-            initialized: false, // Set initialisation flag to false (by default, the accelerometer is not initialised).
+            initialized: false, // Set initialization flag to false (by default, the accelerometer is not initialized).
         };
 
         // Default correction matrix (identity matrix).

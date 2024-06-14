@@ -3,6 +3,7 @@ extern crate libm;
 
 //use linalg::vector::{Vector, dot_product};
 use linalg::vector::Vector;
+use linalg::matrix::Matrix;
 use linalg::common::{EPSILON, LinalgError};
 //use libm::{acosf, sinf};
 
@@ -319,9 +320,259 @@ pub fn convert_to_dcm(quat: &Quaternion) -> Result<Matrix, LinalgError> {
     //element = 1.0 - 2.0*(qy * qy + qz * qz);
     element = qw*qw + qx*qx - qy*qy - qz*qz;
     dcm.set_element(0, 0, element)?;
-    element = 
+    element = 2.0*(qx*qy - qw*qz);
+    dcm.set_element(0, 1, element)?;
+
 
 
 
     Ok(dcm) // Return the rotation matrix with no error.
+}
+
+pub trait Quat {
+    fn is_quaternion(self: &Self) -> Result<bool, LinalgError>;
+    fn set_qw(self: &mut Self, qw: f32) -> Result<(), LinalgError>;
+    fn get_qw(self: &Self) -> Result<f32, LinalgError>;
+    fn set_qx(self: &mut Self, qx: f32) -> Result<(), LinalgError>;
+    fn get_qx(self: &Self) -> Result<f32, LinalgError>;
+    fn set_qy(self: &mut Self, qy: f32) -> Result<(), LinalgError>;
+    fn get_qy(self: &Self) -> Result<f32, LinalgError>;
+    fn set_qz(self: &mut Self, qz: f32) -> Result<(), LinalgError>;
+    fn get_qz(self: &Self) -> Result<f32, LinalgError>;
+    fn fillq(self: &mut Self, qw: f32, qx: f32, qy: f32, qz: f32) -> Result<(), LinalgError>;
+    fn conjugate(self: &mut Self) -> Result<(), LinalgError>;
+    fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError>;
+    fn fill_identity(self: &mut Self) -> Result<(), LinalgError>;
+    fn invert(self: &mut Self) -> Result<(), LinalgError>;
+}
+
+impl Quat for Vector<f32> {
+    // This function is used to check if a vector can be used as a quaternion.
+    fn is_quaternion(self: &Self) -> Result<bool, LinalgError> {
+        // Check that the vector size is 4x1.
+        if self.get_rows()? != 4 {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
+    }
+
+    // This function is used to set the qw value of a quaternion.
+    fn set_qw(self: &mut Self, qw: f32) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        self.set_element(0, qw)?;   // Set the qw value.
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to retrieve the qw value of a quaternion.
+    fn get_qw(self: &Self) -> Result<f32, LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        Ok(self.get_element(0)?)
+    }
+
+    // This function is used to set the qx value of a quaternion.
+    fn set_qx(self: &mut Self, qx: f32) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        self.set_element(1, qx)?;   // Set the qx value.
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to retrieve the qx value of a quaternion.
+    fn get_qx(self: &Self) -> Result<f32, LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        Ok(self.get_element(1)?)
+    }
+
+    // This function is used to set the qy value of a quaternion.
+    fn set_qy(self: &mut Self, qy: f32) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        self.set_element(2, qy)?;   // Set the qy value.
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to retrieve the qy value of a quaternion.
+    fn get_qy(self: &Self) -> Result<f32, LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        Ok(self.get_element(2)?)
+    }
+
+    // This function is used to set the qz value of a quaternion.
+    fn set_qz(self: &mut Self, qz: f32) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        self.set_element(3, qz)?;   // Set the qz value.
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to retrieve the qy value of a quaternion.
+    fn get_qz(self: &Self) -> Result<f32, LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        Ok(self.get_element(3)?)
+    }
+
+    // This function is used to fill a quaternion.
+    fn fillq(self: &mut Self, qw: f32, qx: f32, qy: f32, qz: f32) -> Result<(), LinalgError> {
+        /*
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        // Fill the quaternion.
+        self.set_element(0, qw)?;
+        self.set_element(1, qx)?;
+        self.set_element(2, qy)?;
+        self.set_element(3, qz)?;
+        */
+
+        // Fill the quaternion.
+        self.set_qw(qw)?;
+        self.set_qx(qx)?;
+        self.set_qy(qy)?;
+        self.set_qz(qz)?;
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to conjugate a quaternion.
+    fn conjugate(self: &mut Self) -> Result<(), LinalgError> {
+        /*
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        // Retrieve components of the quaternion.
+        let qx = self.get_element(1)?;
+        let qy = self.get_element(2)?;
+        let qz = self.get_element(3)?;
+
+        // Conjugate the quaternion.
+        self.set_element(1, -qx)?;
+        self.set_element(2, -qy)?;
+        self.set_element(3, -qz)?;
+        */
+
+        let qx = self.get_qx()?;
+        let qy = self.get_qy()?;
+        let qz = self.get_qz()?;
+
+        self.set_qx(-qx)?;
+        self.set_qy(-qy)?;
+        self.set_qz(-qz)?;
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to perform the multiplication operation (Hamilton product) of two quaternions.
+    fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError> {
+        /*
+        // Check that these are all quaternions.
+        if !self.is_quaternion()? || !quat1.is_quaternion()? || !quat2.is_quaternion()? {
+            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+        }
+
+        // Extract components of the first quaternion (quat1).
+        let qw1 = quat1.get_element(0)?;
+        let qx1 = quat1.get_element(1)?;
+        let qy1 = quat1.get_element(2)?;
+        let qz1 = quat1.get_element(3)?;
+
+        // Extract components of the second quaternion (quat2).
+        let qw2 = quat2.get_element(0)?;
+        let qx2 = quat2.get_element(1)?;
+        let qy2 = quat2.get_element(2)?;
+        let qz2 = quat2.get_element(3)?;
+
+        // Calculate the components of the resulting quaternion (self).
+        let qw = qw1*qw2 - qx1*qx2 - qy1*qy2 - qz1*qz2;
+        let qx = qw1*qx2 + qx1*qw2 - qz1*qy2 + qy1*qz2;
+        let qy = qw1*qy2 + qz1*qx2 + qw2*qy1 - qx1*qz2;
+        let qz = qw1*qz2 - qy1*qx2 + qx1*qy2 + qw2*qz1;
+
+        // Store the calculated components in the resulting quaternion.
+        self.set_element(0, qw)?;
+        self.set_element(1, qx)?;
+        self.set_element(2, qy)?;
+        self.set_element(3, qz)?;
+        */
+
+        // Extract components of the first quaternion (quat1).
+        let qw1 = quat1.get_qw()?;
+        let qx1 = quat1.get_qx()?;
+        let qy1 = quat1.get_qy()?;
+        let qz1 = quat1.get_qz()?;
+
+        // Extract components of the second quaternion (quat2).
+        let qw2 = quat2.get_qw()?;
+        let qx2 = quat2.get_qx()?;
+        let qy2 = quat2.get_qy()?;
+        let qz2 = quat2.get_qz()?;
+
+        // Calculate the components of the resulting quaternion (self).
+        let qw = qw1*qw2 - qx1*qx2 - qy1*qy2 - qz1*qz2;
+        let qx = qw1*qx2 + qx1*qw2 - qz1*qy2 + qy1*qz2;
+        let qy = qw1*qy2 + qz1*qx2 + qw2*qy1 - qx1*qz2;
+        let qz = qw1*qz2 - qy1*qx2 + qx1*qy2 + qw2*qz1;
+
+        self.fillq(qw, qx, qy, qz)?;
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to fill a quaternion as identity quaternion.
+    fn fill_identity(self: &mut Self) -> Result<(), LinalgError> {
+        self.fillq(1.0, 0.0, 0.0, 0.0)?;
+
+        Ok(())  // Return no error.
+    }
+
+    // This function is used to invert a quaternion.
+    fn invert(self: &mut Self) -> Result<(), LinalgError> {
+        let norm = self.calculate_norm()?;  // Calculate the norm of the quaternion.
+        self.conjugate()?;                  // Conjugate the quaternion.
+
+        if norm > EPSILON {
+            self.mul_by_scalar(1.0_f32 / (norm * norm))?;
+        } else {
+            self.fillq(0.0, 0.0, 0.0, 0.0)?;
+        }
+
+        Ok(())  // Return no error.
+    }
 }
