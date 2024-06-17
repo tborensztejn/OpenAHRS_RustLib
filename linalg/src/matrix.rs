@@ -2,7 +2,7 @@ extern crate utils;
 extern crate libm;
 
 use utils::utils::{is_valid_value, close_all, min};
-use libm::{powf, sqrtf};
+use libm::{powf, sqrtf, fabsf};
 use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
 use crate::linalg::{lup, solve};
@@ -617,7 +617,7 @@ impl Matrix {
     */
 
     pub fn is_upper_triangular(self: &Self) -> Result<bool, LinalgError> {
-        // Loops on every line except the first (which doesn't need to have null elements).
+        // Loops on every row except the first (which doesn't need to have null elements).
         for row in 1..self.rows {
             // We loop over the columns corresponding to the lower triangular matrix as a function of the current row.
             for col in 0..row {
@@ -632,7 +632,7 @@ impl Matrix {
     }
 
     pub fn is_lower_triangular(self: &Self) -> Result<bool, LinalgError> {
-        // Loops on every line except the last (which doesn't need to have null elements).
+        // Loops on every row except the last (which doesn't need to have null elements).
         for row in 0..self.rows - 1 {
             // We loop over the columns corresponding to the upper triangular matrix as a function of the current row.
             for col in row + 1..self.cols {
@@ -834,6 +834,86 @@ impl Matrix {
         p.init(self.rows, self.cols)?;
 
         Ok(p)
+    }
+
+    pub fn is_orthogonal(self: &Self) -> Result<bool, LinalgError> {
+        // Check if the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square so can't be orthogonal.
+            return Ok(false);   // Return false with no error.
+        }
+
+        let n = self.rows;
+
+        let determinant_abs = fabsf(self.det()?);   // Calculate the absolute value of the determinant of the matrix.
+
+        // Check if the determinant is equal to -1 or 1.
+        if !close_all(determinant_abs, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+            // The absolute value of the determinant is different from 1 so can't be orthogonal.
+            return Ok(false);   // Return false wwith no error.
+        }
+
+        // Create a copy of the actual matrix and transpose it.
+        let mut transposed_mat = Self::new();
+        transposed_mat.init(n, n)?;
+        transposed_mat.copy_from(&self)?;
+        transposed_mat.transpose()?;
+
+        // Create the identity matrix.
+        let mut identity_matrix = Self::new();
+        identity_matrix.init(n, n)?;
+        identity_matrix.fill_identity()?;
+
+        let mut result = Self::new();
+        result.init(n, n)?;
+        result.mul(&self, &transposed_mat)?;
+
+        // Check that the relationship R Tr(R) = I is satisfied.
+        if !result.is_equal_to(&identity_matrix, EPSILON)? {
+            // The product of the matrix and its transpose is not equal to the identity matrix and so cannot be orthogonal.
+            return Ok(false);   // Return false wwith no error.
+        }
+
+        Ok(true)    // Return true with no error.
+    }
+
+    pub fn is_so3(self: &Self) -> Result<bool, LinalgError> {
+        // Check if the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square so can't be orthogonal.
+            return Ok(false);   // Return false with no error.
+        }
+
+        let n = self.rows;
+
+        // Check if the determinant is equal to 1.
+        if !close_all(self.det()?, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+            // The absolute value of the determinant is different from 1 so can't be orthogonal.
+            return Ok(false);   // Return false wwith no error.
+        }
+
+        // Create a copy of the actual matrix and transpose it.
+        let mut transposed_mat = Self::new();
+        transposed_mat.init(n, n)?;
+        transposed_mat.copy_from(&self)?;
+        transposed_mat.transpose()?;
+
+        // Create the identity matrix.
+        let mut identity_matrix = Self::new();
+        identity_matrix.init(n, n)?;
+        identity_matrix.fill_identity()?;
+
+        let mut result = Self::new();
+        result.init(n, n)?;
+        result.mul(&self, &transposed_mat)?;
+
+        // Check that the relationship R Tr(R) = I is satisfied.
+        if !result.is_equal_to(&identity_matrix, EPSILON)? {
+            // The product of the matrix and its transpose is not equal to the identity matrix and so cannot be orthogonal.
+            return Ok(false);   // Return false wwith no error.
+        }
+
+        Ok(true)    // Return true with no error.
     }
 }
 

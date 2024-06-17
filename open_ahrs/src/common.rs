@@ -1,6 +1,7 @@
 extern crate linalg;
 
 use linalg::matrix::Matrix;
+use linalg::vector::Vector;
 use linalg::common::{LinalgError};
 
 pub const CLOSED_FORM:      u8 = 1;
@@ -58,7 +59,8 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
 
     let mut attitudes = Matrix::new();
     attitudes.init(4, number)?;
-    let mut previous_quat = Quaternion::new()?;
+    let mut previous_quat: Vector<f32> = Vector::new();
+    previous_quat.init(4)?;
     previous_quat.fill_identity()?;
 
     for n in 0..number {
@@ -76,8 +78,9 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
         let mut qy = s1 * cosf(t1);
         let mut qz = s2 * sinf(t2);
 
-        let mut actual_quat = Quaternion::new()?;
-        actual_quat.fill(qw, qx, qy, qz)?;
+        let mut actual_quat: Vector<f32> = Vector::new();
+        actual_quat.init(4)?;
+        actual_quat.fillq(qw, qx, qy, qz)?;
 
 
         /*
@@ -94,7 +97,7 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
 
 
         // Perform scalar product.
-        let scalar = dot_product(&actual_quat.get_vect()?, &previous_quat.get_vect()?)?;
+        let scalar = dot_product(&actual_quat, &previous_quat)?;
         let theta = acosf(scalar);  // Angle between the axis of the current quaternion and that of the previous quaternion.
 
         /*
@@ -106,8 +109,11 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
 
         if fabsf(theta) > max_angle {
             let scale = max_angle / fabsf(theta);
-            let mut interpolated_quat = Quaternion::new()?;
+
+            let mut interpolated_quat: Vector<f32> = Vector::new();
+            interpolated_quat.init(4)?;
             interpolated_quat.slerp(&previous_quat, &actual_quat, scale)?;
+
             qw = interpolated_quat.get_qw()?;
             qx = interpolated_quat.get_qx()?;
             qy = interpolated_quat.get_qy()?;

@@ -1,9 +1,10 @@
 extern crate utils;
 
 use utils::utils::{is_valid_value, in_range};
+use libm::{acosf, sinf, sqrtf};
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
-use libm::{acosf, sinf, sqrtf};
+use crate::matrix::Matrix;
 
 #[derive(Debug)]
 pub struct Vector<T> {

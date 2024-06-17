@@ -4,21 +4,14 @@ pub mod quaternion;
 
 #[cfg(test)]
 mod quaternion_tests {
+    use linalg::vector::Vector;
     use crate::quaternion::Quaternion;
-
-    // This test function is used to check that there are no errors when creating a quaternion. No error expected.
-    #[test]
-    //#[ignore]
-    fn init_test_1() {
-        let result = Quaternion::new();
-
-        assert!(result.is_ok(), "Unexpected result: {:?}.", result);
-    }
 
     // This test function is used to check ...
     #[test]
     fn fill_test() {
-        let mut quat: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
+        let mut quat: Vector<f32> = Vector::new();  // Create a new vector that will be used as a quaternion.
+        quat.init(4).unwrap();                      // Initialize it.
 
         // Define quaternion elements.
         let qw: f32 = 1.0;
@@ -26,32 +19,37 @@ mod quaternion_tests {
         let qy: f32 = 3.0;
         let qz: f32 = 4.0;
 
-        let result = quat.fill(qw, qx, qy, qz); // Set quaternion elements.
+        let result = quat.fillq(qw, qx, qy, qz);    // Set quaternion components.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
 
-        let mut q = quat.get_qw();
-        assert!(q.is_ok(), "Unexpected result: {:?}.", q);
-        assert_eq!(q.unwrap(), qw, "Unexpected element value.");
+        let mut component = quat.get_qw();
+        assert!(component.is_ok(), "Unexpected result: {:?}.", component);
+        assert_eq!(component.unwrap(), qw, "Unexpected element value.");
 
-        q = quat.get_qx();
-        assert!(q.is_ok(), "Unexpected result: {:?}.", q);
-        assert_eq!(q.unwrap(), qx, "Unexpected element value.");
+        component = quat.get_qx();
+        assert!(component.is_ok(), "Unexpected result: {:?}.", component);
+        assert_eq!(component.unwrap(), qx, "Unexpected element value.");
 
-        q = quat.get_qy();
-        assert!(q.is_ok(), "Unexpected result: {:?}.", q);
-        assert_eq!(q.unwrap(), qy, "Unexpected element value.");
+        component = quat.get_qy();
+        assert!(component.is_ok(), "Unexpected result: {:?}.", component);
+        assert_eq!(component.unwrap(), qy, "Unexpected element value.");
 
-        q = quat.get_qz();
-        assert!(q.is_ok(), "Unexpected result: {:?}.", q);
-        assert_eq!(q.unwrap(), qz, "Unexpected element value.");
+        component = quat.get_qz();
+        assert!(component.is_ok(), "Unexpected result: {:?}.", component);
+        assert_eq!(component.unwrap(), qz, "Unexpected element value.");
     }
 
     // This test function is used to check ...
     #[test]
     fn mull_test() {
-        let mut p: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
-        let mut q: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
-        let mut pq: Quaternion = Quaternion::new().unwrap();  // Create a new quaternion.
+        let mut p: Vector<f32> = Vector::new();     // Create a new vector that will be used as a quaternion.
+        let mut q: Vector<f32> = Vector::new();     // Create a new vector that will be used as a quaternion.
+        let mut pq: Vector<f32> = Vector::new();    // Create a new vector that will be used as a quaternion.
+
+        // Initialize them.
+        p.init(4).unwrap();
+        q.init(4).unwrap();
+        pq.init(4).unwrap();
 
         // Define p quaternion elements.
         let pw: f32 = 2.0;
@@ -65,9 +63,9 @@ mod quaternion_tests {
         let qy: f32 = 3.0;
         let qz: f32 = 2.0;
 
-        let mut result = p.fill(pw, px, py, pz); // Set quaternion elements.
+        let mut result = p.fillq(pw, px, py, pz);   // Set quaternion components.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
-        result = q.fill(qw, qx, qy, qz); // Set quaternion elements.
+        result = q.fillq(qw, qx, qy, qz);   // Set quaternion components.
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
 
         result = pq.mul(&p, &q);

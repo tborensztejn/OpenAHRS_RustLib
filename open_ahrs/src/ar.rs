@@ -3,8 +3,7 @@ extern crate linalg;
 extern crate utils;
 extern crate libm;
 
-//use quaternion::quaternion::Quaternion;
-use quaternion::quaternion::Quat;
+use quaternion::quaternion::Quaternion;
 use linalg::matrix::{Matrix, copy_from, mul};
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
@@ -24,7 +23,6 @@ use crate::common::{
 pub struct AR {
     gyr: Gyrometer,
 
-    //attitude: Quaternion,
     attitude: Vector<f32>,
 
     ts: f32,
@@ -37,17 +35,16 @@ pub struct AR {
 impl AR {
     pub fn new() -> Result<Self, OpenAHRSError> {
         let ar = Self {
-            gyr: Gyrometer::new()?,         // Filter sensor (only a gyrometer, no drift correction).
+            gyr: Gyrometer::new()?,     // Filter sensor (only a gyrometer, no drift correction).
 
-            //attitude: Quaternion::new()?,   // Estimated attitude by the filter.
-            attitude: Vector::new(),         // Estimated attitude by the filter.
+            attitude: Vector::new(),    // Estimated attitude by the filter.
 
             // Filter settings.
-            ts: 0.01_f32,                   // Sampling period.
-            method: 0_u8,                   // Numerical integration method.
-            order: 1_u8,                    // Order of the numerical integration method.
+            ts: 0.01_f32,               // Sampling period.
+            method: 0_u8,               // Numerical integration method.
+            order: 1_u8,                // Order of the numerical integration method.
 
-            initialized: false,             // Initialization status.
+            initialized: false,         // Initialization status.
         };
 
         Ok(ar)  // Return the structure with no error.
@@ -63,7 +60,6 @@ impl AR {
         ) -> Result<(), OpenAHRSError> {
             self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
             self.attitude.init(4)?;                 // Initialize the vector that will be used as quaternion.
-            //self.attitude.fill(qw, qx, qy, qz)?;    // Set initial attitude.
             self.attitude.fillq(qw, qx, qy, qz)?;   // Set initial attitude.
             self.ts = ts;                           // Set sampling rate.
             self.method = method;                   // Set the numerical integration method that will be used to estimate the attitude.
@@ -128,7 +124,6 @@ impl AR {
                     }
                 }
 
-                //let attitude = mul(&temp, &vector_to_matrix(&self.attitude.get_vect()?)?)?;
                 let attitude = mul(&temp, &vector_to_matrix(&self.attitude)?)?;
 
                 // TODO: use more efficient way.
@@ -137,15 +132,12 @@ impl AR {
                 qy = attitude.get_element(2, 0)?;
                 qz = attitude.get_element(3, 0)?;
             } else if self.method == EULER {
-                //let mut w = Quaternion::new()?;
                 w.reinit(4)?;
                 //let mut w: Vector<f32> = Vector::new();
                 //w.init(4)?;
-                //w.fill(0.0_f32, p, q, r)?;
                 w.fillq(0.0_f32, p, q, r)?;
                 w.mul_by_scalar(0.5_f32 * self.ts)?;
 
-                //let mut delta = Quaternion::new()?;
                 let mut delta: Vector<f32> = Vector::new();
                 delta.init(4)?;
                 delta.mul(&w, &self.attitude)?;
@@ -159,7 +151,6 @@ impl AR {
                 return Err(OpenAHRSError::AEMethodError);   // Return an error.
             }
 
-            //self.attitude.fill(qw, qx, qy, qz)?;
             self.attitude.fillq(qw, qx, qy, qz)?;
             self.attitude.normalize()?;
         } else {

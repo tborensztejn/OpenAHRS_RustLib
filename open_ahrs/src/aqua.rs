@@ -8,9 +8,7 @@ use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, calculate_omega_matrix};
 
-//use quaternion::quaternion::{Quaternion, copy_from, vector_to_quaternion};
-use quaternion::quaternion::Quat;
-//use quaternion::quaternion::copy_from as copy_from_quaternion;
+use quaternion::quaternion::Quaternion;
 use linalg::linalg::{vector_to_matrix, col_to_vector};
 use linalg::matrix::{Matrix, mul};
 use linalg::vector::Vector;
@@ -48,7 +46,6 @@ pub struct AQUA {
     acc: Accelerometer,
     mag: Magnetometer,
 
-    //attitude: Quaternion,
     attitude: Vector<f32>,
 
     ts: f32,                    // Sampling period.
@@ -74,7 +71,6 @@ impl AQUA {
             acc: Accelerometer::new()?,
             mag: Magnetometer::new()?,
 
-            //attitude: Quaternion::new()?,       // Estimated attitude by the filter.
             attitude: Vector::new(),            // Estimated attitude by the filter.
 
             // Filter settings.
@@ -127,6 +123,8 @@ impl AQUA {
         }
         */
 
+        self.attitude.init(4)?;                     // Initialize attitude quaternion.
+
         if mode == Mode::MARG {
             self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
             self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
@@ -147,7 +145,6 @@ impl AQUA {
 
         // Set initial attitude manually.
         if let Some((qw, qx, qy, qz)) = quat {
-            //self.attitude.fill(qw, qx, qy, qz)?;
             self.attitude.fillq(qw, qx, qy, qz)?;
         } else {    // Automatically initialize attitude.
             // Add some code here.
@@ -157,7 +154,6 @@ impl AQUA {
     }
 
     // This function is used to perform adaptive quaternion interpolation based on LERP and SLERP.
-    //fn interpolate(quat: &Quaternion, alpha: f32, treshold: f32) -> Result<Quaternion, OpenAHRSError> {
     fn interpolate(quat: &Vector<f32>, alpha: f32, treshold: f32) -> Result<Vector<f32>, OpenAHRSError> {
         // Check that the interpolation parameter is valid (it must be between 0 and 1 inclusive).
         if !in_range(treshold, 0.0_f32, 1.0_f32) {
@@ -165,13 +161,12 @@ impl AQUA {
             return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold) // Return an error.
         }
 
-        //let mut idendity_quat = Quaternion::new()?;         // Create the identity quaternion.
         let mut idendity_quat: Vector<f32> = Vector::new(); // Create the identity quaternion.
-        idendity_quat.init(4)?;
+        idendity_quat.init(4)?;                             // Initialize it.
         idendity_quat.fill_identity()?;                     // Fill it.
 
-        //let mut interpolated_quat = Quaternion::new()?; // Create the interpolated quaternion.
         let mut interpolated_quat: Vector<f32> = Vector::new(); // Create the interpolated quaternion.
+        interpolated_quat.init(4)?;                             // Initialize it.
 
         if quat.get_qw()? > treshold {  // Use the LERP algorithm because it's more computationally efficient.
             interpolated_quat.lerp(&idendity_quat, &quat, alpha)?;
@@ -243,16 +238,16 @@ impl AQUA {
             let mut q = self.gyr.get_y_angular_rate()?;
             let mut r = self.gyr.get_z_angular_rate()?;
 
-            let mut w: Vector<f32> = Vector::new(); // Create the angular velocity pseudovector.
-            w.init(3)?;                             // Initialize it.
+            let mut w_local: Vector<f32> = Vector::new();   // Create the angular velocity pseudovector expressed in the local reference frame.
+            w_local.init(3)?;                               // Initialize it.
 
             // Fill it with gyrometer corrected measurements.
-            w.set_element(0, p)?;
-            w.set_element(1, q)?;
-            w.set_element(2, r)?;
+            w_local.set_element(0, p)?;
+            w_local.set_element(1, q)?;
+            w_local.set_element(2, r)?;
 
             // Check that the measurements are valid.
-            if w.calculate_norm()? > EPSILON {
+            if w_local.calculate_norm()? > EPSILON {
                 gyr_ok = true;
             }
 
@@ -261,70 +256,105 @@ impl AQUA {
             let mut ay = self.acc.get_y_acceleration()?;
             let mut az = self.acc.get_z_acceleration()?;
 
-            let mut a: Vector<f32> = Vector::new(); // Create the acceleration vector.
-            a.init(3)?;                             // Initialize it.
+            let mut a_local: Vector<f32> = Vector::new();   // Create the acceleration vector expressed in the local reference frame.
+            a_local.init(3)?;                               // Initialize it.
 
             // Fill it with accelerometer corrected measurements.
-            a.set_element(0, p)?;
-            a.set_element(1, q)?;
-            a.set_element(2, r)?;
+            a_local.set_element(0, ax)?;
+            a_local.set_element(1, ay)?;
+            a_local.set_element(2, az)?;
 
             // Check that the measurements are valid.
-            if a.calculate_norm()? > EPSILON {
+            if a_local.calculate_norm()? > EPSILON {
                 acc_ok = true;
             }
 
-            a.normalize()?; // Normalize it.
+            a_local.normalize()?;   // Normalize it.
 
-            ax = a.get_element(0)?;
-            ay = a.get_element(1)?;
-            az = a.get_element(2)?;
+            // Retrieve vector components.
+            ax = a_local.get_element(0)?;
+            ay = a_local.get_element(1)?;
+            az = a_local.get_element(2)?;
 
             // Retrieve corrected magnetometer measurements.
             let mut mx = self.mag.get_x_magnetic_field()?;
             let mut my = self.mag.get_y_magnetic_field()?;
             let mut mz = self.mag.get_z_magnetic_field()?;
 
-            let mut m: Vector<f32> = Vector::new(); // Create the magnetic field intensity vector.
-            m.init(3)?;                             // Initialize it.
+            let mut m_local: Vector<f32> = Vector::new();   // Create the magnetic field intensity vector expressed in the local reference frame.
+            m_local.init(3)?;                               // Initialize it.
 
             // Fill it with magnetometer corrected measurements.
-            m.set_element(0, p)?;
-            m.set_element(1, q)?;
-            m.set_element(2, r)?;
+            m_local.set_element(0, mx)?;
+            m_local.set_element(1, my)?;
+            m_local.set_element(2, mz)?;
 
             // Check that the measurements are valid.
-            if m.calculate_norm()? > EPSILON {
+            if m_local.calculate_norm()? > EPSILON {
                 mag_ok = true;
             }
 
-            m.normalize()?; // Normalize it.
+            m_local.normalize()?;   // Normalize it.
 
-            mx = m.get_element(0)?;
-            my = m.get_element(1)?;
-            mz = m.get_element(2)?;
+            // Retrieve vector components.
+            mx = m_local.get_element(0)?;
+            my = m_local.get_element(1)?;
+            mz = m_local.get_element(2)?;
 
             if gyr_ok && acc_ok && mag_ok {
                 // Prediction step.
                 // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
                 let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
                 omega.mul_by_scalar(0.5)?;
-                //let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude.get_vect()?)?)?;
                 let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude)?)?;
-                derivative_quat.mul_by_scalar(self.ts)?;
 
-                let derivative_quat = col_to_vector(&derivative_quat, 0)?;
-                //let derivative_quat = vector_to_quaternion(&derivative_quat)?;
+                let mut delta_quat = col_to_vector(&derivative_quat, 0)?;
+                delta_quat.mul_by_scalar(self.ts)?;
 
-                //let mut gyr_quat = Quaternion::new()?;
-                let mut gyr_quat: Vector<f32> = Vector::new();
-                //gyr_quat.add(&self.attitude, &vector_to_quaternion(&col_to_vector(&derivative_quat, 0)?)?)?;
-                gyr_quat.add(&self.attitude, &derivative_quat);
+                let mut gyr_quat: Vector<f32> = Vector::new();  // Quaternion defining the orientation of the system and determined by gyrometer measurements.
+                gyr_quat.init(4)?;
+                gyr_quat.add(&self.attitude, &delta_quat)?;
                 gyr_quat.normalize()?;  // Normalize the quaternion to ensure is remains unitary.
 
                 // Accelerometer-based correction step.
-                let mut dcm_local_to_global = qGyr.convert_to_dcm()?;
+                let mut dcm_local_to_global = gyr_quat.convert_to_dcm()?;
                 dcm_local_to_global.transpose()?;
+                let a_global = col_to_vector(&mul(&dcm_local_to_global, &vector_to_matrix(&a_local)?)?, 0)?;
+
+                // Retrieve vector components.
+                let gx = a_global.get_element(0)?;
+                let gy = a_global.get_element(1)?;
+                let gz = a_global.get_element(2)?;
+
+                // Define quaternion components.
+                let mut qw = 0.0_f32;
+                let mut qx = 0.0_f32;
+                let mut qy = 0.0_f32;
+                let mut qz = 0.0_f32;
+
+                let mut acc_quat: Vector<f32> = Vector::new();  // Quaternion defining the orientation of the system and determined by accelerometer and gyrometer measurements.
+                acc_quat.init(4)?;                              // Initialize it.
+
+                // Determine the quaternion (partial orientation) from the accelerometer measurements.
+                if gz < 0.0_f32 {
+                    let l1 = sqrtf((1.0_f32 - gz)/2.0_f32);
+                    qw = l1;
+                    qx = gy/(2.0_f32*l1);
+                    qy = -gx/(2.0_f32*l1);
+                } else {
+                    let l2 = sqrtf((1.0_f32 + gz)/2.0_f32);
+                    qw = gy/(2.0_f32*l2);
+                    qx = l2;
+                    qz = -gx/(2.0_f32*l2);
+                }
+
+                acc_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
+
+
+
+                if self.adaptive {
+                    self.beta = calculate_adaptative_gain(self.beta, )
+                }
 
 
 
@@ -334,31 +364,6 @@ impl AQUA {
             } else if acc_ok && mag_ok {
                 // Add some code here.
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             Ok(())  // Return no error.
         }

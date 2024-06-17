@@ -25,7 +25,6 @@ mod open_ahrs_tests {
     //use linalg::linalg::{vector_to_matrix, col_to_vector, set_col};
     use linalg::linalg::set_col;
     use quaternion::quaternion::Quaternion;
-    //use quaternion::quaternion::Quat;
 
     #[test]
     fn ar_series_method_test() {
@@ -43,13 +42,12 @@ mod open_ahrs_tests {
         angular_rates.fill(0.0).unwrap();
 
         for n in 0..niter {
-        //for n in 0..1 {
-            // Attitude at time t.
-            let mut q_now: Quaternion = Quaternion::new().unwrap();
-            // Attitude at time t + Δt.
-            let mut q_next: Quaternion = Quaternion::new().unwrap();
-            // Quaternion derivative.
-            let mut q_dot: Quaternion = Quaternion::new().unwrap();
+            let mut q_now: Vector<f32> = Vector::new();     // Attitude at time t.
+            q_now.init(4).unwrap();
+            let mut q_next: Vector<f32> = Vector::new();    // Attitude at time t + Δt.
+            q_next.init(4).unwrap();
+            let mut q_dot: Vector<f32> = Vector::new();     // Quaternion derivative.
+            q_dot.init(4).unwrap();
 
             // Extract quaternion elements from randomnly generated "attitudes" matrix.
             let mut qw = attitudes.get_element(0, n).unwrap();
@@ -57,7 +55,7 @@ mod open_ahrs_tests {
             let mut qy = attitudes.get_element(2, n).unwrap();
             let mut qz = attitudes.get_element(3, n).unwrap();
 
-            q_now.fill(qw, qx, qy, qz).unwrap();
+            q_now.fillq(qw, qx, qy, qz).unwrap();
 
             // Extract quaternion elements from randomnly generated "attitudes" matrix.
             qw = attitudes.get_element(0, n + 1).unwrap();
@@ -65,11 +63,11 @@ mod open_ahrs_tests {
             qy = attitudes.get_element(2, n + 1).unwrap();
             qz = attitudes.get_element(3, n + 1).unwrap();
 
-            q_next.fill(qw, qx, qy, qz).unwrap();
+            q_next.fillq(qw, qx, qy, qz).unwrap();
 
             // Calculate the derivative using formula q_dot = (q_next - q_now) / dt.
             q_dot.sub(&q_next, &q_now).unwrap();
-            q_dot.mul_by_scalar(1.0 / ts).unwrap();
+            q_dot.mul_by_scalar(1.0_f32 / ts).unwrap();
             //print!("q_dot (reference):\n");
             //q_dot.print().unwrap(); // REFERENCE RESULT.
 
@@ -130,8 +128,10 @@ mod open_ahrs_tests {
             */
 
             /* Method 3. OK. */
-            let mut w: Quaternion = Quaternion::new().unwrap();
-            let mut q_now_conj: Quaternion = Quaternion::new().unwrap();
+            let mut w: Vector<f32> = Vector::new();
+            w.init(4).unwrap();
+            let mut q_now_conj: Vector<f32> = Vector::new();
+            q_now_conj.init(4).unwrap();
             q_now_conj.copy_from(&q_now).unwrap();
             q_now_conj.conjugate().unwrap();
             q_now_conj.mul_by_scalar(2.0_f32).unwrap();
