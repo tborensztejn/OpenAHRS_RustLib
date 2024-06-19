@@ -3,7 +3,7 @@ use crate::vector::Vector;
 use crate::common::{EPSILON, LinalgError};
 use libm::{fabsf, sqrtf};
 
-// This function in used to replace all elements of specific row of a matrix with those of a vector.
+/// This function in used to replace all elements of specific row of a matrix with those of a vector.
 pub fn set_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
     // Check that the number of columns in the matrix is the same as the number of rows in the vector.
     if mat.get_cols()? != vect.get_rows()? {
@@ -18,7 +18,7 @@ pub fn set_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), Lina
     Ok(())  // Return no error.
 }
 
-// This function in used to replace all elements of specific column of a matrix with those of a vector.
+/// This function in used to replace all elements of specific column of a matrix with those of a vector.
 pub fn set_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
     // Check that the number of rows in the matrix is the same as the number of rows in the vector.
     if mat.get_rows()? != vect.get_rows()? {
@@ -33,7 +33,7 @@ pub fn set_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), Lina
     Ok(())  // Return no error.
 }
 
-// This function is used to extract all elements of specific row of a matrix and store them into a vector.
+/// This function is used to extract all elements of specific row of a matrix and store them into a vector.
 pub fn get_row(mat: &Matrix, vect: &mut Vector<f32>, row: u8) -> Result<(), LinalgError> {
     // Check that the number of columns in the matrix is the same as the number of rows in the vector.
     if mat.get_cols()? != vect.get_rows()? {
@@ -48,7 +48,7 @@ pub fn get_row(mat: &Matrix, vect: &mut Vector<f32>, row: u8) -> Result<(), Lina
     Ok(())  // Return no error.
 }
 
-// This function is used to extract all elements of specific column of a matrix and store them into a vector.
+/// This function is used to extract all elements of specific column of a matrix and store them into a vector.
 pub fn get_col(mat: &Matrix, vect: &mut Vector<f32>, col: u8) -> Result<(), LinalgError> {
     // Check that the number of rows in the matrix is the same as the number of rows in the vector.
     if mat.get_rows()? != vect.get_rows()? {
@@ -63,7 +63,7 @@ pub fn get_col(mat: &Matrix, vect: &mut Vector<f32>, col: u8) -> Result<(), Lina
     Ok(())  // Return no error.
 }
 
-// This function is used to extract all elements of specific row of a matrix and store them into a new vector.
+/// This function is used to extract all elements of specific row of a matrix and store them into a new vector.
 pub fn row_to_vector(mat: &Matrix, row: u8) -> Result<Vector<f32>, LinalgError> {
     let mut vect: Vector<f32> = Vector::new();
     vect.init(mat.get_cols()?)?;
@@ -75,7 +75,7 @@ pub fn row_to_vector(mat: &Matrix, row: u8) -> Result<Vector<f32>, LinalgError> 
     Ok(vect)    // Return the vector with no error.
 }
 
-// This function is used to extract all elements of specific column of a matrix and store them into a new vector.
+/// This function is used to extract all elements of specific column of a matrix and store them into a new vector.
 pub fn col_to_vector(mat: &Matrix, col: u8) -> Result<Vector<f32>, LinalgError> {
     let mut vect: Vector<f32> = Vector::new();
     vect.init(mat.get_rows()?)?;
@@ -87,7 +87,7 @@ pub fn col_to_vector(mat: &Matrix, col: u8) -> Result<Vector<f32>, LinalgError> 
     Ok(vect)    // Return the vector with no error.
 }
 
-// This function adds a row to a matrix of size (m x n) from a vector of size (n x 1). The result is a matrix of size (m+1 x n).
+/// This function adds a row to a matrix of size (m x n) from a vector of size (n x 1). The result is a matrix of size (m+1 x n).
 pub fn add_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
     let rows = mat.get_rows()? + 1;
     let cols = mat.get_cols()?;
@@ -105,7 +105,7 @@ pub fn add_row(mat: &mut Matrix, vect: &Vector<f32>, row: u8) -> Result<(), Lina
     Ok(())  // Return no error.
 }
 
-// This function adds a column to a matrix of size (m x n) from a vector of size (m x 1). The result is a matrix of size (m x n+1).
+/// This function adds a column to a matrix of size (m x n) from a vector of size (m x 1). The result is a matrix of size (m x n+1).
 pub fn add_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
     let rows = mat.get_rows()?;
     let cols = mat.get_cols()? + 1;
@@ -131,7 +131,7 @@ pub fn add_col(mat: &mut Matrix, vect: &Vector<f32>, col: u8) -> Result<(), Lina
     Ok(())  // Return no error.
 }
 
-// This function is used to convert a vector into a matrix in order to perform matrix operations.
+/// This function is used to convert a vector into a matrix in order to perform matrix operations.
 pub fn vector_to_matrix(vect: &Vector<f32>) -> Result<Matrix, LinalgError> {
     let rows = vect.get_rows()?;
     let mut mat = Matrix::new();
@@ -167,6 +167,7 @@ pub fn swap_cols(mat: &mut Matrix, col1: u8, col2: u8) -> Result<(), LinalgError
 }
 */
 
+/// This function is used to perform LU decomposition of a matrix.
 pub fn lup(mat: &Matrix) -> Result<(Matrix, Vector<u8>), LinalgError> {
     // Create the LU matrix.
     let mut lu = Matrix::new();
@@ -251,6 +252,7 @@ pub fn solve(mat: &Matrix, b: &Vector<f32>, p: &Vector<u8>) -> Result<Vector<f32
     Ok(x)
 }
 
+/// This function is used to calculate the eigen values and eigen vectors of a sqaure matrix.
 pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Matrix), LinalgError> {
     // Check that the matrix is square.
     if !mat.is_square()? {
@@ -260,38 +262,38 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Ma
 
     let m = mat.get_rows()?;
 
-    /* Create a copy of the input matrix to avoid modifying it. */
+    // Create a copy of the input matrix to avoid modifying it.
     let mut a = Matrix::new();              // Create a new matrix.
     a.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
     a.copy_from(&mat)?;                     // Copy the input matrix into the new one.
 
-    /* Create an identity matrix I. */
+    // Create an identity matrix I.
     let mut i = Matrix::new();              // Create a new matrix.
     i.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
     i.fill_identity()?;                     // Fill in the identity matrix.
 
-    /* Create an orthogonal Q matrix to be used for QR decomposition. */
+    // Create an orthogonal Q matrix to be used for QR decomposition.
     let mut q = Matrix::new();              // Create a new matrix.
     q.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
 
-    /* Create an upper triangular R matrix to be used for QR decomposition. */
+    // Create an upper triangular R matrix to be used for QR decomposition.
     let mut r = Matrix::new();              // Create a new matrix.
     r.init(m, m)?;                          // Initialize the new matrix with the same size as the input matrix.
 
-    /* Create a matrix containing the calculated eigenvectors. */
+    // Create a matrix containing the calculated eigenvectors.
     let mut eigenvectors = Matrix::new();   // Create a new matrix.
     eigenvectors.init(m, m)?;               // Initialize the new matrix with the same size as the input matrix.
     eigenvectors.fill_identity()?;          // Fill in the identity matrix.
 
-    /* Create a vector containing the calculated eigenvalues. */
+    // Create a vector containing the calculated eigenvalues.
     let mut eigenvalues: Vector<f32> = Vector::new();
     eigenvalues.init(m)?;
 
-    /* Create a vector containing the eigenvalues calculated in the previous loop. */
+    // Create a vector containing the eigenvalues calculated in the previous loop.
     let mut previous_eigenvalues: Vector<f32> = Vector::new();
     previous_eigenvalues.init(m)?;
 
-    /* Create a vector containing the variation of calculated eigenvalues. */
+    // Create a vector containing the variation of calculated eigenvalues.
     let mut delta_eigenvalues: Vector<f32> = Vector::new();
     delta_eigenvalues.init(m)?;
 
@@ -368,7 +370,7 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Ma
         }
     }
 
-    Ok((eigenvalues, eigenvectors))
+    Ok((eigenvalues, eigenvectors)) // Return eigen values and eigen vectors of the matrix with no error.
 }
 
 /*

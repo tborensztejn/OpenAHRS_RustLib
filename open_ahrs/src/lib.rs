@@ -16,9 +16,7 @@ mod open_ahrs_tests {
     use crate::ar::AR;
     use crate::gyrometer::GyrometerConfig;
     //use crate::aqua::AQUA;
-    //use crate::common::{CLOSED_FORM, generate_random_attitudes};
-    //use crate::common::{TAYLOR_SERIES, generate_random_attitudes};
-    use crate::common::{EULER, generate_random_attitudes};
+    use crate::common::{NumericalIntegrationMethod as NIM, generate_random_attitudes};
     //use linalg::matrix::{Matrix, mul};
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
@@ -198,7 +196,7 @@ mod open_ahrs_tests {
             // Gyrometer configuration.
             default_gyrometer_config,
             ts,
-            EULER,
+            NIM::Euler,
             3_u8
         ).unwrap();
 

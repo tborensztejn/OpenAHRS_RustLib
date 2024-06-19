@@ -4,11 +4,15 @@ use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use linalg::common::{LinalgError};
 
-pub const CLOSED_FORM:      u8 = 1;
-pub const TAYLOR_SERIES:    u8 = 2;
-pub const EULER:            u8 = 3;
-pub const ADAMS_BASHFORTH:  u8 = 4;
-pub const RUNGE_KUTTA:      u8 = 5;
+#[derive(Debug)]
+#[derive(PartialEq)]
+pub enum NumericalIntegrationMethod {
+    ClosedForm,
+    TaylorSeries,
+    Euler,
+    AdamsBashforth,
+    RungeKutta,
+}
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -21,7 +25,8 @@ pub enum OpenAHRSError {
     AccAlreadyInit,
     MagNotInit,
     MagAlreadyInit,
-    AEMethodError,
+
+    ARMethodError,
 
     AQUAFilterAlreadyInit,
     AQUAFilterNotInit,

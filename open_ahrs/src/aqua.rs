@@ -6,7 +6,7 @@ extern crate libm;
 use crate::gyrometer::{GyrometerConfig, Gyrometer};
 use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
-use crate::common::{OpenAHRSError, calculate_omega_matrix};
+use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_omega_matrix};
 
 use quaternion::quaternion::Quaternion;
 use linalg::linalg::{vector_to_matrix, col_to_vector};
@@ -16,50 +16,35 @@ use linalg::common::EPSILON;
 use utils::utils::in_range;
 use libm::{sqrtf, fabsf};
 
-/*
-pub const MARG: u8 = 1; // This mode uses the gyrometer, the accelerometer and the magnetometer.
-pub const AM:   u8 = 2; // This mode uses only the accelerometer and the magnetometer.
-*/
-
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum Mode {
-    MARG = 1,
-    AM = 2,
+    MARG,   // This mode uses the gyrometer, the accelerometer and the magnetometer.
+    AM,     // This mode uses only the accelerometer and the magnetometer.
 }
-
-/*
-impl Mode {
-    fn is_valid_mode(value: u8) -> Option<Mode> {
-        match value {
-            1 => Some(Mode::MARG),
-            2 => Some(Mode::AM),
-            _ => None,
-        }
-    }
-}
-*/
 
 #[derive(Debug)]
 pub struct AQUA {
+    // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
     gyr: Gyrometer,
     acc: Accelerometer,
     mag: Magnetometer,
 
-    attitude: Vector<f32>,
+    attitude: Vector<f32>,  // Estimated attitude by the filter.
 
-    ts: f32,                    // Sampling period.
-    adaptive: bool,             // Activate or not the adaptive gain.
-    alpha: f32,
-    beta: f32,
-    t1: f32,
-    t2: f32,
-    t_acc: f32,
-    t_mag: f32,
-    mode: Mode,
-    order: u8,
+    ts: f32,                // Sampling period.
+    adaptive: bool,         // Activate or not the adaptive gain.
+    alpha: f32,             // Interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
+    beta: f32,              // Interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
+    t1: f32,                // Adaptative gain first treshold.
+    t2: f32,                // Adaptative gain second treshold.
+    t_acc: f32,             // Interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
+    t_mag: f32,             // Interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
+    mode: Mode,             // Mode of the filter.
+    order: u8,              // Order of the numerical integration method.
+    method: NIM,            // Numerical integration method.
 
-    initialized: bool,
+    initialized: bool,      // Initialization status.
 }
 
 impl AQUA {
@@ -67,30 +52,29 @@ impl AQUA {
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
             // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
-            gyr: Gyrometer::new()?,
-            acc: Accelerometer::new()?,
-            mag: Magnetometer::new()?,
+            gyr: Gyrometer::new()?,         // ...
+            acc: Accelerometer::new()?,     // ...
+            mag: Magnetometer::new()?,      // ...
 
-            attitude: Vector::new(),            // Estimated attitude by the filter.
+            attitude: Vector::new(),        // Estimated attitude by the filter as a quaternion.
 
             // Filter settings.
-            ts:         0.01_f32,               // Default sampling period.
-            adaptive:   true,                   // Adaptive gain is activated by default.
-            alpha:      0.01_f32,               // Interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
-            beta:       0.01_f32,               // Interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
-            t1:         0.1_f32,                // Adaptative gain first treshold.
-            t2:         0.2_f32,                // Adaptative gain second treshold.
-            t_acc:      0.9_f32,                // Interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
-            t_mag:      0.9_f32,                // Interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
-            //mode:       MARG,                   // Mode of the filter.
-            mode:       Mode::MARG,             // Mode of the filter.
-            order:      2_u8,                   // Order of the numerical integration method.
-            //method:     Method::TAYLOR_SERIES,  // Numerical integration method.
+            ts:         0.01,               // Default sampling period.
+            adaptive:   true,               // Adaptive gain is activated by default.
+            alpha:      0.01_f32,           // Interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
+            beta:       0.01_f32,           // Interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
+            t1:         0.1_f32,            // Adaptative gain first treshold.
+            t2:         0.2_f32,            // Adaptative gain second treshold.
+            t_acc:      0.9_f32,            // Interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
+            t_mag:      0.9_f32,            // Interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
+            mode:       Mode::MARG,         // Mode of the filter.
+            order:      2_u8,               // Order of the numerical integration method.
+            method:     NIM::ClosedForm,    // Numerical integration method.
 
             initialized: false,             // Initialization status.
         };
 
-        Ok(aqua)    // Return the structure with no error.
+        Ok(aqua)    // Return the new filter with no error.
     }
 
     // This function is used to initialize the AQUA filter.
@@ -115,26 +99,6 @@ impl AQUA {
             // The filter has already been initialized.
             return Err(OpenAHRSError::AQUAFilterAlreadyInit); // Return an error.
         }
-
-        /*
-        let valid_mode = match Mode::is_valid_mode(mode) {
-            Some(valid_mode) => valid_mode,
-            None => return Err(OpenAHRSError::InvalidAQUAMode),
-        };
-
-        match valid_mode {
-            Mode::MARG => {
-                // Initialize the gyrometer.
-                // Initialize the accelerometer.
-                // Initialize the magnetometer.
-            }
-
-            Mode::AM => {
-                // Initialize the accelerometer.
-                // Initialize the magnetometer.
-            }
-        }
-        */
 
         self.attitude.init(4)?;                     // Initialize the attitude quaternion.
 

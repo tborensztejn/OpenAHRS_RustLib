@@ -11,43 +11,38 @@ use linalg::linalg::vector_to_matrix;
 use libm::{cosf, sinf};
 use utils::utils::factorial;
 use crate::gyrometer::{GyrometerConfig, Gyrometer};
-use crate::common::{
-    CLOSED_FORM,
-    TAYLOR_SERIES,
-    EULER,
-    OpenAHRSError,
-    calculate_omega_matrix,
-};
+use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_omega_matrix};
 
 #[derive(Debug)]
 pub struct AR {
-    gyr: Gyrometer,
+    gyr: Gyrometer,         // Sensor of the fitler.
 
-    attitude: Vector<f32>,
+    attitude: Vector<f32>,  // Estimated attitude by the filter.
 
-    ts: f32,
-    method: u8,
-    order: u8,
+    ts: f32,                // Sampling period.
+    method: NIM,            // Numerical integration method.
+    order: u8,              // Order of the numerical integration method.
 
-    initialized: bool,
+    initialized: bool,      // Initialization status.
 }
 
 impl AR {
+    /// This method is used to create a new AR filter.
     pub fn new() -> Result<Self, OpenAHRSError> {
         let ar = Self {
-            gyr: Gyrometer::new()?,     // Filter sensor (only a gyrometer, no drift correction).
+            gyr: Gyrometer::new()?,     // Create the sensor (only a gyrometer, no drift correction).
 
-            attitude: Vector::new(),    // Estimated attitude by the filter.
+            attitude: Vector::new(),    // Create the vector that will be used as a quaternion.
 
             // Filter settings.
-            ts: 0.01_f32,               // Sampling period.
-            method: 0_u8,               // Numerical integration method.
-            order: 1_u8,                // Order of the numerical integration method.
+            ts: 0.01,                   // Default sampling period.
+            method: NIM::ClosedForm,    // Default numerical integration method.
+            order: 1,                   // Default order of the numerical integration method.
 
-            initialized: false,         // Initialization status.
+            initialized: false,         // Default initialization status.
         };
 
-        Ok(ar)  // Return the structure with no error.
+        Ok(ar)  // Return the new filter with no error.
     }
 
     // This function is used to initialize the AR filter.
@@ -55,7 +50,7 @@ impl AR {
         qw: f32, qx: f32, qy: f32, qz: f32, // Initial attitude (quaternion coordinates).
         gyrometer_config: GyrometerConfig,  // Gyrometer configuration.
         ts: f32,                            // Sampling period.
-        method: u8,                         // Numerical integration method.
+        method: NIM,                        // Numerical integration method.
         order: u8                           // Order of the numerical integration method.
         ) -> Result<(), OpenAHRSError> {
             self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
@@ -100,17 +95,17 @@ impl AR {
 
         // Check that the norm is not zero.
         if w_norm > EPSILON {
-            let theta = w_norm * self.ts / 2.0_f32;
+            let theta = w_norm * self.ts / 2.0;
             let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
 
             // Closed form method (not very suitable for numerical implementations).
-            if self.method == CLOSED_FORM || self.method == TAYLOR_SERIES {
-                if self.method == CLOSED_FORM {
+            if self.method == NIM::ClosedForm || self.method == NIM::TaylorSeries {
+                if self.method == NIM::ClosedForm {
                     temp.mul_by_scalar(cosf(theta))?;
                     omega.mul_by_scalar(sinf(theta) / w_norm)?;
                     temp.add_in_place(&omega)?;
-                } else if self.method == TAYLOR_SERIES {
-                    omega.mul_by_scalar(0.5_f32 * self.ts)?;
+                } else if self.method == NIM::TaylorSeries {
+                    omega.mul_by_scalar(0.5 * self.ts)?;
 
                     for n in 1..=self.order {
                         // S = 0.5 * dt * Omega
@@ -118,7 +113,7 @@ impl AR {
                         // A' = S^n / !n
                         s.power_exponent(n as f32)?;
                         let factor = factorial(n);
-                        s.mul_by_scalar(1.0_f32 / factor as f32)?;
+                        s.mul_by_scalar(1.0 / factor as f32)?;
                         // A = A + A'
                         temp.add_in_place(&s)?;
                     }
@@ -131,12 +126,12 @@ impl AR {
                 qx = attitude.get_element(1, 0)?;
                 qy = attitude.get_element(2, 0)?;
                 qz = attitude.get_element(3, 0)?;
-            } else if self.method == EULER {
+            } else if self.method == NIM::Euler {
                 w.reinit(4)?;
                 //let mut w: Vector<f32> = Vector::new();
                 //w.init(4)?;
-                w.fillq(0.0_f32, p, q, r)?;
-                w.mul_by_scalar(0.5_f32 * self.ts)?;
+                w.fillq(0.0, p, q, r)?;
+                w.mul_by_scalar(0.5 * self.ts)?;
 
                 let mut delta: Vector<f32> = Vector::new();
                 delta.init(4)?;
@@ -148,7 +143,7 @@ impl AR {
                 qz += delta.get_qz()?;
             } else {
                 // The chosen method is not correct.
-                return Err(OpenAHRSError::AEMethodError);   // Return an error.
+                return Err(OpenAHRSError::ARMethodError);   // Return an error.
             }
 
             self.attitude.fillq(qw, qx, qy, qz)?;

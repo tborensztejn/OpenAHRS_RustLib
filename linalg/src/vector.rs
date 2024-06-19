@@ -4,9 +4,9 @@ use utils::utils::{is_valid_value, in_range};
 use libm::{acosf, sinf, sqrtf};
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
-use crate::matrix::Matrix;
 
 #[derive(Debug)]
+/// Vector structure.
 pub struct Vector<T> {
     rows: u8,               // Number of rows in the vector.
     elements: [T; M_MAX],   // All the elements of the vector in a linear array.

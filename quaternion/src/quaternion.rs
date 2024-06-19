@@ -281,7 +281,7 @@ impl Quaternion for Vector<f32> {
         let mut dcm = Matrix::new();    // Create the rotation matrix.
         dcm.init(3, 3)?;                // Initialize it.
 
-        let mut element = 0.0_f32;      // Create a temporary variable to store an element of the matrix.
+        let mut element: f32 = 0.0;     // Create a temporary variable to store an element of the matrix.
 
         let qw = self.get_qw()?;        // Retrieve qw component from the quaternion.
         let qx = self.get_qx()?;        // Retrieve qx component from the quaternion.

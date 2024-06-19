@@ -9,6 +9,7 @@ use crate::linalg::{lup, solve};
 use crate::vector::Vector;
 
 #[derive(Debug)]
+/// Matrix structure.
 pub struct Matrix {
     rows: u8,                       // Number of rows in the matrix.
     cols: u8,                       // Number of columns in the matrix.
@@ -17,7 +18,7 @@ pub struct Matrix {
 }
 
 impl Matrix {
-    // This function is used to create a new matrix of size m x n.
+    /// This method is used to create a new matrix of size m x n.
     pub fn new() -> Self {
         Self {
             rows: 0,
@@ -27,7 +28,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to initialize a matrix of size m x n.
+    /// This method is used to initialize a matrix of size m x n.
     pub fn init(self: &mut Self, rows: u8, cols: u8) -> Result<(), LinalgError> {
         // Check if the matrix has already been initialized.
         if self.initialized {
@@ -45,7 +46,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to reinitialize a matrix of size m x n.
+    /// This method is used to reinitialize a matrix of size m x n.
     pub fn reinit(self: &mut Self, rows: u8, cols: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -60,7 +61,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to get the number of rows (m) of the matrix of size m x n.
+    /// This method is used to get the number of rows (m) of the matrix of size m x n.
     pub fn get_rows(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -71,7 +72,7 @@ impl Matrix {
         Ok(self.rows)   // Return the value with no error.
     }
 
-    // This function is used to set the number of rows (m) of the matrix of size m x n.
+    /// This method is used to set the number of rows (m) of the matrix of size m x n.
     pub(crate) fn set_rows(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -90,7 +91,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to get the number of columns (n) of the matrix of size m x n.
+    /// This method is used to get the number of columns (n) of the matrix of size m x n.
     pub fn get_cols(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -101,7 +102,7 @@ impl Matrix {
         Ok(self.cols)   // Return the value with no error.
     }
 
-    // This function is used to set the number of columns (n) of the matrix of size m x n.
+    /// This method is used to set the number of columns (n) of the matrix of size m x n.
     pub(crate) fn set_cols(self: &mut Self, cols: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -134,12 +135,12 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to verify if the matrix is initialized or not.
+    /// This method is used to verify if the matrix is initialized or not.
     pub fn is_initialized(self: &Self) -> bool {
         self.initialized
     }
 
-    // This function is used to assign a value to a specific element of a matrix of size m x n.
+    /// This method is used to assign a value to a specific element of a matrix of size m x n.
     pub fn set_element(self: &mut Self, row: u8, col: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -159,7 +160,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to access a specific element of a matrix of size m x n.
+    /// This method is used to access a specific element of a matrix of size m x n.
     pub fn get_element(self: &Self, row: u8, col: u8) -> Result<f32, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -178,7 +179,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to fill an entire matrix of size m x n with a given value.
+    /// This method is used to fill an entire matrix of size m x n with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the matrix.
         for row in 0..self.rows {
@@ -190,7 +191,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to check if a matrix is square or not.
+    /// This method is used to check if a matrix is square or not.
     pub fn is_square(self: &Self) -> Result<bool, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -204,7 +205,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to fill a square matrix of size (m x m) with the identity matrix.
+    /// This method is used to fill a square matrix of size m x n with the identity matrix.
     pub fn fill_identity(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
@@ -226,7 +227,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to check if two matrices have the same number of rows and columns.
+    /// This method is used to check if two matrices have the same number of rows and columns.
     pub fn is_same_size_as(self: &Self, other: &Matrix) -> Result<bool, LinalgError> {
         // Check that the matrices are initialized.
         if !self.initialized || !other.initialized {
@@ -239,7 +240,7 @@ impl Matrix {
         }
     }
 
-    // This function is used to duplicate/copy a matrix of size m x n.
+    /// This method is used to duplicate/copy a matrix of size m x n.
     pub fn copy_from(self: &mut Self, other: &Matrix) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -257,7 +258,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to check if two matrices are identical/equal or not.
+    /// This method is used to check if two matrices are identical/equal or not.
     pub fn is_equal_to(self: &Self, other: &Matrix, deviation: f32) -> Result<bool, LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -283,7 +284,7 @@ impl Matrix {
     }
 
     #[cfg(feature = "std")]
-    // This function is used to diplay a matrix of size m x n.
+    /// This method is used to diplay a matrix of size m x n (not available in no_std environment).
     pub fn print(self: &Self) -> Result<(), LinalgError> {
         // Iterate through each element and print it and move to the next row with a newline character.
         for row in 0..self.rows {
@@ -300,8 +301,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform the matrix addition operation of two matrices of size m x n.
-    // A = B + C.
+    /// This method is used to perform the matrix addition operation of two matrices of size m x n.
     pub fn add(&mut self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(matrix1)? {
@@ -329,7 +329,7 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
-    // This function is used to add another matrix to itself.
+    /// This method is used to add another matrix to itself.
     pub fn add_in_place(&mut self, other: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -351,7 +351,7 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
-    // This function is used to perform the matrix subtraction operation of two matrices of size m x n.
+    /// This method is used to perform the matrix subtraction operation of two matrices of size m x n.
     pub fn sub(self: &mut Self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(matrix1)? {
@@ -379,7 +379,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to subtract another matrix to itself.
+    /// This method is used to subtract another matrix to itself.
     pub fn sub_in_place(&mut self, other: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -401,7 +401,7 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
-    // This function is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
+    /// This method is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
     // Naive implementation, as it is not very efficient for large matrices (for larger matrices, use the "divide and conquer" strategy).
     pub fn mul(self: &mut Self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         if matrix1.cols != matrix2.rows || self.rows != matrix1.rows || self.cols != matrix2.cols {
@@ -426,7 +426,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to transpose a matrix of size m x n.
+    /// This method is used to transpose a matrix of size m x n.
     pub fn transpose(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -469,7 +469,7 @@ impl Matrix {
         Ok(())
     }
 
-    // This function is used to invert a square matrix of size (m x m)
+    /// This method is used to invert a square matrix of size m x n.
     pub fn invert(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
@@ -507,7 +507,7 @@ impl Matrix {
         Ok(())
     }
 
-    // This function is used to multiply by a scalar all elements of a matrix of size m x n.
+    /// This method is used to multiply by a scalar all elements of a matrix of size m x n.
     pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
@@ -520,7 +520,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    // This function is used to apply an exponent to all elements of a matrix of size m x n.
+    /// This method is used to apply an exponent to all elements of a matrix of size m x n.
     pub fn power_exponent(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
         // Iterate through each element and apply exponent.
         for row in 0..self.rows {
@@ -541,7 +541,7 @@ impl Matrix {
     }
     */
 
-    // This function is used to calculate the trace of a matrix of size m x n.
+    /// This method is used to calculate the trace of a matrix of size m x n.
     pub fn trace(self: &Self) -> Result<f32, LinalgError> {
         let mut trace: f32 = 0.0;
 
@@ -558,11 +558,12 @@ impl Matrix {
 
         QR decomposition is a matrix decomposition designed to factor a rectangular matrix into two matrices.
         One (Q) is orthogonal (or unitary in the complex case) and the other (R) is upper triangular (or upper triangular in the complex case).
-        The matrix Q is of size (m x m) and orthogonal (or unitary) which means that for the real case: Trans(Q).Q = I and for the complex case: Q*.Q = I.
+        The matrix Q is of size m x n and orthogonal (or unitary) which means that for the real case: Trans(Q).Q = I and for the complex case: Q*.Q = I.
         Where Trans(Q) is the transpose of Q and Q* is its transposed conjugate.
         The matrix R is upper triangular (or tri-superior) of size m x n which means that all elements below the main diagonal of R are zero.
     */
 
+    /// This method is used to perform QR decomposition of a matrix of size m x n.
     pub fn qr_decomp(self: &Self) -> Result<(Self, Self), LinalgError> {
         let mut q: Matrix = Matrix::new();
         q.init(self.rows, self.cols)?;
@@ -616,11 +617,13 @@ impl Matrix {
     }
 
     /*
+    /// This method is used to check if a matrix of size m x n is in row echelon form.
     pub fn is_row_echelon_form(self: &Self) -> Result<bool, LinalgError> {
 
     }
     */
 
+    /// This method is used to check if a matrix of size m x n is upper triangular.
     pub fn is_upper_triangular(self: &Self) -> Result<bool, LinalgError> {
         // Loops on every row except the first (which doesn't need to have null elements).
         for row in 1..self.rows {
@@ -636,6 +639,7 @@ impl Matrix {
         Ok(true)    // Return the result with no error.
     }
 
+    /// This method is used to check if a matrix of size m x n is lower triangular.
     pub fn is_lower_triangular(self: &Self) -> Result<bool, LinalgError> {
         // Loops on every row except the last (which doesn't need to have null elements).
         for row in 0..self.rows - 1 {
@@ -651,6 +655,7 @@ impl Matrix {
         Ok(true)    // Return the result with no error.
     }
 
+    /// This method is used to calculate the frobenius norm of a matrix of size m x n.
     pub fn calculate_frobenius_norm(self: &Self) -> Result<f32, LinalgError> {
         let mut frobenius_norm: f32 = 0.0;
 
@@ -666,6 +671,7 @@ impl Matrix {
         Ok(frobenius_norm)
     }
 
+    /// This method is used to calculate the derminant of a matrix of size m x m.
     pub fn det(self: &Self) -> Result<f32, LinalgError> {
         let mut determinant: f32 = 1.0;
 
@@ -693,9 +699,10 @@ impl Matrix {
             determinant = -determinant;
         }
 
-        Ok(determinant)
+        Ok(determinant) // Return the determinant with no error.
     }
 
+    /// This method is used to check if a matrix of size m x n is symmetrical or not.
     pub fn is_symmetric(self: &Self) -> Result<bool, LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
@@ -715,6 +722,7 @@ impl Matrix {
         Ok(true)    // Return the result with no error.
     }
 
+    /// This method is used to ...
     pub fn is_positive_definite(self: &Self) -> Result<bool, LinalgError> {
         // Check that the matrix is symetric.
         if !self.is_symmetric()? {
@@ -743,6 +751,7 @@ impl Matrix {
         Ok(true)    // Return the result with no error.
     }
 
+    /// This method is used to ...
     pub fn chol(self: &Self) -> Result<Self, LinalgError> {
         // Check that the matrix is positive-definite.
         if !self.is_positive_definite()? {
@@ -816,6 +825,7 @@ impl Matrix {
         Ok(l)
     }
 
+    /// This method is used to ...
     pub fn dlyap(self: &Self, q: &Self) -> Result<Self, LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
@@ -841,6 +851,7 @@ impl Matrix {
         Ok(p)
     }
 
+    /// This method is used to check if a matrix of size m x n is orthogonal or not.
     pub fn is_orthogonal(self: &Self) -> Result<bool, LinalgError> {
         // Check if the matrix is square.
         if !self.is_square()? {
@@ -848,7 +859,7 @@ impl Matrix {
             return Ok(false);   // Return false with no error.
         }
 
-        let n = self.rows;
+        let m = self.rows;
 
         let determinant_abs = fabsf(self.det()?);   // Calculate the absolute value of the determinant of the matrix.
 
@@ -860,17 +871,17 @@ impl Matrix {
 
         // Create a copy of the actual matrix and transpose it.
         let mut transposed_mat = Self::new();
-        transposed_mat.init(n, n)?;
+        transposed_mat.init(m, m)?;
         transposed_mat.copy_from(&self)?;
         transposed_mat.transpose()?;
 
         // Create the identity matrix.
         let mut identity_matrix = Self::new();
-        identity_matrix.init(n, n)?;
+        identity_matrix.init(m, m)?;
         identity_matrix.fill_identity()?;
 
         let mut result = Self::new();
-        result.init(n, n)?;
+        result.init(m, m)?;
         result.mul(&self, &transposed_mat)?;
 
         // Check that the relationship R Tr(R) = I is satisfied.
@@ -882,14 +893,15 @@ impl Matrix {
         Ok(true)    // Return true with no error.
     }
 
-    pub fn is_so3(self: &Self) -> Result<bool, LinalgError> {
+    /// This method can be used to check if a matrix of size m x n belongs to the SO(n) group or not.
+    pub fn is_so_n(self: &Self) -> Result<bool, LinalgError> {
         // Check if the matrix is square.
         if !self.is_square()? {
             // The matrix is not square so can't be orthogonal.
             return Ok(false);   // Return false with no error.
         }
 
-        let n = self.rows;
+        let m = self.rows;
 
         // Check if the determinant is equal to 1.
         if !close_all(self.det()?, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
@@ -899,17 +911,17 @@ impl Matrix {
 
         // Create a copy of the actual matrix and transpose it.
         let mut transposed_mat = Self::new();
-        transposed_mat.init(n, n)?;
+        transposed_mat.init(m, m)?;
         transposed_mat.copy_from(&self)?;
         transposed_mat.transpose()?;
 
         // Create the identity matrix.
         let mut identity_matrix = Self::new();
-        identity_matrix.init(n, n)?;
+        identity_matrix.init(m, m)?;
         identity_matrix.fill_identity()?;
 
         let mut result = Self::new();
-        result.init(n, n)?;
+        result.init(m, m)?;
         result.mul(&self, &transposed_mat)?;
 
         // Check that the relationship R Tr(R) = I is satisfied.

@@ -2,72 +2,88 @@ extern crate utils;
 
 use utils::utils::UtilsError;
 
-pub const M_MAX: usize = 16;            // Maximum number of rows in a matrix and a vector.
-pub const N_MAX: usize = 16;            // Maximum number of columns in a matrix.
-pub const EPSILON: f32 = 0.0001;        // ...
-pub const PI: f32 = 3.141592653589793;  // ...
+pub const M_MAX: usize = 16;            /// Maximum number of rows in a matrix and a vector.
+pub const N_MAX: usize = 16;            /// Maximum number of columns in a matrix.
+pub const EPSILON: f32 = 0.0001;        /// ...
+pub const PI: f32 = 3.141592653589793;  /// ...
 
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum LinalgError {
-    NotInit,
-    AlreadyInit,
-    RowsNumberOverflow,
-    RowsNumberNull,
-    ColsNumberOverflow,
-    ColsNumberNull,
-    InvalidRow,
-    InvalidCol,
-    NotSquare,
-    NotSameSize,
-    UnchangedSize,
-    InvalidSize,
-    Unsolvable,
-    Singular,
-    NotPositiveDefinite,
-    NotSymetric,
-    NotInversible,
-    InvalidAlpha,
-    QuaternionSizeMismatch, // Remove it from linalg lib.
+    NotInit,                /// This error occurs when an attempt is made to manipulate an uninitialised vector or matrix.
+    AlreadyInit,            /// This error occurs when an attempt is made to initialise a matrix that has already been initialised.
+    RowsNumberOverflow,     /// This error occurs when the number of rows is greater than the maximum number.
+    RowsNumberNull,         /// This error occurs when the number of rows is zero.
+    ColsNumberOverflow,     /// ...
+    ColsNumberNull,         /// ...
+    InvalidRow,             /// ...
+    InvalidCol,             /// ...
+    NotSquare,              /// This error occurs when an operation that applies exclusively to a square matrix is applied to a non-square matrix.
+    NotSameSize,            /// This error occurs when an operation on a vector or matrix that requires them to have the same dimensions is not carried out.
+    UnchangedSize,          /// ...
+    InvalidSize,            /// ...
+    Unsolvable,             /// ...
+    Singular,               /// ...
+    NotPositiveDefinite,    /// ...
+    NotSymetric,            /// ...
+    NotInversible,          /// ...
+    InvalidAlpha,           /// ...
+    QuaternionSizeMismatch, /// Remove it from linalg lib.
     UtilsError(UtilsError),
 }
 
-// This function is used to check if the rows number is valid (rows number less than or equal to M_MAX).
+/// This function is used to check if the rows number is valid (rows number less than or equal to M_MAX).
 pub fn is_valid_rows_number(rows: u8) -> Result<(), LinalgError> {
+    // Check that the number of rows does not exceed the maximum number of rows (protection against the risk of buffer overflow).
     if rows > M_MAX as u8 {
-        Err(LinalgError::RowsNumberOverflow)
-    } else if rows == 0 {
-        Err(LinalgError::RowsNumberNull)
-    } else {
-        Ok(())
+        // The number of rows exceeds the maximum number of rows (risk of buffer overflow).
+        return Err(LinalgError::RowsNumberOverflow);    // Return an error.
     }
+
+    // Check that the number of rows is not zero.
+    if rows == 0 {
+        // The number of rows can't be zero.
+        return Err(LinalgError::RowsNumberNull);    // Return an error.
+    }
+
+    Ok(())  // Return no error.
 }
 
-// This function is used to check if the columns number is valid (colums number less than or equal to N_MAX).
+/// This function is used to check if the columns number is valid (colums number less than or equal to N_MAX).
 pub fn is_valid_cols_number(cols: u8) -> Result<(), LinalgError> {
+    // Check that the number of columns does not exceed the maximum number of columns (protection against the risk of buffer overflow).
     if cols > N_MAX as u8 {
-        Err(LinalgError::ColsNumberOverflow)
-    } else if cols == 0 {
-        Err(LinalgError::ColsNumberNull)
-    } else {
-        Ok(())
+        // The number of columns exceeds the maximum number of columns (risk of buffer overflow).
+        return Err(LinalgError::ColsNumberOverflow);    // Return an error.
     }
+
+    // Check that the number of columns is not zero.
+    if cols == 0 {
+        // The number of columns can't be zero.
+        return Err(LinalgError::ColsNumberNull);    // Return an error.
+    }
+
+    Ok(())  // Return no error.
 }
 
-// This function is used to check if the index is valid (row number less than number of rows).
+/// This function is used to check if the index is valid (row number less than number of rows).
 pub fn is_valid_row(row: u8, rows: u8) -> Result<(), LinalgError> {
+    // Check that the row to be accessed is valid.
     if row >= rows {
-        Err(LinalgError::InvalidRow)
-    } else {
-        Ok(())
+        // The row to be accessed is invalid or does not exist.
+        return Err(LinalgError::InvalidRow);    // Return an error.
     }
+
+    Ok(())  // Return an error.
 }
 
-// This function is used to check if the index is valid (column number less than number of columns).
+/// This function is used to check if the index is valid (column number less than number of columns).
 pub fn is_valid_col(col: u8, cols: u8) -> Result<(), LinalgError> {
+    // Check that the column to be accessed is valid.
     if col >= cols {
-        Err(LinalgError::InvalidCol)
-    } else {
-        Ok(())
+        // The column to be accessed is invalid or does not exist.
+        return Err(LinalgError::InvalidCol);    // Return an error.
     }
+
+    Ok(())  // Return no error.
 }

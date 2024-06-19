@@ -14,7 +14,7 @@ mod matrix_tests {
     //use crate::linalg::eigen;
     use crate::linalg:: {set_row, set_col, add_row, add_col};
 
-    // This test function is used to check that there are no errors in the correct creation of a matrix. No error expected.
+    /// This test function is used to check that there are no errors in the correct creation of a matrix. No error expected.
     #[test]
     //#[ignore]
     fn init_test_1() {
@@ -27,7 +27,7 @@ mod matrix_tests {
         assert!(result.is_ok(), "Unexpected result: {:?}.", result);
     }
 
-    // This test function is used to check that it is not possible to create a matrix with zero rows. Expected error.
+    /// This test function is used to check that it is not possible to create a matrix with zero rows. Expected error.
     #[test]
     //#[ignore]
     fn init_test_2() {
@@ -41,7 +41,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::RowsNumberNull, "Unexpected error.");
     }
 
-    // This test function is used to check that it is not possible to create a matrix with zero columns. Expected error.
+    /// This test function is used to check that it is not possible to create a matrix with zero columns. Expected error.
     #[test]
     //#[ignore]
     fn init_test_3() {
@@ -55,7 +55,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::ColsNumberNull, "Unexpected error.");
     }
 
-    // This test function is used to check that it is not possible to create a matrix with a number of rows greater than M_MAX. Expected error.
+    /// This test function is used to check that it is not possible to create a matrix with a number of rows greater than M_MAX. Expected error.
     #[test]
     //#[ignore]
     fn init_test_4() {
@@ -69,7 +69,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::RowsNumberOverflow, "Unexpected error.");
     }
 
-    // This test function is used to check that it is not possible to create a matrix with a number of columns greater than N_MAX. Expected error.
+    /// This test function is used to check that it is not possible to create a matrix with a number of columns greater than N_MAX. Expected error.
     #[test]
     //#[ignore]
     fn init_test_5() {
@@ -83,7 +83,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::ColsNumberOverflow, "Unexpected error.");
     }
 
-    // This test function is used to check that it is not possible to initialize a matrix that has already been initialized. Expected error.
+    /// This test function is used to check that it is not possible to initialize a matrix that has already been initialized. Expected error.
     #[test]
     //#[ignore]
     fn init_test_6() {
@@ -98,7 +98,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::AlreadyInit, "Unexpected error.");
     }
 
-    // This test function is used to check that there are no errors when a matrix element is correctly modified. No error expected.
+    /// This test function is used to check that there are no errors when a matrix element is correctly modified. No error expected.
     #[test]
     //#[ignore]
     fn set_element_test_1() {
@@ -117,7 +117,7 @@ mod matrix_tests {
         }
     }
 
-    // This test function is used to check that it is not possible to modify an element of an uninitialized matrix. Expected error.
+    /// This test function is used to check that it is not possible to modify an element of an uninitialized matrix. Expected error.
     #[test]
     //#[ignore]
     fn set_element_test_2() {
@@ -129,7 +129,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::NotInit, "Unexpected error.");
     }
 
-    // This test function is used to check that it is not possible to modify an element in a non-existent row of an initialized matrix. Expected error.
+    /// This test function is used to check that it is not possible to modify an element in a non-existent row of an initialized matrix. Expected error.
     #[test]
     //#[ignore]
     fn set_element_test_3() {
@@ -145,7 +145,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::InvalidRow, "Unexpected error.");
     }
 
-    // This test function is used to check that it is not possible to modify an element in a non-existent column of an initialized matrix. Expected error.
+    /// This test function is used to check that it is not possible to modify an element in a non-existent column of an initialized matrix. Expected error.
     #[test]
     //#[ignore]
     fn set_element_test_4() {
@@ -161,7 +161,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap_err(), LinalgError::InvalidCol, "Unexpected error.");
     }
 
-    // This test function is used to check that there are no errors when correctly accessing an element in a matrix. No error expected.
+    /// This test function is used to check that there are no errors when correctly accessing an element in a matrix. No error expected.
     #[test]
     //#[ignore]
     fn get_element_test_1() {
@@ -181,7 +181,7 @@ mod matrix_tests {
         }
     }
 
-    //
+    ///
     #[test]
     //#[ignore]
     fn get_element_test_2() {
