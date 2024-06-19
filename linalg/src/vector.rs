@@ -29,14 +29,14 @@ impl<T: Default + Copy> Vector<T> {
         if self.initialized {
             // The vector has already been initialized.
             return Err(LinalgError::AlreadyInit);   // Return an error.
-        } else {
-            is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
-
-            self.rows = rows;               // Set the number of rows in the vector.
-            self.initialized = true;        // Set the initialization flag to true.
-
-            Ok(())  // Return no error.
         }
+
+        is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
+
+        self.rows = rows;               // Set the number of rows in the vector.
+        self.initialized = true;        // Set the initialization flag to true.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to reinitialize a vector of size m x 1.
@@ -44,24 +44,24 @@ impl<T: Default + Copy> Vector<T> {
         // Check that the vector is initialized.
         if !self.initialized {
             // The vector is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            self.initialized = false;   // Set the initialization flag to false.
-
-            self.init(rows)?;           // Reinitialize the vector.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        self.initialized = false;   // Set the initialization flag to false.
+
+        self.init(rows)?;           // Reinitialize the vector.
+
+        Ok(())  // Return no error.
     }
 
     pub fn get_rows(self: &Self) -> Result<u8, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
             // The vector is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            Ok(self.rows)   // Return the value with no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        Ok(self.rows)   // Return the value with no error.
     }
 
     pub fn is_initialized(self: &Self) -> bool {
@@ -75,14 +75,14 @@ impl Vector<u8> {
         // Check that the vector is initialized.
         if !self.initialized {
             // The vector is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            is_valid_row(row, self.rows)?;  // Check if the row exists.
-
-            self.elements[row as usize] = value;    // Set the value to the specified vector element.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        is_valid_row(row, self.rows)?;  // Check if the row exists.
+
+        self.elements[row as usize] = value;    // Set the value to the specified vector element.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to access a specific element of a vector of size m x 1.
@@ -90,14 +90,14 @@ impl Vector<u8> {
         // Check that the vector is initialized.
         if !self.initialized {
             // The vector is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            is_valid_row(row, self.rows)?;  // Check if the row exists.
-
-            let value = self.elements[row as usize];    // Retrieve the value of the specified element from the vector.
-
-            Ok(value)   // Return the value with no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        is_valid_row(row, self.rows)?;  // Check if the row exists.
+
+        let value = self.elements[row as usize];    // Retrieve the value of the specified element from the vector.
+
+        Ok(value)   // Return the value with no error.
     }
 }
 
@@ -184,6 +184,13 @@ impl Vector<f32> {
         }
 
         Ok(())  // Return no error.
+    }
+
+    pub fn copy(self: &Self) -> Result<Self, LinalgError> {
+        let mut copied_vect: Vector<f32> = Vector::new();
+        copied_vect.copy_from(&self)?;
+
+        Ok(copied_vect)
     }
 
     // This function is used to perform the vector addition operation of two vectors of size m x 1.
@@ -495,3 +502,15 @@ pub fn lerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vect
 
     Ok(v)   // Return the interpolated vector with no error.
 }
+
+/*
+// This function is used to duplicate/copy a vector of size m x 1.
+pub fn copy_from(vect: &Vector<f32>) -> Result<Vector<f32>, LinalgError> {
+    let mut copied_vect: Vector<f32> = Vector::new();   // Create a vector containing a copy of each of the components of the original vector.
+    copied_vect.init(vect.get_rows()?)?;                // Initialise it with the same size as the original vector.
+
+    copied_vect.copy_from(&vect)?;                      // Perform the copy.
+
+    Ok(copied_vect) // Return the copy of the vector with no error.
+}
+*/

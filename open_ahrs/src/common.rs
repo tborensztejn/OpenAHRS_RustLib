@@ -22,10 +22,13 @@ pub enum OpenAHRSError {
     MagNotInit,
     MagAlreadyInit,
     AEMethodError,
+
+    AQUAFilterAlreadyInit,
     AQUAFilterNotInit,
     InvalidQuaternion,
     InvalidAQUAMode,
     InvalidAQUAInterpolationTreshold,
+
     InvalidGyroRawMeasurements,
     LinalgError(LinalgError),
 }

@@ -32,17 +32,17 @@ impl Matrix {
         // Check if the matrix has already been initialized.
         if self.initialized {
             // The matrix has already been initialized.
-            Err(LinalgError::AlreadyInit)   // Return an error.
-        } else {
-            is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
-            is_valid_cols_number(cols)?;    // Check that the number of columns does not exceed N_MAX.
-
-            self.rows = rows;           // Set the number of rows in the matrix.
-            self.cols = cols;           // Set the number of columns in the matrix.
-            self.initialized = true;    // Set the initialization flag to true.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::AlreadyInit);   // Return an error.
         }
+
+        is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
+        is_valid_cols_number(cols)?;    // Check that the number of columns does not exceed N_MAX.
+
+        self.rows = rows;               // Set the number of rows in the matrix.
+        self.cols = cols;               // Set the number of columns in the matrix.
+        self.initialized = true;        // Set the initialization flag to true.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to reinitialize a matrix of size m x n.
@@ -50,14 +50,14 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            self.initialized = false;   // Set the initialization flag to false.
-
-            self.init(rows, cols)?;     // Reinitialize the matrix.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        self.initialized = false;   // Set the initialization flag to false.
+
+        self.init(rows, cols)?;     // Reinitialize the matrix.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to get the number of rows (m) of the matrix of size m x n.
@@ -65,10 +65,10 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            Ok(self.rows)   // Return the value with no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        Ok(self.rows)   // Return the value with no error.
     }
 
     // This function is used to set the number of rows (m) of the matrix of size m x n.
@@ -76,15 +76,18 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else if rows == self.rows {
-            Err(LinalgError::UnchangedSize) // Return an error.
-        } else {
-            is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
-            self.rows = rows;               // Set the number of rows in the matrix.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        if rows == self.rows {
+            return Err(LinalgError::UnchangedSize); // Return an error.
+        }
+
+        is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
+
+        self.rows = rows;               // Set the number of rows in the matrix.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to get the number of columns (n) of the matrix of size m x n.
@@ -92,10 +95,10 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            Ok(self.cols)   // Return the value with no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        Ok(self.cols)   // Return the value with no error.
     }
 
     // This function is used to set the number of columns (n) of the matrix of size m x n.
@@ -103,31 +106,32 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else if cols == self.cols {
-            Err(LinalgError::UnchangedSize) // Return an error.
-        } else {
-            is_valid_cols_number(cols)?;    // Check that the number of columns does not exceed N_MAX.
-            //self.cols = cols;               // Set the number of columns in the matrix.
-
-            let new_elements = {
-                let mut new_elements = [0.0; M_MAX * N_MAX];
-
-                // Copy existing elements to the new array with the updated number of columns.
-                for row in 0..self.rows {
-                    for col in 0..self.cols {
-                        new_elements[row as usize * cols as usize + col as usize] = self.elements[row as usize * self.cols as usize + col as usize];
-                    }
-                }
-
-                new_elements
-            };
-
-            self.cols = cols;               // Set the number of columns.
-            self.elements = new_elements;   // Set the new elements.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        if cols == self.cols {
+            return Err(LinalgError::UnchangedSize); // Return an error.
+        }
+
+        is_valid_cols_number(cols)?;    // Check that the number of columns does not exceed N_MAX.
+
+        let new_elements = {
+            let mut new_elements = [0.0; M_MAX * N_MAX];
+
+            // Copy existing elements to the new array with the updated number of columns.
+            for row in 0..self.rows {
+                for col in 0..self.cols {
+                    new_elements[row as usize * cols as usize + col as usize] = self.elements[row as usize * self.cols as usize + col as usize];
+                }
+            }
+
+            new_elements
+        };
+
+        self.cols = cols;               // Set the number of columns.
+        self.elements = new_elements;   // Set the new elements.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to verify if the matrix is initialized or not.
@@ -140,18 +144,19 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            is_valid_value(value).map_err(LinalgError::UtilsError)?;    // Check that the value is valid.
-
-            is_valid_row(row, self.rows)?;  // Check if the row exists.
-            is_valid_col(col, self.cols)?;  // Check if the column exists.
-
-            let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
-            self.elements[index] = value;                           // Set the value to the specified matrix element.
-
-            Ok(())  // Return no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        is_valid_value(value).map_err(LinalgError::UtilsError)?;    // Check that the value is valid.
+
+        is_valid_row(row, self.rows)?;  // Check if the row exists.
+        is_valid_col(col, self.cols)?;  // Check if the column exists.
+
+        let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
+
+        self.elements[index] = value;   // Set the value to the specified matrix element.
+
+        Ok(())  // Return no error.
     }
 
     // This function is used to access a specific element of a matrix of size m x n.
@@ -919,7 +924,7 @@ impl Matrix {
 
 // This function is used to duplicate/copy a matrix of size m x n.
 pub fn copy_from(matrix: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut copied_matrix: Matrix = Matrix::new();
+    let mut copied_matrix = Matrix::new();
     copied_matrix.init(matrix.get_rows()?, matrix.get_cols()?)?;
     copied_matrix.copy_from(&matrix)?;
 
@@ -928,7 +933,7 @@ pub fn copy_from(matrix: &Matrix) -> Result<Matrix, LinalgError> {
 
 // This function is used to perform the matrix addition operation of two matrices of size m x n.
 pub fn add(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut result_matrix: Matrix = Matrix::new();
+    let mut result_matrix = Matrix::new();
     result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
     result_matrix.add(&matrix1, &matrix2)?;
 
@@ -937,7 +942,7 @@ pub fn add(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
 
 // This function is used to perform the matrix subtraction operation of two matrices of size m x n.
 pub fn sub(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut result_matrix: Matrix = Matrix::new();
+    let mut result_matrix = Matrix::new();
     result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
     result_matrix.sub(&matrix1, &matrix2)?;
 
@@ -947,7 +952,7 @@ pub fn sub(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
 // This function is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
 // Naive implementation, as it is not very efficient for large matrices (for larger matrices, use the "divide and conquer" strategy).
 pub fn mul(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut result_matrix: Matrix = Matrix::new();
+    let mut result_matrix = Matrix::new();
     result_matrix.init(matrix1.get_rows()?, matrix2.get_cols()?)?;
     result_matrix.mul(&matrix1, &matrix2)?;
 
