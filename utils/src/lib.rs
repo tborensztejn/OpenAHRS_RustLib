@@ -10,6 +10,7 @@ pub mod utils {
         Inf,
     }
 
+    // This function is used to verify if a value is valid before using it.
     pub fn is_valid_value(value: f32) -> Result<(), UtilsError> {
         if value.is_nan() {
             Err(UtilsError::Nan)
@@ -49,6 +50,22 @@ pub mod utils {
     }
 
     pub fn max<T: Ord + Sized>(x: T, y: T) -> T {
+        if x > y {
+            x
+        } else {
+            y
+        }
+    }
+
+    pub fn minf<T: PartialOrd + Sized>(x: T, y: T) -> T {
+        if x < y {
+            x
+        } else {
+            y
+        }
+    }
+
+    pub fn maxf<T: PartialOrd + Sized>(x: T, y: T) -> T {
         if x > y {
             x
         } else {

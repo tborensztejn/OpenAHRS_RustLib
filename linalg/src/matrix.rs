@@ -56,6 +56,7 @@ impl Matrix {
 
         self.initialized = false;   // Set the initialization flag to false.
 
+        // TODO: use set_rows() and set_cols()
         self.init(rows, cols)?;     // Reinitialize the matrix.
 
         Ok(())  // Return no error.

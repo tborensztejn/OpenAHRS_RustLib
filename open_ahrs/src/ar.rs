@@ -51,7 +51,8 @@ impl AR {
         gyrometer_config: GyrometerConfig,  // Gyrometer configuration.
         ts: f32,                            // Sampling period.
         method: NIM,                        // Numerical integration method.
-        order: u8                           // Order of the numerical integration method.
+        //order: Option<u8>                   // Order of the numerical integration method.
+        order: u8
         ) -> Result<(), OpenAHRSError> {
             self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
             self.attitude.init(4)?;                 // Initialize the vector that will be used as quaternion.
@@ -60,7 +61,7 @@ impl AR {
             self.method = method;                   // Set the numerical integration method that will be used to estimate the attitude.
             self.order = order;                     // Set the order of the method.
 
-            self.initialized = true;    // Set initialization status flag to true.
+            self.initialized = true;                // Set initialization status flag to true.
 
             Ok(())  // Return no error.
     }

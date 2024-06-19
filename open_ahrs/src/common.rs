@@ -1,14 +1,16 @@
 extern crate linalg;
 
 use linalg::matrix::Matrix;
-use linalg::vector::Vector;
 use linalg::common::{LinalgError};
+
+//pub(crate) const MAX_ORDER: usize = 5;  /// Maximum order of numerical integration methods.
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+/// All numerical integration methods supported by OpenAHRS.
 pub enum NumericalIntegrationMethod {
-    ClosedForm,
-    TaylorSeries,
+    ClosedForm,     // Closed form solution (not very suitable for numerical implementations).
+    TaylorSeries,   //
     Euler,
     AdamsBashforth,
     RungeKutta,
@@ -16,9 +18,11 @@ pub enum NumericalIntegrationMethod {
 
 #[derive(Debug)]
 #[derive(PartialEq)]
+/// All OpenAHRS errors.
 pub enum OpenAHRSError {
-    GyrNotInit,
-    GyrAlreadyInit,
+    // Sensors errors.
+    GyrNotInit,                 /// This error occurs when an attempt is made to use an uninitialised gyrometer.
+    GyrAlreadyInit,             /// This error occurs when an attempt is made to initialise a gyro that has already been initialised.
     InvalidCorrectionMatrix,
     InvalidStaticBiases,
     AccNotInit,
@@ -26,8 +30,10 @@ pub enum OpenAHRSError {
     MagNotInit,
     MagAlreadyInit,
 
+    // AR filter errors.
     ARMethodError,
 
+    // AQUA filter errors.
     AQUAFilterAlreadyInit,
     AQUAFilterNotInit,
     InvalidQuaternion,
@@ -35,6 +41,10 @@ pub enum OpenAHRSError {
     InvalidAQUAInterpolationTreshold,
 
     InvalidGyroRawMeasurements,
+
+
+
+
     LinalgError(LinalgError),
 }
 
@@ -44,14 +54,14 @@ impl From<LinalgError> for OpenAHRSError {
     }
 }
 
-//#[cfg(feature = "std")]
-//use linalg::matrix::Matrix;
 #[cfg(feature = "std")]
 use linalg::common::is_valid_cols_number;
 #[cfg(feature = "std")]
 use quaternion::quaternion::Quaternion;
 #[cfg(feature = "std")]
 use linalg::vector::dot_product;
+#[cfg(feature = "std")]
+use linalg::vector::Vector;
 
 #[cfg(feature = "std")]
 pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {

@@ -10,9 +10,8 @@ use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_
 
 use quaternion::quaternion::Quaternion;
 use linalg::linalg::{vector_to_matrix, col_to_vector};
-use linalg::matrix::{Matrix, mul};
+use linalg::matrix::mul;
 use linalg::vector::Vector;
-use linalg::common::EPSILON;
 use utils::utils::in_range;
 use libm::{sqrtf, fabsf};
 
@@ -48,7 +47,7 @@ pub struct AQUA {
 }
 
 impl AQUA {
-    // This function is used to create a new AQUA filter.
+    /// This method is used to create a new AQUA filter.
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
             // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
@@ -60,18 +59,18 @@ impl AQUA {
 
             // Filter settings.
             ts:         0.01,               // Default sampling period.
-            adaptive:   true,               // Adaptive gain is activated by default.
-            alpha:      0.01_f32,           // Interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
-            beta:       0.01_f32,           // Interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
-            t1:         0.1_f32,            // Adaptative gain first treshold.
-            t2:         0.2_f32,            // Adaptative gain second treshold.
-            t_acc:      0.9_f32,            // Interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
-            t_mag:      0.9_f32,            // Interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
-            mode:       Mode::MARG,         // Mode of the filter.
-            order:      2_u8,               // Order of the numerical integration method.
-            method:     NIM::ClosedForm,    // Numerical integration method.
+            adaptive:   true,               // Default adaptive gain is activated by default.
+            alpha:      0.01_f32,           // Default interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
+            beta:       0.01_f32,           // Default interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
+            t1:         0.1_f32,            // Default adaptative gain first treshold.
+            t2:         0.2_f32,            // Default adaptative gain second treshold.
+            t_acc:      0.9_f32,            // Default interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
+            t_mag:      0.9_f32,            // Default interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
+            mode:       Mode::MARG,         // Default mode of the filter.
+            order:      2_u8,               // Default order of the numerical integration method.
+            method:     NIM::ClosedForm,    // Default numerical integration method.
 
-            initialized: false,             // Initialization status.
+            initialized: false,             // Default initialization status.
         };
 
         Ok(aqua)    // Return the new filter with no error.
@@ -249,9 +248,9 @@ impl AQUA {
         az = a_local.get_element(2)?;
 
         // Retrieve corrected magnetometer measurements.
-        let mut mx = self.mag.get_x_magnetic_field()?;
-        let mut my = self.mag.get_y_magnetic_field()?;
-        let mut mz = self.mag.get_z_magnetic_field()?;
+        let mx = self.mag.get_x_magnetic_field()?;
+        let my = self.mag.get_y_magnetic_field()?;
+        let mz = self.mag.get_z_magnetic_field()?;
 
         let mut m_local: Vector<f32> = Vector::new();   // Create the magnetic field intensity vector expressed in the local reference frame.
         m_local.init(3)?;                               // Initialize it.
@@ -262,11 +261,6 @@ impl AQUA {
         m_local.set_element(2, mz)?;
 
         m_local.normalize()?;   // Normalize it.
-
-        // Retrieve vector components.
-        mx = m_local.get_element(0)?;
-        my = m_local.get_element(1)?;
-        mz = m_local.get_element(2)?;
 
         // Define quaternion components.
         let mut qw: f32 = 0.0;
@@ -283,9 +277,9 @@ impl AQUA {
         // Check the type of mode.
         if self.mode == Mode::MARG {
             // Retrieve corrected gyrometer measurements.
-            let mut p = self.gyr.get_x_angular_rate()?;
-            let mut q = self.gyr.get_y_angular_rate()?;
-            let mut r = self.gyr.get_z_angular_rate()?;
+            let p = self.gyr.get_x_angular_rate()?;
+            let q = self.gyr.get_y_angular_rate()?;
+            let r = self.gyr.get_z_angular_rate()?;
 
             let mut w_local: Vector<f32> = Vector::new();   // Create the angular velocity pseudovector expressed in the local reference frame.
             w_local.init(3)?;                               // Initialize it.
@@ -299,7 +293,7 @@ impl AQUA {
             // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
             let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
             omega.mul_by_scalar(0.5)?;
-            let mut derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude)?)?;
+            let derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude)?)?;
 
             let mut delta_quat = col_to_vector(&derivative_quat, 0)?;
             delta_quat.mul_by_scalar(self.ts)?;
@@ -318,12 +312,6 @@ impl AQUA {
             let gx = a_global.get_element(0)?;
             let gy = a_global.get_element(1)?;
             let gz = a_global.get_element(2)?;
-
-            // Define quaternion components.
-            let mut qw: f32 = 0.0;
-            let mut qx: f32 = 0.0;
-            let mut qy: f32 = 0.0;
-            let mut qz: f32 = 0.0;
 
             // Determine the quaternion (partial orientation) from the accelerometer measurements.
             if gz < 0.0 {

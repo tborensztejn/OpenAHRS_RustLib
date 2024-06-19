@@ -1,13 +1,17 @@
 extern crate linalg;
 extern crate utils;
+extern crate libm;
 
 use linalg::vector::Vector;
 use linalg::matrix::Matrix;
 use linalg::common::{EPSILON, LinalgError};
-use utils::utils::close_all;
+use utils::utils::{close_all, minf, maxf};
+use libm::sqrtf;
 
 pub trait Quaternion {
+    /// This method is used to check if a vector can be used as a quaternion.
     fn is_quaternion(self: &Self) -> Result<bool, LinalgError>;
+    /// This method is used to check if the quaternion is real or not.
     fn is_real(self: &Self) -> Result<bool, LinalgError>;
     fn is_pure(self: &Self) -> Result<bool, LinalgError>;
     fn set_qw(self: &mut Self, qw: f32) -> Result<(), LinalgError>;
@@ -32,11 +36,14 @@ pub trait Quaternion {
     //fn mult_L(self: &Self) -> Result<Matrix, LinalgError>;
     //fn mult_R(self: &Self) -> Result<Matrix, LinalgError>;
     //fn rotate(self: &Self, Self) -> Result<Self, LinalgError>;
-
+    /// This method is used to convert a DCM into a quaternion using Hughe's method.
+    /// Source: Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
+    fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
+    fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError>;
 }
 
 impl Quaternion for Vector<f32> {
-    // This function is used to check if a vector can be used as a quaternion.
+    // This method is used to check if a vector can be used as a quaternion.
     fn is_quaternion(self: &Self) -> Result<bool, LinalgError> {
         // Check that the vector size is 4x1.
         if self.get_rows()? != 4 {
@@ -46,10 +53,11 @@ impl Quaternion for Vector<f32> {
         }
     }
 
+    // This method is used to check if the quaternion is real or not.
     fn is_real(self: &Self) -> Result<bool, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         // Check if the components of the scalar part are equal to 0.
@@ -65,7 +73,7 @@ impl Quaternion for Vector<f32> {
     fn is_pure(self: &Self) -> Result<bool, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         // Check if the real part componentof the quaternion is equal to 0.
@@ -80,7 +88,7 @@ impl Quaternion for Vector<f32> {
     fn set_qw(self: &mut Self, qw: f32) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         self.set_element(0, qw)?;   // Set the qw value.
@@ -92,7 +100,7 @@ impl Quaternion for Vector<f32> {
     fn get_qw(self: &Self) -> Result<f32, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         Ok(self.get_element(0)?)
@@ -102,7 +110,7 @@ impl Quaternion for Vector<f32> {
     fn set_qx(self: &mut Self, qx: f32) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         self.set_element(1, qx)?;   // Set the qx value.
@@ -114,7 +122,7 @@ impl Quaternion for Vector<f32> {
     fn get_qx(self: &Self) -> Result<f32, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         Ok(self.get_element(1)?)
@@ -124,7 +132,7 @@ impl Quaternion for Vector<f32> {
     fn set_qy(self: &mut Self, qy: f32) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         self.set_element(2, qy)?;   // Set the qy value.
@@ -136,7 +144,7 @@ impl Quaternion for Vector<f32> {
     fn get_qy(self: &Self) -> Result<f32, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         Ok(self.get_element(2)?)
@@ -146,7 +154,7 @@ impl Quaternion for Vector<f32> {
     fn set_qz(self: &mut Self, qz: f32) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         self.set_element(3, qz)?;   // Set the qz value.
@@ -158,7 +166,7 @@ impl Quaternion for Vector<f32> {
     fn get_qz(self: &Self) -> Result<f32, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         Ok(self.get_element(3)?)
@@ -168,7 +176,7 @@ impl Quaternion for Vector<f32> {
     fn get_vector_part(self: &Self) -> Result<Vector<f32>, LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         let mut qv: Vector<f32> = Vector::new();
@@ -189,7 +197,7 @@ impl Quaternion for Vector<f32> {
     fn fillq(self: &mut Self, qw: f32, qx: f32, qy: f32, qz: f32) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         // Fill the quaternion.
@@ -205,7 +213,7 @@ impl Quaternion for Vector<f32> {
     fn conjugate(self: &mut Self) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         // Retrieve components of the quaternion.
@@ -225,7 +233,7 @@ impl Quaternion for Vector<f32> {
     fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError> {
         // Check that these are all quaternions.
         if !self.is_quaternion()? || !quat1.is_quaternion()? || !quat2.is_quaternion()? {
-            return Err(LinalgError::QuaternionSizeMismatch) // Return an error.
+            return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
         // Extract components of the first quaternion (quat1).
@@ -317,5 +325,39 @@ impl Quaternion for Vector<f32> {
         if self.is_pure()? {
             //
         }
-        */
+    }
+    */
+
+    // This method is used to convert a DCM into a quaternion using Hughe's method.
+    // Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
+    // Caution! Here we assume that the matrix passed as a parameter to the method is a rotation matrix. If this is not the case, the algorithm will calculate aberrant results.
+    fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError> {
+        let mut trace = dcm.trace()?;
+        trace = maxf(-1.0, minf(3.0, trace));
+
+        // Check if the rotation is null.
+        if close_all(trace, 3.0, EPSILON).map_err(LinalgError::UtilsError)? {
+            // The trace is 3, which implies that the DCM is the identity matrix and therefore the rotation is null.
+            self.fillq(1.0, 0.0, 0.0, 0.0)?;
+
+            return Ok(());  // Return no error.
+        }
+
+        let n = 0.5 * sqrtf(1.0 + trace);  // eq. 15 on p. 18 of "Spacecraft Attitude Dynamics".
+
+        if close_all(b, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+            // The trace is -1, which implies that the real part of quaternion is null and therefore the quaternion is pure.
+
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    // This method is used to convert a quaternion into Tait-Bryan (Euler) angles.
+    fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError> {
+        let mut euler_angles: Vector<f32> = Vector::new();
+        euler_angles.init(3)?;
+
+        Ok(euler_angles)
+    }
 }
