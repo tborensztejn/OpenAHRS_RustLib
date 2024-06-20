@@ -102,7 +102,7 @@ impl Vector<u8> {
 }
 
 impl Vector<f32> {
-    // This method is used to assign a value to a specific element of a vector of size m x 1.
+    /// This method is used to assign a value to a specific element of a vector of size m x 1.
     pub fn set_element(self: &mut Self, row: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -118,7 +118,7 @@ impl Vector<f32> {
         }
     }
 
-    // This method is used to access a specific element of a vector of size m x 1.
+    /// This method is used to access a specific element of a vector of size m x 1.
     pub fn get_element(self: &Self, row: u8) -> Result<f32, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -134,7 +134,7 @@ impl Vector<f32> {
     }
 
     #[cfg(feature = "std")]
-    // This method is used to diplay a vector of size m x 1.
+    /// This method is used to diplay a vector of size m x 1.
     pub fn print(self: &Self) -> Result<(), LinalgError> {
         // Iterate through each element and print it and move to the next row with a newline character.
         for row in 0..self.rows {
@@ -147,7 +147,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This method is used to check if two vectors have the same number of rows and columns.
+    /// This method is used to check if two vectors have the same number of rows and columns.
     pub fn is_same_size_as(self: &Self, other: &Self) -> Result<bool, LinalgError> {
         // Check that the vectors are initialized.
         if !self.initialized || !other.initialized {
@@ -160,7 +160,7 @@ impl Vector<f32> {
         }
     }
 
-    // This method is used to fill an entire vector of size m x 1 with a given value.
+    /// This method is used to fill an entire vector of size m x 1 with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the vector.
         for row in 0..self.rows {
@@ -170,7 +170,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This method is used to duplicate/copy a vector of size m x 1.
+    /// This method is used to copy a vector of size m x 1.
     pub fn copy_from(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -186,11 +186,14 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    pub fn copy(self: &Self) -> Result<Self, LinalgError> {
-        let mut copied_vect: Vector<f32> = Vector::new();
-        copied_vect.copy_from(&self)?;
+    /// This method is used to duplicate a vector of size m x 1.
+    pub fn duplicate(self: &Self) -> Result<Self, LinalgError> {
+        let mut duplicated_vect = Self::new();  // Create a new vector.
+        duplicated_vect.init(self.rows)?;       // Initialise it with the same dimension as the original vector.
 
-        Ok(copied_vect)
+        duplicated_vect.copy_from(&self)?;      // Copy the elements of the original vector.
+
+        Ok(duplicated_vect) // Return the duplicated vector with no error.
     }
 
     // This method is used to perform the vector addition operation of two vectors of size m x 1.

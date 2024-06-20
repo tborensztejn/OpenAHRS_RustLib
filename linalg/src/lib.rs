@@ -596,7 +596,7 @@ mod matrix_tests {
         mat.print().unwrap();
 
         //let v = mat.diag(None).unwrap();
-        let v = mat.diag(Some(1)).unwrap();
+        //let v = mat.diag(Some(1)).unwrap();
         let v = mat.diag(Some(-1)).unwrap();
 
         v.print().unwrap();

@@ -241,7 +241,7 @@ impl Matrix {
         }
     }
 
-    /// This method is used to duplicate/copy a matrix of size m x n.
+    /// This method is used to copy a matrix of size m x n.
     pub fn copy_from(self: &mut Self, other: &Matrix) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -257,6 +257,16 @@ impl Matrix {
         }
 
         Ok(())  // Return no error.
+    }
+
+    /// This method is used to duplicate a matrix of size m x n.
+    pub fn duplicate(self: &Self) -> Result<Self, LinalgError> {
+        let mut duplicated_mat = Self::new();       // Create a new matrix.
+        duplicated_mat.init(self.rows, self.cols)?; // Initialise it with the same dimensiosn as the original matrix.
+
+        duplicated_mat.copy_from(&self)?;    // Copy the elements of the original matrix.
+
+        Ok(duplicated_mat)  // Return the duplicated vector with no error.
     }
 
     /// This method is used to check if two matrices are identical/equal or not.
@@ -352,6 +362,19 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
+    // This method is used to ...
+    pub fn add_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(row, col)? + scalar;
+
+                self.set_element(row, col, element)?;
+            }
+        }
+
+        Ok(())  // Return no error.
+    }
+
     /// This method is used to perform the matrix subtraction operation of two matrices of size m x n.
     pub fn sub(self: &mut Self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
@@ -400,6 +423,19 @@ impl Matrix {
         }
 
         Ok(()) // Return no error.
+    }
+
+    // This method is used to ...
+    pub fn sub_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(row, col)? - scalar;
+
+                self.set_element(row, col, element)?;
+            }
+        }
+
+        Ok(())  // Return no error.
     }
 
     /// This method is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
@@ -470,7 +506,7 @@ impl Matrix {
         Ok(())
     }
 
-    /// This method is used to invert a square matrix of size m x n.
+    /// This method is used to invert a square matrix of size m x m.
     pub fn invert(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
@@ -544,6 +580,12 @@ impl Matrix {
 
     /// This method is used to calculate the trace of a matrix of size m x n.
     pub fn trace(self: &Self) -> Result<f32, LinalgError> {
+        // Check that the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square.
+            return Err(LinalgError::NotSquare); // Return an error.
+        }
+
         let mut trace: f32 = 0.0;
 
         // Loop through the minimum of m and n and accumulate diagonal elements to trace.

@@ -263,10 +263,10 @@ impl AQUA {
         m_local.normalize()?;   // Normalize it.
 
         // Define quaternion components.
-        let mut qw: f32 = 0.0;
-        let mut qx: f32 = 0.0;
-        let mut qy: f32 = 0.0;
-        let mut qz: f32 = 0.0;
+        let mut qw: f32;
+        let mut qx: f32;
+        let mut qy: f32;
+        let mut qz: f32;
 
         let mut acc_quat: Vector<f32> = Vector::new();  // Quaternion defining the orientation of the system and determined by accelerometer and gyrometer measurements.
         acc_quat.init(4)?;                              // Initialize it.
@@ -319,10 +319,12 @@ impl AQUA {
                 qw = l1;
                 qx = gy / (2.0 * l1);
                 qy = -gx / (2.0 * l1);
+                qz = 0.0;
             } else {
                 let l2 = sqrtf((1.0 + gz) / 2.0);
                 qw = gy / (2.0 * l2);
                 qx = l2;
+                qy = 0.0;
                 qz = -gx / (2.0 * l2);
             }
 
@@ -367,7 +369,7 @@ impl AQUA {
             let mag_quat_interpolated = Self::interpolate(&mag_quat, self.beta, self.t_mag)?;
 
             //self.attitude.mul(&copy_from(&self.attitude)?, &mag_quat_interpolated)?;
-            self.attitude.mul(&self.attitude.copy()?, &mag_quat_interpolated)?;
+            self.attitude.mul(&self.attitude.duplicate()?, &mag_quat_interpolated)?;
         } else if self.mode == Mode::AM {
             // Determine the partial orientation as a quaternion from the accelerometer measurements.
             if az < 0.0 {

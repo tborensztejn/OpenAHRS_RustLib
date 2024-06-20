@@ -292,12 +292,12 @@ impl Quaternion for Vector<f32> {
         let mut dcm = Matrix::new();    // Create the rotation matrix.
         dcm.init(3, 3)?;                // Initialize it.
 
-        let mut element: f32 = 0.0;     // Create a temporary variable to store an element of the matrix.
-
         let qw = self.get_qw()?;        // Retrieve qw component from the quaternion.
         let qx = self.get_qx()?;        // Retrieve qx component from the quaternion.
         let qy = self.get_qy()?;        // Retrieve qy component from the quaternion.
         let qz = self.get_qz()?;        // Retrieve qz component from the quaternion.
+
+        let mut element: f32;           // Create a temporary variable to store an element of the matrix.
 
         // Fill the first column of the rotation matrix.
         //element = 1.0 - 2.0*(qy * qy + qz * qz);
@@ -361,9 +361,9 @@ impl Quaternion for Vector<f32> {
         // Calculate the real part of the quaternion.
         let n = 0.5 * sqrtf(1.0 + trace);  // eq. 15 on p. 18 of "Spacecraft Attitude Dynamics".
 
-        let mut qx: f32 = 0.0;
-        let mut qy: f32 = 0.0;
-        let mut qz: f32 = 0.0;
+        let qx: f32;
+        let qy: f32;
+        let qz: f32;
 
         // Calculate the vector part of the quaternion.
         if allclose(n, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
@@ -373,13 +373,13 @@ impl Quaternion for Vector<f32> {
             e.mul_by_scalar(0.5)?;
             e.power_exponent(0.5)?;
 
-            let qx = e.get_element(0)?;
-            let qy = e.get_element(1)?;
-            let qz = e.get_element(2)?;
+            qx = e.get_element(0)?;
+            qy = e.get_element(1)?;
+            qz = e.get_element(2)?;
         } else {    // eq. 16 on p. 18 of "Spacecraft Attitude Dynamics".
-            let qx = 0.25 * (dcm.get_element(1, 2)? - dcm.get_element(2, 1)?) / n;
-            let qy = 0.25 * (dcm.get_element(2, 0)? - dcm.get_element(0, 2)?) / n;
-            let qz = 0.25 * (dcm.get_element(0, 1)? - dcm.get_element(1, 0)?) / n;
+            qx = 0.25 * (dcm.get_element(1, 2)? - dcm.get_element(2, 1)?) / n;
+            qy = 0.25 * (dcm.get_element(2, 0)? - dcm.get_element(0, 2)?) / n;
+            qz = 0.25 * (dcm.get_element(0, 1)? - dcm.get_element(1, 0)?) / n;
         }
 
         // Fill the quaternion.
