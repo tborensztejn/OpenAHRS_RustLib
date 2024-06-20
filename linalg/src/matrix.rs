@@ -1,7 +1,7 @@
 extern crate utils;
 extern crate libm;
 
-use utils::utils::{is_valid_value, close_all, min};
+use utils::utils::{is_valid_value, allclose, min};
 use libm::{powf, sqrtf, fabsf};
 use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
@@ -273,7 +273,7 @@ impl Matrix {
                 let element = self.get_element(row, col)?;
                 let other_element = other.get_element(row, col)?;
 
-                let result = close_all(element, other_element, deviation).map_err(LinalgError::UtilsError)?;
+                let result = allclose(element, other_element, deviation).map_err(LinalgError::UtilsError)?;
 
                 if !result {
                     return Ok(false);   // Return the result with no error.
@@ -631,7 +631,7 @@ impl Matrix {
             // We loop over the columns corresponding to the lower triangular matrix as a function of the current row.
             for col in 0..row {
                 // If the matrix is upper diagonal, the element must always be zero, otherwise the matrix cannot be upper diagonal.
-                if !close_all(self.get_element(row, col)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+                if !allclose(self.get_element(row, col)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
                     return Ok(false);   // Return the result with no error.
                 }
             }
@@ -647,7 +647,7 @@ impl Matrix {
             // We loop over the columns corresponding to the upper triangular matrix as a function of the current row.
             for col in row + 1..self.cols {
                 // If the matrix is lower triangular, the element must always be zero, otherwise the matrix cannot be lower triangular.
-                if !close_all(self.get_element(row, col)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+                if !allclose(self.get_element(row, col)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
                     return Ok(false);   // Return the result with no error.
                 }
             }
@@ -714,7 +714,7 @@ impl Matrix {
         for row in 0..self.rows {
             for col in 0..self.cols {
                 // If any element is not equal to its symmetric counterpart, the matrix is not symmetric.
-                if !close_all(self.get_element(row, col)?, self.get_element(col, row)?, EPSILON).map_err(LinalgError::UtilsError)? {
+                if !allclose(self.get_element(row, col)?, self.get_element(col, row)?, EPSILON).map_err(LinalgError::UtilsError)? {
                     return Ok(false);   // Return the result with no error.
                 }
             }
@@ -865,7 +865,7 @@ impl Matrix {
         let determinant_abs = fabsf(self.det()?);   // Calculate the absolute value of the determinant of the matrix.
 
         // Check if the determinant is equal to -1 or 1.
-        if !close_all(determinant_abs, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+        if !allclose(determinant_abs, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
             // The absolute value of the determinant is different from 1 so can't be orthogonal.
             return Ok(false);   // Return false wwith no error.
         }
@@ -905,7 +905,7 @@ impl Matrix {
         let m = self.rows;
 
         // Check if the determinant is equal to 1.
-        if !close_all(self.det()?, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+        if !allclose(self.det()?, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
             // The absolute value of the determinant is different from 1 so can't be orthogonal.
             return Ok(false);   // Return false wwith no error.
         }
@@ -932,6 +932,62 @@ impl Matrix {
         }
 
         Ok(true)    // Return true with no error.
+    }
+
+    /// This method is used to extract a specified diagonal of a matrix of size m x n.
+    // k: int, optional, is the diagonal in question. The default is 0. Use k>0 for diagonals above the main diagonal, and k<0 for diagonals below the main diagonal.
+    pub fn diag(self: &Self, k: Option<i8>) -> Result<Vector<f32>, LinalgError> {
+        let mut vect: Vector<f32> = Vector::new();
+
+        /*
+        // Check if the matrix is square.
+        if self.is_square()? {  // The matrix is square.
+            let m = self.rows()?;
+
+            vect.init(m)?;
+
+            for row in 0..m {
+                for col in 0..m {
+                    if row == col {
+                        let element = self.get_element(row, col)?;
+                        vect.set_element(row, element)?;
+                    }
+                }
+            }
+        } else {    // The matrix is not square.
+            // Add some code here.
+        }
+        */
+
+        // Retrieve matrix dimensions.
+        let m = self.rows as i8;
+        let n = self.cols as i8;
+
+        // Try to retrieve the diagonal to extract.
+        let k = k.unwrap_or(0);
+
+        // Calculate the lenght of the diagonal to extract.
+        let diag_len = if k >= 0 {
+            min(m, n - k)
+        } else {
+            min(m + k, n)
+        };
+
+        // Check if the diagonal length is valid.
+        if diag_len <= 0 {
+            return Err(LinalgError::InvalidDiagonalLength); // Return an error.
+        }
+
+        vect.init(diag_len as u8)?;
+
+        for i in 0..diag_len {
+            let row = if k >= 0 { i } else { i - k };
+            let col = if k >= 0 { i + k } else { i };
+            let element = self.get_element(row as u8, col as u8)?;
+            vect.set_element(i as u8, element)?;
+        }
+
+        Ok(vect)    // Return the diagonal as a vector with no error.
     }
 }
 

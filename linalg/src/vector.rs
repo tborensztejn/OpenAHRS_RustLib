@@ -1,7 +1,7 @@
 extern crate utils;
 
 use utils::utils::{is_valid_value, in_range};
-use libm::{acosf, sinf, sqrtf};
+use libm::{acosf, sinf, sqrtf, powf};
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
 
@@ -14,7 +14,7 @@ pub struct Vector<T> {
 }
 
 impl<T: Default + Copy> Vector<T> {
-    // This function is used to create a new vector of size m x 1.
+    // This method is used to create a new vector of size m x 1.
     pub fn new() -> Self {
         Self {
             rows: 0,
@@ -23,7 +23,7 @@ impl<T: Default + Copy> Vector<T> {
         }
     }
 
-    // This function is used to initialize a vector of size m x 1.
+    // This method is used to initialize a vector of size m x 1.
     pub fn init(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check if the vector has already been initialized.
         if self.initialized {
@@ -39,7 +39,7 @@ impl<T: Default + Copy> Vector<T> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to reinitialize a vector of size m x 1.
+    // This method is used to reinitialize a vector of size m x 1.
     pub fn reinit(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -70,7 +70,7 @@ impl<T: Default + Copy> Vector<T> {
 }
 
 impl Vector<u8> {
-    // This function is used to assign a value to a specific element of a vector of size m x 1.
+    // This method is used to assign a value to a specific element of a vector of size m x 1.
     pub fn set_element(self: &mut Self, row: u8, value: u8) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -85,7 +85,7 @@ impl Vector<u8> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to access a specific element of a vector of size m x 1.
+    // This method is used to access a specific element of a vector of size m x 1.
     pub fn get_element(self: &Self, row: u8) -> Result<u8, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -102,7 +102,7 @@ impl Vector<u8> {
 }
 
 impl Vector<f32> {
-    // This function is used to assign a value to a specific element of a vector of size m x 1.
+    // This method is used to assign a value to a specific element of a vector of size m x 1.
     pub fn set_element(self: &mut Self, row: u8, value: f32) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -118,7 +118,7 @@ impl Vector<f32> {
         }
     }
 
-    // This function is used to access a specific element of a vector of size m x 1.
+    // This method is used to access a specific element of a vector of size m x 1.
     pub fn get_element(self: &Self, row: u8) -> Result<f32, LinalgError> {
         // Check that the vector is initialized.
         if !self.initialized {
@@ -134,7 +134,7 @@ impl Vector<f32> {
     }
 
     #[cfg(feature = "std")]
-    // This function is used to diplay a vector of size m x 1.
+    // This method is used to diplay a vector of size m x 1.
     pub fn print(self: &Self) -> Result<(), LinalgError> {
         // Iterate through each element and print it and move to the next row with a newline character.
         for row in 0..self.rows {
@@ -147,7 +147,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to check if two vectors have the same number of rows and columns.
+    // This method is used to check if two vectors have the same number of rows and columns.
     pub fn is_same_size_as(self: &Self, other: &Self) -> Result<bool, LinalgError> {
         // Check that the vectors are initialized.
         if !self.initialized || !other.initialized {
@@ -160,7 +160,7 @@ impl Vector<f32> {
         }
     }
 
-    // This function is used to fill an entire vector of size m x 1 with a given value.
+    // This method is used to fill an entire vector of size m x 1 with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the vector.
         for row in 0..self.rows {
@@ -170,7 +170,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to duplicate/copy a vector of size m x 1.
+    // This method is used to duplicate/copy a vector of size m x 1.
     pub fn copy_from(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -193,7 +193,7 @@ impl Vector<f32> {
         Ok(copied_vect)
     }
 
-    // This function is used to perform the vector addition operation of two vectors of size m x 1.
+    // This method is used to perform the vector addition operation of two vectors of size m x 1.
     pub fn add(self: &mut Self, vector1: &Self, vector2: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(vector1)? {
@@ -219,7 +219,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to add another vector to itself.
+    // This method is used to add another vector to itself.
     pub fn add_in_place(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -239,7 +239,29 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform the vector subtraction operation of two vectors of size m x 1.
+    // This method is used to ...
+    pub fn add_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        for row in 0..self.rows {
+            let element = self.get_element(row)? + scalar;
+
+            self.set_element(row, element)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    // This method is used to ...
+    pub fn sub_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        for row in 0..self.rows {
+            let element = self.get_element(row)? - scalar;
+
+            self.set_element(row, element)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    // This method is used to perform the vector subtraction operation of two vectors of size m x 1.
     pub fn sub(self: &mut Self, vector1: &Self, vector2: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(vector1)? {
@@ -265,7 +287,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to subtract another vector to itself.
+    // This method is used to subtract another vector to itself.
     pub fn sub_in_place(self: &mut Self, other: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -285,7 +307,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to calculate the norm of a vector of size m x 1.
+    // This method is used to calculate the norm of a vector of size m x 1.
     pub fn calculate_norm(self: &Self) -> Result<f32, LinalgError> {
         let mut norm: f32 = 0.0;
 
@@ -304,7 +326,7 @@ impl Vector<f32> {
         Ok(norm)    // Return the calculated Euclidean norm with no error.
     }
 
-    // This function is used to normalize a vector of size m x 1.
+    // This method is used to normalize a vector of size m x 1.
     pub fn normalize(self: &mut Self) ->  Result<(), LinalgError> {
         let norm: f32 = self.calculate_norm()?; // Calculate the norm of the vector.
 
@@ -321,7 +343,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to multiply by a scalar all elements of a vector of size m x 1.
+    // This method is used to multiply by a scalar all elements of a vector of size m x 1.
     pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
@@ -332,7 +354,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to perform dot product between two vectors of size m x 1.
+    // This method is used to perform dot product between two vectors of size m x 1.
     pub fn dot_product(self: &mut Self, other: &Self) -> Result<f32, LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -350,7 +372,7 @@ impl Vector<f32> {
         Ok(scalar)  // Return the result with no error.
     }
 
-    // This function is used to perform the spherical interpolation (SLERP) of two vectors.
+    // This method is used to perform the spherical interpolation (SLERP) of two vectors.
     pub fn slerp(self: &mut Self, vect1: &Self, vect2: &Self, alpha: f32) -> Result<(), LinalgError> {
         // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
         if !in_range(alpha, 0.0_f32, 1.0_f32) {
@@ -386,7 +408,7 @@ impl Vector<f32> {
         Ok(())    // Return no error.
     }
 
-    // This function is used to perform the linear interpolation (LERP) of two vectors.
+    // This method is used to perform the linear interpolation (LERP) of two vectors.
     pub fn lerp(self: &mut Self, vect1: &Self, vect2: &Self, alpha: f32) -> Result<(), LinalgError> {
         // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
         if !in_range(alpha, 0.0_f32, 1.0_f32) {
@@ -416,6 +438,17 @@ impl Vector<f32> {
         self.add(&v1, &v2)?;
 
         Ok(())    // Return no error.
+    }
+
+    /// This method is used to apply an exponent to all elements of a vector of size m x 1.
+    pub fn power_exponent(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
+        // Iterate through each element and apply exponent.
+        for row in 0..self.rows {
+            let element = powf(self.get_element(row)?, exponent);
+            self.set_element(row, element)?;
+        }
+
+        Ok(())  // Return no error.
     }
 }
 

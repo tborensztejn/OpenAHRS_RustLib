@@ -570,4 +570,35 @@ mod matrix_tests {
         #[cfg(feature = "std")]
         _l.print().unwrap();
     }
+
+    /// This test function is used to check that ...
+    #[test]
+    //#[ignore]
+    fn diag_test() {
+        let rows: u8 = 3;
+        let cols: u8 = 3;
+
+        let mut mat: Matrix = Matrix::new();
+        mat.init(rows, cols).unwrap();
+
+        mat.set_element(0, 0, 0.0).unwrap();
+        mat.set_element(0, 1, 1.0).unwrap();
+        mat.set_element(0, 2, 2.0).unwrap();
+
+        mat.set_element(1, 0, 3.0).unwrap();
+        mat.set_element(1, 1, 4.0).unwrap();
+        mat.set_element(1, 2, 5.0).unwrap();
+
+        mat.set_element(2, 0, 6.0).unwrap();
+        mat.set_element(2, 1, 7.0).unwrap();
+        mat.set_element(2, 2, 8.0).unwrap();
+
+        mat.print().unwrap();
+
+        //let v = mat.diag(None).unwrap();
+        let v = mat.diag(Some(1)).unwrap();
+        let v = mat.diag(Some(-1)).unwrap();
+
+        v.print().unwrap();
+    }
 }

@@ -5,7 +5,7 @@ extern crate libm;
 use linalg::vector::Vector;
 use linalg::matrix::Matrix;
 use linalg::common::{EPSILON, LinalgError};
-use utils::utils::{close_all, minf, maxf};
+use utils::utils::{allclose, clip, Sign};
 use libm::sqrtf;
 
 pub trait Quaternion {
@@ -29,6 +29,7 @@ pub trait Quaternion {
     fn fill_identity(self: &mut Self) -> Result<(), LinalgError>;
     fn invert(self: &mut Self) -> Result<(), LinalgError>;
     fn convert_to_dcm(self: &mut Self) -> Result<Matrix, LinalgError>;
+
     //fn exp(self: &mut Self) -> Result<(), LinalgError>;
     //fn log(self: &mut Self) -> Result<(), LinalgError>;
     //fn is_versor(self: &Self) -> Result<bool, LinalgError>;
@@ -36,9 +37,11 @@ pub trait Quaternion {
     //fn mult_L(self: &Self) -> Result<Matrix, LinalgError>;
     //fn mult_R(self: &Self) -> Result<Matrix, LinalgError>;
     //fn rotate(self: &Self, Self) -> Result<Self, LinalgError>;
+
     /// This method is used to convert a DCM into a quaternion using Hughe's method.
     /// Source: Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
     fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
+    fn chiaverini(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
     fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError>;
 }
 
@@ -62,7 +65,7 @@ impl Quaternion for Vector<f32> {
 
         // Check if the components of the scalar part are equal to 0.
         for row in 1..4 {
-            if !close_all(self.get_element(row)?, 0.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+            if !allclose(self.get_element(row)?, 0.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
                 return Ok(false);   // Return false wwith no error.
             }
         }
@@ -77,7 +80,7 @@ impl Quaternion for Vector<f32> {
         }
 
         // Check if the real part componentof the quaternion is equal to 0.
-        if !close_all(self.get_element(0)?, 0.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+        if !allclose(self.get_element(0)?, 0.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
             return Ok(false);   // Return false wwith no error.
         }
 
@@ -328,27 +331,111 @@ impl Quaternion for Vector<f32> {
     }
     */
 
-    // This method is used to convert a DCM into a quaternion using Hughe's method.
-    // Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
+    // This method is used to convert a DCM into a quaternion using Hughes's method.
+    // Peter C. Hughes, Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
     // Caution! Here we assume that the matrix passed as a parameter to the method is a rotation matrix. If this is not the case, the algorithm will calculate aberrant results.
     fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        /*
+        // Caution! Very costly in computing resources.
+        if !dcm.is_orthogonal()? {
+            return Err(LinalgError::NotDCM);    // Return an error.
+        }
+        */
+
         let mut trace = dcm.trace()?;
-        trace = maxf(-1.0, minf(3.0, trace));
+        trace = clip(trace, -1.0, 3.0);
 
         // Check if the rotation is null.
-        if close_all(trace, 3.0, EPSILON).map_err(LinalgError::UtilsError)? {
+        if allclose(trace, 3.0, EPSILON).map_err(LinalgError::UtilsError)? {
             // The trace is 3, which implies that the DCM is the identity matrix and therefore the rotation is null.
             self.fillq(1.0, 0.0, 0.0, 0.0)?;
 
             return Ok(());  // Return no error.
         }
 
+        // Calculate the real part of the quaternion.
         let n = 0.5 * sqrtf(1.0 + trace);  // eq. 15 on p. 18 of "Spacecraft Attitude Dynamics".
 
-        if close_all(b, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
-            // The trace is -1, which implies that the real part of quaternion is null and therefore the quaternion is pure.
+        let mut qx: f32 = 0.0;
+        let mut qy: f32 = 0.0;
+        let mut qz: f32 = 0.0;
 
+        // Calculate the vector part of the quaternion.
+        if allclose(n, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+            // The trace is -1, which implies that the real part of quaternion is null and therefore the quaternion is pure.
+            let mut e = dcm.diag(None)?;
+            e.add_scalar(1.0)?;
+            e.mul_by_scalar(0.5)?;
+            e.power_exponent(0.5)?;
+
+            let qx = e.get_element(0)?;
+            let qy = e.get_element(1)?;
+            let qz = e.get_element(2)?;
+        } else {    // eq. 16 on p. 18 of "Spacecraft Attitude Dynamics".
+            let qx = 0.25 * (dcm.get_element(1, 2)? - dcm.get_element(2, 1)?) / n;
+            let qy = 0.25 * (dcm.get_element(2, 0)? - dcm.get_element(0, 2)?) / n;
+            let qz = 0.25 * (dcm.get_element(0, 1)? - dcm.get_element(1, 0)?) / n;
         }
+
+        // Fill the quaternion.
+        self.set_element(0, n)?;
+        self.set_element(1, qx)?;
+        self.set_element(2, qy)?;
+        self.set_element(3, qz)?;
+
+        Ok(())  // Return no error.
+    }
+
+    // This method is used to convert a DCM into a quaternion using Chiaverini's method.
+    // S. Chiaverini & B. Siciliano, The Unit Quaternion: A Useful Tool for Inverse Kinematics of Robot Manipulators. OPA, Overseas Publishers Association, 1999.
+    // Caution! Here we assume that the matrix passed as a parameter to the method is a rotation matrix. If this is not the case, the algorithm will calculate aberrant results.
+    fn chiaverini(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        /*
+        // Caution! Very costly in computing resources.
+        if !dcm.is_orthogonal()? {
+            return Err(LinalgError::NotDCM);    // Return an error.
+        }
+        */
+
+        let mut trace = dcm.trace()?;
+        trace = clip(trace, -1.0, 3.0);
+
+        // TODO: try to be more efficient.
+        let dcm_32 = dcm.get_element(2, 1)?;
+        let dcm_23 = dcm.get_element(1, 2)?;
+        let dcm_11 = dcm.get_element(0, 0)?;
+        let dcm_22 = dcm.get_element(1, 1)?;
+        let dcm_33 = dcm.get_element(2, 2)?;
+        let dcm_13 = dcm.get_element(0, 2)?;
+        let dcm_31 = dcm.get_element(2, 0)?;
+        let dcm_21 = dcm.get_element(1, 0)?;
+        let dcm_12 = dcm.get_element(0, 1)?;
+
+        let qw = 0.5 * sqrtf(trace + 1.0);
+        let qx = 0.5 * (dcm_32 - dcm_23).sign() * sqrtf(clip(dcm_11 - dcm_22 - dcm_33, -1.0, 1.0) + 1.0);
+        let qy = 0.5 * (dcm_13 - dcm_31).sign() * sqrtf(clip(dcm_22 - dcm_33 - dcm_11, -1.0, 1.0) + 1.0);
+        let qz = 0.5 * (dcm_21 - dcm_12).sign() * sqrtf(clip(dcm_33 - dcm_11 - dcm_22, -1.0, 1.0) + 1.0);
+
+        // Fill the quaternion.
+        self.set_element(0, qw)?;
+        self.set_element(1, qx)?;
+        self.set_element(2, qy)?;
+        self.set_element(3, qz)?;
+
+        // TODO: check if the quaternion is correct. ex: (0 0 0 0) is not force qw to 1 or return an error.
+        // Add some code here.
+
+        self.normalize()?;
 
         Ok(())  // Return no error.
     }
@@ -357,6 +444,9 @@ impl Quaternion for Vector<f32> {
     fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError> {
         let mut euler_angles: Vector<f32> = Vector::new();
         euler_angles.init(3)?;
+
+        // TODO: finish to implement this method.
+        // Add some code here.
 
         Ok(euler_angles)
     }

@@ -28,7 +28,7 @@ pub enum LinalgError {
     NotSymetric,            /// This error occurs when the matrix is not symmetrical.
     NotInversible,          /// This error occurs when the matrix can't be inverted.
     InvalidAlpha,           /// ...
-    QuaternionSizeMismatch, /// Remove it from linalg lib.
+    InvalidDiagonalLength,  /// This error occurs when the specified diagonal to be extracted from a matrix is invalid.
     UtilsError(UtilsError),
 }
 
