@@ -4,10 +4,9 @@ extern crate utils;
 extern crate libm;
 
 use quaternion::quaternion::Quaternion;
-use linalg::matrix::{Matrix, copy_from, mul};
+use linalg::matrix::{Matrix, mul};
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
-use linalg::linalg::vector_to_matrix;
 use libm::{cosf, sinf};
 use utils::utils::factorial;
 use crate::gyrometer::{GyrometerConfig, Gyrometer};
@@ -110,7 +109,7 @@ impl AR {
 
                     for n in 1..=self.order {
                         // S = 0.5 * dt * Omega
-                        let mut s = copy_from(&omega)?;
+                        let mut s = omega.duplicate()?;
                         // A' = S^n / !n
                         s.power_exponent(n as f32)?;
                         let factor = factorial(n);
@@ -120,7 +119,7 @@ impl AR {
                     }
                 }
 
-                let attitude = mul(&temp, &vector_to_matrix(&self.attitude)?)?;
+                let attitude = mul(&temp, &self.attitude.convert_to_matrix()?)?;
 
                 // TODO: use more efficient way.
                 qw = attitude.get_element(0, 0)?;

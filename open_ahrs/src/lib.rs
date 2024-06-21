@@ -21,7 +21,7 @@ mod open_ahrs_tests {
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
     //use linalg::linalg::{vector_to_matrix, col_to_vector, set_col};
-    use linalg::linalg::set_col;
+    //use linalg::linalg::set_col;
     use quaternion::quaternion::Quaternion;
 
     #[test]
@@ -145,7 +145,7 @@ mod open_ahrs_tests {
             w_vect.set_element(1, wy).unwrap();
             w_vect.set_element(2, wz).unwrap();
 
-            set_col(&mut angular_rates, &w_vect, n).unwrap();
+            angular_rates.set_col(&w_vect, n).unwrap();
 
             /* Used to find derivative of q(t) from w(t). */
             q_dot.mul(&q_now, &w).unwrap();

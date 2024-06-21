@@ -4,6 +4,7 @@ use utils::utils::{is_valid_value, in_range};
 use libm::{acosf, sinf, sqrtf, powf};
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
+use crate::matrix::Matrix;
 
 #[derive(Debug)]
 /// Vector structure.
@@ -444,7 +445,7 @@ impl Vector<f32> {
     }
 
     /// This method is used to apply an exponent to all elements of a vector of size m x 1.
-    pub fn power_exponent(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
+    pub fn power_elements(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
         // Iterate through each element and apply exponent.
         for row in 0..self.rows {
             let element = powf(self.get_element(row)?, exponent);
@@ -452,6 +453,18 @@ impl Vector<f32> {
         }
 
         Ok(())  // Return no error.
+    }
+
+    /// This function is used to convert a vector of size m x 1 into a matrix of size m x 1 in order to perform matrix operations.
+    pub fn convert_to_matrix(self: &Self) -> Result<Matrix, LinalgError> {
+        let rows = self.get_rows()?;
+
+        let mut mat = Matrix::new();
+        mat.init(rows, 1)?;
+
+        mat.set_col(&self, 0)?;
+
+        Ok(mat) // Return the matrix with no error.
     }
 }
 
@@ -475,78 +488,18 @@ pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, Lina
 
 // This function is used to perform the spherical interpolation (SLERP) of two vectors.
 pub fn slerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vector<f32>, LinalgError> {
-    // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
-    if !in_range(alpha, 0.0_f32, 1.0_f32) {
-        // Alpha is not valid.
-        return Err(LinalgError::InvalidAlpha)   // Return an error.
-    }
+    let mut interpolated_vect: Vector<f32> = Vector::new();
+    interpolated_vect.init(vect1.get_rows()?)?;
+    interpolated_vect.slerp(&vect1, &vect2, alpha)?;
 
-    // Perform scalar product.
-    let scalar = dot_product(&vect1, &vect2)?;
-    let theta = acosf(scalar);  // Angle between the axis of the first vector and the second one.
-
-    // Create a copy of the first vector.
-    let mut v1: Vector<f32> = Vector::new();
-    v1.init(vect1.get_rows()?)?;
-    v1.copy_from(&vect1)?;
-
-    // Create a copy of the second vector.
-    let mut v2: Vector<f32> = Vector::new();
-    v2.init(vect1.get_rows()?)?;
-    v2.copy_from(&vect2)?;
-
-    v1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
-    v2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
-
-    let mut v: Vector<f32> = Vector::new();
-    v.init(vect1.get_rows()?)?;
-    v.add(&v1, &v2)?;
-
-    Ok(v)   // Return the interpolated vector with no error.
+    Ok(interpolated_vect)   // Return the interpolated vector with no error.
 }
 
 // This function is used to perform the linear interpolation (LERP) of two vectors.
 pub fn lerp(vect1: &Vector<f32>, vect2: &Vector<f32>, alpha: f32) -> Result<Vector<f32>, LinalgError> {
-    // Check that alpha is valid (alpha must be between 0 and 1 inclusive).
-    if !in_range(alpha, 0.0_f32, 1.0_f32) {
-        // Alpha is not valid.
-        return Err(LinalgError::InvalidAlpha)   // Return an error.
-    }
+    let mut interpolated_vect: Vector<f32> = Vector::new();
+    interpolated_vect.init(vect1.get_rows()?)?;
+    interpolated_vect.lerp(&vect1, &vect2, alpha)?;
 
-    // Check that the vectors have the same dimensions.
-    if !vect1.is_same_size_as(vect2)? {
-        // The vectors do not have the same dimensions.
-        return Err(LinalgError::NotSameSize)    // Return an error.
-    }
-
-    // Create a copy of the first vector.
-    let mut v1: Vector<f32> = Vector::new();
-    v1.init(vect1.get_rows()?)?;
-    v1.copy_from(&vect1)?;
-
-    // Create a copy of the second vector.
-    let mut v2: Vector<f32> = Vector::new();
-    v2.init(vect1.get_rows()?)?;
-    v2.copy_from(&vect2)?;
-
-    v1.mul_by_scalar(1.0_f32 - alpha)?;
-    v2.mul_by_scalar(alpha)?;
-
-    let mut v: Vector<f32> = Vector::new();
-    v.init(vect1.get_rows()?)?;
-    v.add(&v1, &v2)?;
-
-    Ok(v)   // Return the interpolated vector with no error.
+    Ok(interpolated_vect)   // Return the interpolated vector with no error.
 }
-
-/*
-// This function is used to duplicate/copy a vector of size m x 1.
-pub fn copy_from(vect: &Vector<f32>) -> Result<Vector<f32>, LinalgError> {
-    let mut copied_vect: Vector<f32> = Vector::new();   // Create a vector containing a copy of each of the components of the original vector.
-    copied_vect.init(vect.get_rows()?)?;                // Initialise it with the same size as the original vector.
-
-    copied_vect.copy_from(&vect)?;                      // Perform the copy.
-
-    Ok(copied_vect) // Return the copy of the vector with no error.
-}
-*/

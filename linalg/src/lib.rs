@@ -12,7 +12,7 @@ mod matrix_tests {
     use crate::vector::Vector;
     use crate::common:: {M_MAX, N_MAX, LinalgError};
     //use crate::linalg::eigen;
-    use crate::linalg:: {set_row, set_col, add_row, add_col};
+    //use crate::linalg:: {set_row, set_col, add_row, add_col};
 
     /// This test function is used to check that there are no errors in the correct creation of a matrix. No error expected.
     #[test]
@@ -417,6 +417,7 @@ mod matrix_tests {
         assert_eq!(result.unwrap(), false, "Expected matrices with different sizes.");
     }
 
+    /*
     #[test]
     #[ignore]
     fn foo() {
@@ -437,7 +438,9 @@ mod matrix_tests {
         #[cfg(feature = "std")]
         mat.print().unwrap();
     }
+    */
 
+    /*
     #[test]
     #[ignore]
     fn bar() {
@@ -459,7 +462,9 @@ mod matrix_tests {
         #[cfg(feature = "std")]
         mat.print().unwrap();
     }
+    */
 
+    /*
     #[test]
     #[ignore]
     fn foofoo() {
@@ -480,7 +485,9 @@ mod matrix_tests {
         #[cfg(feature = "std")]
         mat.print().unwrap();
     }
+    */
 
+    /*
     #[test]
     #[ignore]
     fn foobar() {
@@ -502,6 +509,7 @@ mod matrix_tests {
         #[cfg(feature = "std")]
         mat.print().unwrap();
     }
+    */
 
     #[test]
     #[ignore]

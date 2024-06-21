@@ -36,7 +36,9 @@ pub trait Quaternion {
     //fn is_identity(self: &Self) -> Result<bool, LinalgError>;
     //fn mult_L(self: &Self) -> Result<Matrix, LinalgError>;
     //fn mult_R(self: &Self) -> Result<Matrix, LinalgError>;
-    //fn rotate(self: &Self, Self) -> Result<Self, LinalgError>;
+
+    //fn rotate(self: &Self, vect: &Self) -> Result<Self, LinalgError>;
+    //fn rotate_in_place(self: &Self, vect: &mut Self) -> Result<(), LinalgError>;
 
     /// This method is used to convert a DCM into a quaternion using Hughe's method.
     /// Source: Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
@@ -371,7 +373,7 @@ impl Quaternion for Vector<f32> {
             let mut e = dcm.diag(None)?;
             e.add_scalar(1.0)?;
             e.mul_by_scalar(0.5)?;
-            e.power_exponent(0.5)?;
+            e.power_elements(0.5)?;
 
             qx = e.get_element(0)?;
             qy = e.get_element(1)?;
@@ -451,3 +453,14 @@ impl Quaternion for Vector<f32> {
         Ok(euler_angles)
     }
 }
+
+/*
+fn rotate(self: &Self, vect: &Self) -> Result<Self, LinalgError> {
+    let dcm = self.convert_to_dcm()?;
+
+}
+
+fn rotate_in_place(self: &Self, vect: &mut Self) -> Result<(), LinalgError> {
+
+}
+*/

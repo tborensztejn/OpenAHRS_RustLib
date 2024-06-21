@@ -1,8 +1,7 @@
 extern crate linalg;
 
-use linalg::matrix::{Matrix, copy_from};
+use linalg::matrix::Matrix;
 use linalg::vector::Vector;
-use linalg::linalg::{vector_to_matrix, get_col};
 use crate::common::OpenAHRSError;
 
 // Magnetometer configuration.
@@ -144,9 +143,9 @@ impl Magnetometer {
     // This function is used to correct the raw measurements.
     fn correct(self: &mut Self) -> Result<(), OpenAHRSError> {
         self.corrected_measurements.sub(&self.raw_measurements, &self.hard_iron_biases)?;                           // Remove static biases (hard-iron effects) from raw measurements.
-        let mut corrected_measurements = vector_to_matrix(&self.corrected_measurements)?;                           // Convert this vector into a matrix to perform matrix operations.
-        corrected_measurements.mul(&self.scale_and_soft_iron_correction, &copy_from(&corrected_measurements)?)?;    // Correct measurement distorsions (soft-iron effects, scale factors, axes misalignments and non-orthogonality).
-        get_col(&corrected_measurements, &mut self.corrected_measurements, 0)?;                                     // Perform matrix-to-vector conversion to store the corrected measurements.
+        let mut corrected_measurements = self.corrected_measurements.convert_to_matrix()?;                          // Convert this vector into a matrix to perform matrix operations.
+        corrected_measurements.mul(&self.scale_and_soft_iron_correction, &corrected_measurements.duplicate()?)?;    // Correct measurement distorsions (soft-iron effects, scale factors, axes misalignments and non-orthogonality).
+        corrected_measurements.get_col(&mut self.corrected_measurements, 0)?;                                       // Perform matrix-to-vector conversion to store the corrected measurements.
 
         Ok(())  // Return no error.
     }

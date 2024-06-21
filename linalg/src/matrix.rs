@@ -21,10 +21,10 @@ impl Matrix {
     /// This method is used to create a new matrix of size m x n.
     pub fn new() -> Self {
         Self {
-            rows: 0,
-            cols: 0,
-            elements: [0.0; M_MAX * N_MAX],
-            initialized: false,
+            rows: 0,                        // Default number of rows.
+            cols: 0,                        // Default number of columns.
+            elements: [0.0; M_MAX * N_MAX], // Default elements value.
+            initialized: false,             // Default initialization status.
         }
     }
 
@@ -56,7 +56,6 @@ impl Matrix {
 
         self.initialized = false;   // Set the initialization flag to false.
 
-        // TODO: use set_rows() and set_cols()
         self.init(rows, cols)?;     // Reinitialize the matrix.
 
         Ok(())  // Return no error.
@@ -174,11 +173,148 @@ impl Matrix {
             let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
             let value = self.elements[index];                       // Retrieve the value of the specified element from the matrix.
 
-            //is_valid_value(value).map_err(LinalgError::UtilsError)?;
-
             Ok(value)   // Return the value with no error.
         }
     }
+
+
+
+
+    /// This method in used to replace all elements of specific row of a matrix of size m x n with those of a vector of size n x 1.
+    pub fn set_row(self: &mut Self, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
+        // Check that the number of columns in the matrix is the same as the number of rows in the vector.
+        if self.cols != vect.get_rows()? {
+            // The number of columns in the matrix is not the same as the number of rows in the vector.
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        for col in 0..self.cols {
+            self.set_element(row, col, vect.get_element(col)?)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method in used to replace all elements of specific column of a matrix of size m x n with those of a vector of size m x 1.
+    pub fn set_col(self: &mut Self, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
+        // Check that the number of rows in the matrix is the same as the number of rows in the vector.
+        if self.rows != vect.get_rows()? {
+            // The number of rows in the matrix is not the same as the number of rows in the vector.
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        for row in 0..self.rows {
+            self.set_element(row, col, vect.get_element(row)?)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to extract all elements of specific row of a matrix of size m x n with those of a vector of size n x 1.
+    pub fn get_row(self: &Self, vect: &mut Vector<f32>, row: u8) -> Result<(), LinalgError> {
+        // Check that the number of columns in the matrix is the same as the number of rows in the vector.
+        if self.cols != vect.get_rows()? {
+            // The number of columns in the matrix is not the same as the number of rows in the vector.
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        for col in 0..self.cols {
+            vect.set_element(col, self.get_element(row, col)?)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to extract all elements of specific column of a matrix of size m x n with those of a vector of size m x 1.
+    pub fn get_col(self: &Self, vect: &mut Vector<f32>, col: u8) -> Result<(), LinalgError> {
+        // Check that the number of rows in the matrix is the same as the number of rows in the vector.
+        if self.rows != vect.get_rows()? {
+            // The number of rows in the matrix is not the same as the number of rows in the vector.
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        for row in 0..self.rows {
+            vect.set_element(row, self.get_element(row, col)?)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to extract all elements of specific row of a matrix of size m x n and store them into a new vector of size n x 1.
+    pub fn row_to_vector(self: &Self, row: u8) -> Result<Vector<f32>, LinalgError> {
+        let mut vect: Vector<f32> = Vector::new();
+        vect.init(self.cols)?;
+
+        for col in 0..self.cols {
+            vect.set_element(col, self.get_element(row, col)?)?;
+        }
+
+        Ok(vect)    // Return the vector with no error.
+    }
+
+    /// This method is used to extract all elements of specific column of a matrix of size m x n and store them into a new vector of size m x 1.
+    pub fn col_to_vector(self: &Self, col: u8) -> Result<Vector<f32>, LinalgError> {
+        let mut vect: Vector<f32> = Vector::new();
+        vect.init(self.rows)?;
+
+        for row in 0..self.rows {
+            vect.set_element(row, self.get_element(row, col)?)?;
+        }
+
+        Ok(vect)    // Return the vector with no error.
+    }
+
+    /// This method is used to add a row to a matrix of size m x n from a vector of size n x 1. The result is a matrix of size m+1 x n.
+    pub fn add_row(self: &mut Self, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
+        let rows = self.rows + 1;
+
+        self.set_rows(rows)?;
+
+        for m in (row + 1..rows).rev() {
+            for col in 0..self.cols {
+                self.set_element(m, col, self.get_element(m - 1, col)?)?;
+            }
+        }
+
+        self.set_row(&vect, row)?;
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to add a column to a matrix of size m x n from a vector of size m x 1. The result is a matrix of size m x n+1.
+    pub fn add_col(self: &mut Self, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
+        let cols = self.cols + 1;
+
+        self.set_cols(cols)?;
+
+        for n in (col + 1..cols).rev() {
+            for row in 0..self.rows {
+                self.set_element(row, n, self.get_element(row, n - 1)?)?;
+            }
+        }
+
+        self.set_col(&vect, col)?;
+
+        Ok(())  // Return no error.
+    }
+
+    /*
+    pub fn del_row(self: &mut Self, row: u8) -> Result<Vector<f32, LinalgError> {
+        // Add some code here.
+    }
+
+    pub fn del_column(self: &mut Self, col: u8) -> Result<Vector<f32, LinalgError> {
+        // Add some code here.
+    }
+
+    pub fn swap_rows(self: &mut Self, row1: u8, row2: u8) -> Result<(), LinalgError> {
+        // Add some code here. Use temporary vector to do the swipe.
+    }
+
+    pub fn swap_cols(self: &mut Self, col1: u8, col2: u8) -> Result<(), LinalgError> {
+        // Add some code here. Use temporary vector to do the swipe.
+    }
+    */
 
     /// This method is used to fill an entire matrix of size m x n with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
@@ -206,11 +342,11 @@ impl Matrix {
         }
     }
 
-    /// This method is used to fill a square matrix of size m x n with the identity matrix.
+    /// This method is used to fill a square matrix of size m x m with the identity matrix.
     pub fn fill_identity(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
-            // The matrix is not square.
+            // The matrix is not square and therefore cannot be initialised as an identity matrix.
             return Err(LinalgError::NotSquare); // Return an error.
         }
 
@@ -1031,15 +1167,6 @@ impl Matrix {
 
         Ok(vect)    // Return the diagonal as a vector with no error.
     }
-}
-
-// This function is used to duplicate/copy a matrix of size m x n.
-pub fn copy_from(matrix: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut copied_matrix = Matrix::new();
-    copied_matrix.init(matrix.get_rows()?, matrix.get_cols()?)?;
-    copied_matrix.copy_from(&matrix)?;
-
-    Ok(copied_matrix)
 }
 
 // This function is used to perform the matrix addition operation of two matrices of size m x n.

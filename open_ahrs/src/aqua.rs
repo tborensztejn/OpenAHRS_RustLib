@@ -9,8 +9,7 @@ use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_omega_matrix};
 
 use quaternion::quaternion::Quaternion;
-use linalg::linalg::{vector_to_matrix, col_to_vector};
-use linalg::matrix::mul;
+use linalg::matrix::{Matrix, mul};
 use linalg::vector::Vector;
 use utils::utils::in_range;
 use libm::{sqrtf, fabsf};
@@ -274,6 +273,9 @@ impl AQUA {
         let mut mag_quat: Vector<f32> = Vector::new();  // Quaternion defining the orientation of the system and determined by magnetometer and gyrometer measurements.
         mag_quat.init(4)?;                              // Initialize it.
 
+        let mut temp = Matrix::new();
+        temp.init(3, 1)?;
+
         // Check the type of mode.
         if self.mode == Mode::MARG {
             // Retrieve corrected gyrometer measurements.
@@ -293,9 +295,10 @@ impl AQUA {
             // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
             let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
             omega.mul_by_scalar(0.5)?;
-            let derivative_quat = mul(&omega, &vector_to_matrix(&self.attitude)?)?;
+            let derivative_quat = mul(&omega, &self.attitude.convert_to_matrix()?)?;
 
-            let mut delta_quat = col_to_vector(&derivative_quat, 0)?;
+
+            let mut delta_quat = derivative_quat.col_to_vector(0)?;
             delta_quat.mul_by_scalar(self.ts)?;
 
             let mut gyr_quat: Vector<f32> = Vector::new();  // Quaternion defining the orientation of the system and determined by gyrometer measurements.
@@ -306,7 +309,8 @@ impl AQUA {
             // Accelerometer-based correction step.
             let mut dcm_local_to_global = gyr_quat.convert_to_dcm()?;
             dcm_local_to_global.transpose()?;
-            let a_global = col_to_vector(&mul(&dcm_local_to_global, &vector_to_matrix(&a_local)?)?, 0)?;
+            temp.mul(&dcm_local_to_global, &a_local.convert_to_matrix()?)?;
+            let a_global = temp.col_to_vector(0)?;
 
             // Retrieve vector components.
             let gx = a_global.get_element(0)?;
@@ -341,7 +345,8 @@ impl AQUA {
             // Magnetometer-based correction step.
             let mut dcm_local_to_global = self.attitude.convert_to_dcm()?;
             dcm_local_to_global.transpose()?;
-            let m_global = col_to_vector(&mul(&dcm_local_to_global, &vector_to_matrix(&m_local)?)?, 0)?;
+            temp.mul(&dcm_local_to_global, &m_local.convert_to_matrix()?)?;
+            let m_global = temp.col_to_vector(0)?;
 
             let lx = m_global.get_element(0)?;
             let ly = m_global.get_element(1)?;
@@ -391,7 +396,8 @@ impl AQUA {
             // Determine the partial orientation in the form of a quaternion from the magnetometer measurements.
             let mut partial_dcm_local_to_global = acc_quat.convert_to_dcm()?;
             partial_dcm_local_to_global.transpose()?;
-            let m_global = col_to_vector(&mul(&partial_dcm_local_to_global, &vector_to_matrix(&m_local)?)?, 0)?;
+            temp.mul(&partial_dcm_local_to_global, &m_local.convert_to_matrix()?)?;
+            let m_global = temp.col_to_vector(0)?;
 
             let lx = m_global.get_element(0)?;
             let ly = m_global.get_element(1)?;
