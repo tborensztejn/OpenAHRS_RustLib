@@ -2,6 +2,7 @@ extern crate utils;
 
 use utils::utils::{is_valid_value, in_range};
 use libm::{acosf, sinf, sqrtf, powf};
+
 use crate::common::{M_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_row};
 use crate::matrix::Matrix;
@@ -18,9 +19,9 @@ impl<T: Default + Copy> Vector<T> {
     // This method is used to create a new vector of size m x 1.
     pub fn new() -> Self {
         Self {
-            rows: 0,
-            elements: [Default::default(); M_MAX],
-            initialized: false,
+            rows: 0,                                // Default number of rows.
+            elements: [Default::default(); M_MAX],  // Default elements value.
+            initialized: false,                     // Default initialization status.
         }
     }
 

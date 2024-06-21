@@ -3,6 +3,7 @@ extern crate libm;
 
 use utils::utils::{is_valid_value, allclose, min};
 use libm::{powf, sqrtf, fabsf};
+
 use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError};
 use crate::common::{is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
 use crate::linalg::{lup, solve};
@@ -346,7 +347,7 @@ impl Matrix {
     pub fn fill_identity(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is square.
         if !self.is_square()? {
-            // The matrix is not square and therefore cannot be initialised as an identity matrix.
+            // The matrix is not square and therefore cannot be initialized as an identity matrix.
             return Err(LinalgError::NotSquare); // Return an error.
         }
 
