@@ -9,7 +9,7 @@ use crate::magnetometer::{MagnetometerConfig, Magnetometer};
 use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_omega_matrix};
 
 use quaternion::quaternion::Quaternion;
-use linalg::matrix::{Matrix, mul};
+use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use utils::utils::in_range;
 use libm::{sqrtf, fabsf};
@@ -295,7 +295,7 @@ impl AQUA {
             // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
             let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
             omega.mul_by_scalar(0.5)?;
-            let derivative_quat = mul(&omega, &self.attitude.convert_to_matrix()?)?;
+            let derivative_quat = omega.muln(&self.attitude.convert_to_matrix()?)?;
 
 
             let mut delta_quat = derivative_quat.col_to_vector(0)?;
@@ -373,7 +373,6 @@ impl AQUA {
 
             let mag_quat_interpolated = Self::interpolate(&mag_quat, self.beta, self.t_mag)?;
 
-            //self.attitude.mul(&copy_from(&self.attitude)?, &mag_quat_interpolated)?;
             self.attitude.mul(&self.attitude.duplicate()?, &mag_quat_interpolated)?;
         } else if self.mode == Mode::AM {
             // Determine the partial orientation as a quaternion from the accelerometer measurements.

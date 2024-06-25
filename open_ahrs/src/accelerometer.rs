@@ -4,6 +4,7 @@ use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use crate::common::OpenAHRSError;
 
+//#[derive(Default)]
 // Accelerometer configuration.
 pub struct AccelerometerConfig {
     // Scaling correction factors.

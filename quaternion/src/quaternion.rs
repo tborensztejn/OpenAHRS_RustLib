@@ -11,9 +11,11 @@ use libm::sqrtf;
 pub trait Quaternion {
     /// This method is used to check if a vector can be used as a quaternion.
     fn is_quaternion(self: &Self) -> Result<bool, LinalgError>;
-    /// This method is used to check if the quaternion is real or not.
+    /// This method is used to check if a quaternion is real or not.
     fn is_real(self: &Self) -> Result<bool, LinalgError>;
+    /// This method is used to check if a quaternion is pure or not.
     fn is_pure(self: &Self) -> Result<bool, LinalgError>;
+    /// This method is used to set w component of a quaternion.
     fn set_qw(self: &mut Self, qw: f32) -> Result<(), LinalgError>;
     fn get_qw(self: &Self) -> Result<f32, LinalgError>;
     fn set_qx(self: &mut Self, qx: f32) -> Result<(), LinalgError>;
@@ -28,7 +30,7 @@ pub trait Quaternion {
     fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError>;
     fn fill_identity(self: &mut Self) -> Result<(), LinalgError>;
     fn invert(self: &mut Self) -> Result<(), LinalgError>;
-    fn convert_to_dcm(self: &mut Self) -> Result<Matrix, LinalgError>;
+    fn convert_to_dcm(self: &Self) -> Result<Matrix, LinalgError>;
 
     //fn exp(self: &mut Self) -> Result<(), LinalgError>;
     //fn log(self: &mut Self) -> Result<(), LinalgError>;
@@ -37,13 +39,14 @@ pub trait Quaternion {
     //fn mult_L(self: &Self) -> Result<Matrix, LinalgError>;
     //fn mult_R(self: &Self) -> Result<Matrix, LinalgError>;
 
-    //fn rotate(self: &Self, vect: &Self) -> Result<Self, LinalgError>;
-    //fn rotate_in_place(self: &Self, vect: &mut Self) -> Result<(), LinalgError>;
+    fn rotate(self: &Self, vect: &Self) -> Result<Vector<f32>, LinalgError>;
+    fn rotate_in_place(self: &Self, vect: &mut Self) -> Result<(), LinalgError>;
 
     /// This method is used to convert a DCM into a quaternion using Hughe's method.
     /// Source: Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
     fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
     fn chiaverini(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
+    //fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError>;
     fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError>;
 }
 
@@ -290,7 +293,7 @@ impl Quaternion for Vector<f32> {
     }
 
     // This function is used to calculate the rotation matrix (Direct Cosine Matrix - DCM) from a quaternion.
-    fn convert_to_dcm(self: &mut Self) -> Result<Matrix, LinalgError> {
+    fn convert_to_dcm(self: &Self) -> Result<Matrix, LinalgError> {
         let mut dcm = Matrix::new();    // Create the rotation matrix.
         dcm.init(3, 3)?;                // Initialize it.
 
@@ -443,7 +446,8 @@ impl Quaternion for Vector<f32> {
     }
 
     // This method is used to convert a quaternion into Tait-Bryan (Euler) angles.
-    fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError> {
+    //fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError> {
+    fn convert_to_euler(self: &mut Self) -> Result<Self, LinalgError> {
         let mut euler_angles: Vector<f32> = Vector::new();
         euler_angles.init(3)?;
 
@@ -452,15 +456,43 @@ impl Quaternion for Vector<f32> {
 
         Ok(euler_angles)
     }
+
+    // This method is used to rotate a vector of size 3 x 1 using quaternion.
+    fn rotate(self: &Self, vect: &Self) -> Result<Vector<f32>, LinalgError> {
+        // Check that the size of the vector is 3 x 1.
+        if vect.get_rows()? != 3 {
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        // Not very computationally efficient. Quaternions can be implicitly converted to a rotation-like matrix (12 multiplications and 12 additions/subtractions), which levels the following vectors rotating cost with the rotation matrix method.
+        let dcm = self.convert_to_dcm()?;
+        let rotated_vect = dcm.muln(&vect.convert_to_matrix()?)?;
+
+        let rotated_vect = rotated_vect.col_to_vector(0)?;
+
+        Ok(rotated_vect)    // Return the rotated vector with no error.
+
+        /*
+        let vect_quat: Vector<f32> = Vector::new();
+        vect_quat.init(4)?;
+
+        vect_quat.set_qw(0.0)?;
+        vect_quat.set_qx(vect.get_element(0)?)?;
+        vect_quat.set_qy(vect.get_element(1)?)?;
+        vect_quat.set_qz(vect.get_element(2)?)?;
+        */
+    }
+
+    fn rotate_in_place(self: &Self, vect: &mut Self) -> Result<(), LinalgError> {
+        // Check that the size of the vector is 3 x 1.
+        if vect.get_rows()? != 3 {
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        let dcm = self.convert_to_dcm()?;
+        let temp = dcm.muln(&vect.convert_to_matrix()?)?;
+        temp.get_col(vect, 0)?;
+
+        Ok(())  // Return no error.
+    }
 }
-
-/*
-fn rotate(self: &Self, vect: &Self) -> Result<Self, LinalgError> {
-    let dcm = self.convert_to_dcm()?;
-
-}
-
-fn rotate_in_place(self: &Self, vect: &mut Self) -> Result<(), LinalgError> {
-
-}
-*/

@@ -7,6 +7,8 @@ pub const N_MAX: usize = 16;            /// Maximum number of columns in a matri
 pub const EPSILON: f32 = 0.0001;        /// ...
 pub const PI: f32 = 3.141592653589793;  /// ...
 
+//pub type Result<T> = core::result::Result<T, LinalgError>;
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum LinalgError {

@@ -17,18 +17,15 @@ mod open_ahrs_tests {
     use crate::gyrometer::GyrometerConfig;
     //use crate::aqua::AQUA;
     use crate::common::{NumericalIntegrationMethod as NIM, generate_random_attitudes};
-    //use linalg::matrix::{Matrix, mul};
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
-    //use linalg::linalg::{vector_to_matrix, col_to_vector, set_col};
-    //use linalg::linalg::set_col;
     use quaternion::quaternion::Quaternion;
 
     #[test]
     fn ar_series_method_test() {
-        /* Generate random attitudes. */
-        let niter: u8 = 10; // Number of iterations.
-        let ts: f32 = 0.01;  // Sampling period (s).
+        // Generate random attitudes.
+        let niter: u8 = 10;     // Number of iterations.
+        let ts: f32 = 0.01;     // Sampling period (s).
 
         let attitudes: Matrix = generate_random_attitudes(niter + 1).unwrap();
 

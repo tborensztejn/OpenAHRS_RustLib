@@ -4,7 +4,7 @@ extern crate utils;
 extern crate libm;
 
 use quaternion::quaternion::Quaternion;
-use linalg::matrix::{Matrix, mul};
+use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
 use libm::{cosf, sinf};
@@ -119,7 +119,7 @@ impl AR {
                     }
                 }
 
-                let attitude = mul(&temp, &self.attitude.convert_to_matrix()?)?;
+                let attitude = temp.muln(&self.attitude.convert_to_matrix()?)?;
 
                 // TODO: use more efficient way.
                 qw = attitude.get_element(0, 0)?;

@@ -4,8 +4,7 @@ extern crate libm;
 use utils::utils::{is_valid_value, allclose, min};
 use libm::{powf, sqrtf, fabsf};
 
-use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError};
-use crate::common::{is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
+use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError, is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
 use crate::linalg::{lup, solve};
 use crate::vector::Vector;
 
@@ -18,15 +17,22 @@ pub struct Matrix {
     initialized: bool,              // This variable is used to identify whether or not a matrix has already been initialized. An uninitialized matrix cannot be manipulated.
 }
 
-impl Matrix {
-    /// This method is used to create a new matrix of size m x n.
-    pub fn new() -> Self {
+impl Default for Matrix {
+    fn default() -> Self {
         Self {
             rows: 0,                        // Default number of rows.
             cols: 0,                        // Default number of columns.
             elements: [0.0; M_MAX * N_MAX], // Default elements value.
+            //elements: [Default::default(); M_MAX * N_MAX],
             initialized: false,             // Default initialization status.
         }
+    }
+}
+
+impl Matrix {
+    /// This method is used to create a new matrix of size m x n.
+    pub fn new() -> Self {
+        Self::default() // Create default matrix.
     }
 
     /// This method is used to initialize a matrix of size m x n.
@@ -62,7 +68,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    /// This method is used to get the number of rows (m) of the matrix of size m x n.
+    /// This method is used to get the number of rows (m) of a matrix of size m x n.
     pub fn get_rows(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -73,7 +79,7 @@ impl Matrix {
         Ok(self.rows)   // Return the value with no error.
     }
 
-    /// This method is used to set the number of rows (m) of the matrix of size m x n.
+    /// This method is used to set the number of rows (m) of a matrix of size m x n.
     pub(crate) fn set_rows(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -92,7 +98,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    /// This method is used to get the number of columns (n) of the matrix of size m x n.
+    /// This method is used to get the number of columns (n) of a matrix of size m x n.
     pub fn get_cols(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -103,7 +109,7 @@ impl Matrix {
         Ok(self.cols)   // Return the value with no error.
     }
 
-    /// This method is used to set the number of columns (n) of the matrix of size m x n.
+    /// This method is used to set the number of columns (n) of a matrix of size m x n.
     pub(crate) fn set_cols(self: &mut Self, cols: u8) -> Result<(), LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
@@ -136,7 +142,7 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    /// This method is used to verify if the matrix is initialized or not.
+    /// This method is used to verify if a matrix of size m x 1 is initialized or not.
     pub fn is_initialized(self: &Self) -> bool {
         self.initialized
     }
@@ -166,20 +172,36 @@ impl Matrix {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else {
-            is_valid_row(row, self.rows)?;  // Check if the row exists.
-            is_valid_col(col, self.cols)?;  // Check if the column exists.
-
-            let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
-            let value = self.elements[index];                       // Retrieve the value of the specified element from the matrix.
-
-            Ok(value)   // Return the value with no error.
+            return Err(LinalgError::NotInit);   // Return an error.
         }
+
+        is_valid_row(row, self.rows)?;  // Check if the row exists.
+        is_valid_col(col, self.cols)?;  // Check if the column exists.
+
+        let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
+
+        let value = self.elements[index];                       // Retrieve the value of the specified element from the matrix.
+
+        Ok(value)   // Return the value with no error.
     }
 
+    #[cfg(feature = "std")]
+    /// This method is used to diplay a matrix of size m x n (not available in no_std environment).
+    pub fn print(self: &Self) -> Result<(), LinalgError> {
+        // Iterate through each element and print it and move to the next row with a newline character.
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(row, col)?;  // Retrieve the value of the specified element from the matrix.
 
+                print!("{:.3}\t", element);                 // Print the value of the element.
+            }
+            print!("\n");   // Move to the next row with a newline character.
+        }
 
+        print!("\n");   // Print an additional newline for better formatting.
+
+        Ok(())  // Return no error.
+    }
 
     /// This method in used to replace all elements of specific row of a matrix of size m x n with those of a vector of size n x 1.
     pub fn set_row(self: &mut Self, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
@@ -329,18 +351,60 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
+    /// This method is used to check if two matrices have the same number of rows and columns.
+    pub fn is_same_size_as(self: &Self, other: &Matrix) -> Result<bool, LinalgError> {
+        // Check that the matrices are initialized.
+        if !self.initialized || !other.initialized {
+            // The matrix is not initialized.
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        if (self.rows != other.rows) || (self.cols != other.cols) {
+            Ok(false)   // Return the result with no error.
+        } else {
+            Ok(true)    // Return the result with no error.
+        }
+    }
+
     /// This method is used to check if a matrix is square or not.
     pub fn is_square(self: &Self) -> Result<bool, LinalgError> {
         // Check that the matrix is initialized.
         if !self.initialized {
             // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else if self.rows != self.cols {
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        if self.rows != self.cols {
             // The matrix has not the same number of rows as columns, it is not square.
             Ok(false)   // Return the result with no error.
         } else {
             Ok(true)    // Return the result with no error.
         }
+    }
+
+    /// This method is used to check if two matrices are identical/equal or not.
+    pub fn is_equal_to(self: &Self, other: &Self, deviation: f32) -> Result<bool, LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Ok(false);   // Return the result with no error.
+        }
+
+        // Iterate through each element and check if they are close within the deviation.
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(row, col)?;
+                let other_element = other.get_element(row, col)?;
+
+                let result = allclose(element, other_element, deviation).map_err(LinalgError::UtilsError)?;
+
+                if !result {
+                    return Ok(false);   // Return the result with no error.
+                }
+            }
+        }
+
+        Ok(true)    // Return the value with no error.
     }
 
     /// This method is used to fill a square matrix of size m x m with the identity matrix.
@@ -365,25 +429,12 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    /// This method is used to check if two matrices have the same number of rows and columns.
-    pub fn is_same_size_as(self: &Self, other: &Matrix) -> Result<bool, LinalgError> {
-        // Check that the matrices are initialized.
-        if !self.initialized || !other.initialized {
-            // The matrix is not initialized.
-            Err(LinalgError::NotInit)   // Return an error.
-        } else if (self.rows != other.rows) || (self.cols != other.cols) {
-            Ok(false)   // Return the result with no error.
-        } else {
-            Ok(true)    // Return the result with no error.
-        }
-    }
-
     /// This method is used to copy a matrix of size m x n.
     pub fn copy_from(self: &mut Self, other: &Matrix) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
         if !self.is_same_size_as(other)? {
             // The matrices do not have the same dimensions.
-            return Err(LinalgError::NotSameSize)    // Return an error.
+            return Err(LinalgError::NotSameSize);   // Return an error.
         }
 
         for row in 0..self.rows {
@@ -399,54 +450,11 @@ impl Matrix {
     /// This method is used to duplicate a matrix of size m x n.
     pub fn duplicate(self: &Self) -> Result<Self, LinalgError> {
         let mut duplicated_mat = Self::new();       // Create a new matrix.
-        duplicated_mat.init(self.rows, self.cols)?; // Initialise it with the same dimensiosn as the original matrix.
+        duplicated_mat.init(self.rows, self.cols)?; // Initialise it with the same dimensions as the original matrix.
 
         duplicated_mat.copy_from(&self)?;    // Copy the elements of the original matrix.
 
         Ok(duplicated_mat)  // Return the duplicated vector with no error.
-    }
-
-    /// This method is used to check if two matrices are identical/equal or not.
-    pub fn is_equal_to(self: &Self, other: &Matrix, deviation: f32) -> Result<bool, LinalgError> {
-        // Check that the matrices have the same dimensions.
-        if !self.is_same_size_as(other)? {
-            // The matrices do not have the same dimensions.
-            return Ok(false);   // Return the result with no error.
-        }
-
-        // Iterate through each element and check if they are close within the deviation.
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let element = self.get_element(row, col)?;
-                let other_element = other.get_element(row, col)?;
-
-                let result = allclose(element, other_element, deviation).map_err(LinalgError::UtilsError)?;
-
-                if !result {
-                    return Ok(false);   // Return the result with no error.
-                }
-            }
-        }
-
-        Ok(true)    // Return the value with no error.
-    }
-
-    #[cfg(feature = "std")]
-    /// This method is used to diplay a matrix of size m x n (not available in no_std environment).
-    pub fn print(self: &Self) -> Result<(), LinalgError> {
-        // Iterate through each element and print it and move to the next row with a newline character.
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let element = self.get_element(row, col)?;  // Retrieve the value of the specified element from the matrix.
-
-                print!("{:.3}\t", element);                 // Print the value of the element.
-            }
-            print!("\n");   // Move to the next row with a newline character.
-        }
-
-        print!("\n");   // Print an additional newline for better formatting.
-
-        Ok(())  // Return no error.
     }
 
     /// This method is used to perform the matrix addition operation of two matrices of size m x n.
@@ -598,6 +606,18 @@ impl Matrix {
         }
 
         Ok(())  // Return no error.
+    }
+
+    pub fn muln(self: &Self, other: &Self) -> Result<Self, LinalgError> {
+        let mut result_matrix = Self::new();
+        let m = self.get_rows()?;
+        let k = other.get_cols()?;
+
+        result_matrix.init(m, k)?;
+
+        result_matrix.mul(&self, &other)?;
+
+        Ok(result_matrix)  // Return no error.
     }
 
     /// This method is used to transpose a matrix of size m x n.
@@ -1168,32 +1188,4 @@ impl Matrix {
 
         Ok(vect)    // Return the diagonal as a vector with no error.
     }
-}
-
-// This function is used to perform the matrix addition operation of two matrices of size m x n.
-pub fn add(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut result_matrix = Matrix::new();
-    result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
-    result_matrix.add(&matrix1, &matrix2)?;
-
-    Ok(result_matrix)
-}
-
-// This function is used to perform the matrix subtraction operation of two matrices of size m x n.
-pub fn sub(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut result_matrix = Matrix::new();
-    result_matrix.init(matrix1.get_rows()?, matrix1.get_cols()?)?;
-    result_matrix.sub(&matrix1, &matrix2)?;
-
-    Ok(result_matrix)
-}
-
-// This function is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
-// Naive implementation, as it is not very efficient for large matrices (for larger matrices, use the "divide and conquer" strategy).
-pub fn mul(matrix1: &Matrix, matrix2: &Matrix) -> Result<Matrix, LinalgError> {
-    let mut result_matrix = Matrix::new();
-    result_matrix.init(matrix1.get_rows()?, matrix2.get_cols()?)?;
-    result_matrix.mul(&matrix1, &matrix2)?;
-
-    Ok(result_matrix)
 }
