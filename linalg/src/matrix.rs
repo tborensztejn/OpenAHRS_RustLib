@@ -2,7 +2,7 @@ extern crate utils;
 extern crate libm;
 
 use utils::utils::{is_valid_value, allclose, min};
-use libm::{powf, sqrtf, fabsf};
+use libm::{powf, sqrtf, fabsf, acosf, sinf};
 
 use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError, is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
 use crate::linalg::{lup, solve};
@@ -509,12 +509,12 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
-        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
-        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+        let mut result_mat = Self::new();       // Create a new matrix to store the result.
+        result_mat.init(self.rows, self.cols)?; // Initialize it.
 
-        result_matrix.add(&self, &other)?;          // Perform addition.
+        result_mat.add(&self, &other)?;         // Perform addition.
 
-        Ok(result_matrix)   // Return the result matrix with no error.
+        Ok(result_mat)  // Return the result matrix with no error.
     }
 
     /// This method is used to ...
@@ -557,18 +557,18 @@ impl Matrix {
             return Err(LinalgError::NotInit);   // Return an error.
         }
 
-        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
-        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+        let mut result_mat = Self::new();       // Create a new matrix to store the result.
+        result_mat.init(self.rows, self.cols)?; // Initialize it.
 
         for row in 0..self.rows {
             for col in 0..self.cols {
                 let element = self.get_element(row, col)? + scalar;
 
-                result_matrix.set_element(row, col, element)?;
+                result_mat.set_element(row, col, element)?;
             }
         }
 
-        Ok(result_matrix)   // Return the result matrix with no error.
+        Ok(result_mat)  // Return the result matrix with no error.
     }
 
     /// This method is used to perform the matrix subtraction operation of two matrices of size m x n.
@@ -623,12 +623,12 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
-        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
-        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+        let mut result_mat = Self::new();       // Create a new matrix to store the result.
+        result_mat.init(self.rows, self.cols)?; // Initialize it.
 
-        result_matrix.sub(&self, &other)?;          // Perform addition.
+        result_mat.sub(&self, &other)?;         // Perform addition.
 
-        Ok(result_matrix)   // Return the result matrix with no error.
+        Ok(result_mat)  // Return the result matrix with no error.
     }
 
     /// This method is used to ...
@@ -671,18 +671,18 @@ impl Matrix {
             return Err(LinalgError::NotInit);   // Return an error.
         }
 
-        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
-        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+        let mut result_mat = Self::new();       // Create a new matrix to store the result.
+        result_mat.init(self.rows, self.cols)?; // Initialize it.
 
         for row in 0..self.rows {
             for col in 0..self.cols {
                 let element = self.get_element(row, col)? - scalar;
 
-                result_matrix.set_element(row, col, element)?;
+                result_mat.set_element(row, col, element)?;
             }
         }
 
-        Ok(result_matrix)   // Return the result matrix with no error.
+        Ok(result_mat)  // Return the result matrix with no error.
     }
 
     /// This method is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
@@ -712,15 +712,15 @@ impl Matrix {
 
     /// This method is used to ...
     pub fn mul_new(self: &Self, other: &Self) -> Result<Self, LinalgError> {
-        let mut result_matrix = Self::new();
+        let mut result_mat = Self::new();
         let m = self.get_rows()?;
         let k = other.get_cols()?;
 
-        result_matrix.init(m, k)?;
+        result_mat.init(m, k)?;
 
-        result_matrix.mul(&self, &other)?;
+        result_mat.mul(&self, &other)?;
 
-        Ok(result_matrix)  // Return no error.
+        Ok(result_mat)  // Return no error.
     }
 
     /// This method is used to transpose a matrix of size m x n.
@@ -1156,12 +1156,6 @@ impl Matrix {
 
     /// This method is used to check if a matrix of size m x n is orthogonal or not.
     pub fn is_orthogonal(self: &Self) -> Result<bool, LinalgError> {
-        // Check if the matrix is square.
-        if !self.is_square()? {
-            // The matrix is not square so can't be orthogonal.
-            return Ok(false);   // Return false with no error.
-        }
-
         let m = self.rows;
 
         let determinant_abs = fabsf(self.det()?);   // Calculate the absolute value of the determinant of the matrix.
@@ -1173,22 +1167,18 @@ impl Matrix {
         }
 
         // Create a copy of the actual matrix and transpose it.
-        let mut transposed_mat = Self::new();
-        transposed_mat.init(m, m)?;
-        transposed_mat.copy_from(&self)?;
+        let mut transposed_mat = self.duplicate()?;
         transposed_mat.transpose()?;
 
         // Create the identity matrix.
-        let mut identity_matrix = Self::new();
-        identity_matrix.init(m, m)?;
-        identity_matrix.fill_identity()?;
+        let mut identity_mat = Self::new();
+        identity_mat.init(m, m)?;
+        identity_mat.fill_identity()?;
 
-        let mut result = Self::new();
-        result.init(m, m)?;
-        result.mul(&self, &transposed_mat)?;
+        let result_mat = self.mul_new(&transposed_mat)?;
 
         // Check that the relationship R Tr(R) = I is satisfied.
-        if !result.is_equal_to(&identity_matrix, EPSILON)? {
+        if !result_mat.is_equal_to(&identity_mat, EPSILON)? {
             // The product of the matrix and its transpose is not equal to the identity matrix and so cannot be orthogonal.
             return Ok(false);   // Return false wwith no error.
         }
@@ -1198,37 +1188,29 @@ impl Matrix {
 
     /// This method can be used to check if a matrix of size m x n belongs to the SO(n) group or not.
     pub fn is_so_n(self: &Self) -> Result<bool, LinalgError> {
-        // Check if the matrix is square.
-        if !self.is_square()? {
-            // The matrix is not square so can't be orthogonal.
-            return Ok(false);   // Return false with no error.
-        }
-
         let m = self.rows;
 
         // Check if the determinant is equal to 1.
-        if !allclose(self.det()?, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
+        let determinant = self.det()?;
+
+        if !allclose(determinant, 1.0_f32, EPSILON).map_err(LinalgError::UtilsError)? {
             // The absolute value of the determinant is different from 1 so can't be orthogonal.
             return Ok(false);   // Return false wwith no error.
         }
 
         // Create a copy of the actual matrix and transpose it.
-        let mut transposed_mat = Self::new();
-        transposed_mat.init(m, m)?;
-        transposed_mat.copy_from(&self)?;
+        let mut transposed_mat = self.duplicate()?;
         transposed_mat.transpose()?;
 
         // Create the identity matrix.
-        let mut identity_matrix = Self::new();
-        identity_matrix.init(m, m)?;
-        identity_matrix.fill_identity()?;
+        let mut identity_mat = Self::new();
+        identity_mat.init(m, m)?;
+        identity_mat.fill_identity()?;
 
-        let mut result = Self::new();
-        result.init(m, m)?;
-        result.mul(&self, &transposed_mat)?;
+        let result_mat = self.mul_new(&transposed_mat)?;
 
         // Check that the relationship R Tr(R) = I is satisfied.
-        if !result.is_equal_to(&identity_matrix, EPSILON)? {
+        if !result_mat.is_equal_to(&identity_mat, EPSILON)? {
             // The product of the matrix and its transpose is not equal to the identity matrix and so cannot be orthogonal.
             return Ok(false);   // Return false wwith no error.
         }
@@ -1239,6 +1221,7 @@ impl Matrix {
     /// This method is used to extract a specified diagonal of a matrix of size m x n.
     // k: int, optional, is the diagonal in question. The default is 0. Use k>0 for diagonals above the main diagonal, and k<0 for diagonals below the main diagonal.
     pub fn diag(self: &Self, k: Option<i8>) -> Result<Vector<f32>, LinalgError> {
+        // TODO: check if the matrix is initialized.
         let mut vect: Vector<f32> = Vector::new();
 
         // Retrieve matrix dimensions.
@@ -1270,5 +1253,83 @@ impl Matrix {
         }
 
         Ok(vect)    // Return the diagonal as a vector with no error.
+    }
+
+    /// This method is used to calculate the logarithmic map of a rotation matrix or a Direct Cosine Matrix (DCM).
+    /*
+    It corresponds to the logarithm given by the Rodrigues rotation formula:
+
+    \log(\mathbf{R}) = \frac{\theta(\mathbf{R} - \mathbf{R}^T)}{2\sin\theta}
+    \theta = \arccos\left(\frac{\mathrm{tr}(\mathbf{R}) - 1}{2}\right)
+    */
+    pub fn log(self: &Self) -> Result<Self, LinalgError> {
+        /*
+        \log(\mathbf{R}) = \frac{\theta(\mathbf{R} - \mathbf{R}^T)}{2\sin\theta}
+        \theta = \arccos\left(\frac{\mathrm{tr}(\mathbf{R}) - 1}{2}\right)
+        */
+
+        // Check if the matrix belongs to SO(n).
+        if !self.is_so_n()? {
+            // The matrix does not belong to SO(n).
+            //return Err(LinalgError::); // Return an error.
+        }
+
+        let theta = acosf((self.trace()? - 1.0) / 2.0);
+
+        let mut transposed_mat = self.duplicate()?; // Duplicate the actual matrix.
+        transposed_mat.transpose()?;                // Tranpose it.
+
+        let mut result_mat = self.sub_new(&transposed_mat)?;
+        result_mat.mul_by_scalar(theta / (2.0 * sinf(theta)))?;
+
+        Ok(result_mat)  // Return the result matrix with no error.
+    }
+
+    /// This method is used to calculate the logarithmic map of a rotation matrix or a Direct Cosine Matrix (DCM).
+    /*
+    It corresponds to the logarithm given by the Rodrigues rotation formula:
+
+    \log(\mathbf{R}) = \frac{\theta(\mathbf{R} - \mathbf{R}^T)}{2\sin\theta}
+    \theta = \arccos\left(\frac{\mathrm{tr}(\mathbf{R}) - 1}{2}\right)
+    */
+    pub fn log_in_place(self: &mut Self) -> Result<(), LinalgError> {
+        // Check if the matrix belongs to SO(n).
+        if !self.is_so_n()? {
+            // The matrix does not belong to SO(n).
+            //return Err(LinalgError::); // Return an error.
+        }
+
+        let theta = acosf((self.trace()? - 1.0) / 2.0);
+
+        let mut transposed_mat = self.duplicate()?; // Duplicate the actual matrix.
+        transposed_mat.transpose()?;                // Tranpose it.
+
+        self.sub_in_place(&transposed_mat)?;
+        self.mul_by_scalar(theta / (2.0 * sinf(theta)))?;
+
+        Ok(())  // Return no error.
+    }
+
+    /*
+    pub fn adjugate(self: &Self) -> Result<Self, LinalgError> {
+        //
+    }
+    */
+
+    /// This method is used to ...
+    pub fn adjugate_in_place(self: &mut Self) -> Result<(), LinalgError> {
+        // Check if the matrix belongs to SO(n).
+        if !self.is_so_n()? {
+            // The matrix does not belong to SO(n).
+            //return Err(LinalgError::); // Return an error.
+        }
+
+        let determinant = self.det()?;  // Calculate the determinant of the matrix.
+
+        self.transpose()?;              // Tranpose the matrix.
+
+        self.mul_by_scalar(determinant)?;
+
+        Ok(())  // Return no error.
     }
 }
