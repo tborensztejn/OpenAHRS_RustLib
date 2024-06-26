@@ -111,7 +111,7 @@ impl AR {
                         // S = 0.5 * dt * Omega
                         let mut s = omega.duplicate()?;
                         // A' = S^n / !n
-                        s.power_exponent(n as f32)?;
+                        s.power_elements(n as f32)?;
                         let factor = factorial(n);
                         s.mul_by_scalar(1.0 / factor as f32)?;
                         // A = A + A'
@@ -119,7 +119,7 @@ impl AR {
                     }
                 }
 
-                let attitude = temp.muln(&self.attitude.convert_to_matrix()?)?;
+                let attitude = temp.mul_new(&self.attitude.convert_to_matrix()?)?;
 
                 // TODO: use more efficient way.
                 qw = attitude.get_element(0, 0)?;

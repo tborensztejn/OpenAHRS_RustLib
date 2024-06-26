@@ -32,9 +32,17 @@ mod open_ahrs_tests {
         print!("\nAttitudes:\n");
         attitudes.print().unwrap();
 
-        let mut angular_rates: Matrix = Matrix::new();
-        angular_rates.init(3, niter).unwrap();
-        angular_rates.fill(0.0).unwrap();
+        let mut gyrometer_measurements: Matrix = Matrix::new();
+        gyrometer_measurements.init(3, niter).unwrap();
+        gyrometer_measurements.fill(0.0).unwrap();
+
+        let mut accelerometer_measurements: Matrix = Matrix::new();
+        accelerometer_measurements.init(3, niter).unwrap();
+        accelerometer_measurements.fill(0.0).unwrap();
+
+        let mut magnetometer_measurements: Matrix = Matrix::new();
+        magnetometer_measurements.init(3, niter).unwrap();
+        magnetometer_measurements.fill(0.0).unwrap();
 
         for n in 0..niter {
             let mut q_now: Vector<f32> = Vector::new();     // Attitude at time t.
@@ -142,7 +150,7 @@ mod open_ahrs_tests {
             w_vect.set_element(1, wy).unwrap();
             w_vect.set_element(2, wz).unwrap();
 
-            angular_rates.set_col(&w_vect, n).unwrap();
+            gyrometer_measurements.set_col(&w_vect, n).unwrap();
 
             /* Used to find derivative of q(t) from w(t). */
             q_dot.mul(&q_now, &w).unwrap();
@@ -152,7 +160,7 @@ mod open_ahrs_tests {
         }
 
         print!("Angular rates:\n");
-        angular_rates.print().unwrap();
+        gyrometer_measurements.print().unwrap();
 
         let mut ar_filter: AR = AR::new().unwrap();
 
@@ -198,9 +206,9 @@ mod open_ahrs_tests {
         ).unwrap();
 
         for n in 0..niter {
-            let gx = angular_rates.get_element(0, n).unwrap();
-            let gy = angular_rates.get_element(1, n).unwrap();
-            let gz = angular_rates.get_element(2, n).unwrap();
+            let gx = gyrometer_measurements.get_element(0, n).unwrap();
+            let gy = gyrometer_measurements.get_element(1, n).unwrap();
+            let gz = gyrometer_measurements.get_element(2, n).unwrap();
 
             ar_filter.update(gx, gy, gz).unwrap();
             ar_filter.print_attitude().unwrap();

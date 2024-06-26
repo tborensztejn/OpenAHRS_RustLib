@@ -295,7 +295,7 @@ impl AQUA {
             // Check whether it would not be more appropriate to use the AR filter to determine the quaternion with the 3-axis gyro.
             let mut omega = calculate_omega_matrix(p, q, r)?;   // Calculate the transformation matrix Ω(ω).
             omega.mul_by_scalar(0.5)?;
-            let derivative_quat = omega.muln(&self.attitude.convert_to_matrix()?)?;
+            let derivative_quat = omega.mul_new(&self.attitude.convert_to_matrix()?)?;
 
 
             let mut delta_quat = derivative_quat.col_to_vector(0)?;

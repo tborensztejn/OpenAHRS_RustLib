@@ -17,19 +17,37 @@ pub trait Quaternion {
     fn is_pure(self: &Self) -> Result<bool, LinalgError>;
     /// This method is used to set w component of a quaternion.
     fn set_qw(self: &mut Self, qw: f32) -> Result<(), LinalgError>;
+    /// This method is used to retrieve w component of a quaternion.
     fn get_qw(self: &Self) -> Result<f32, LinalgError>;
+    /// This method is used to set x component of a quaternion.
     fn set_qx(self: &mut Self, qx: f32) -> Result<(), LinalgError>;
+    /// This method is used to retrieve x component of a quaternion.
     fn get_qx(self: &Self) -> Result<f32, LinalgError>;
+    /// This method is used to set y component of a quaternion.
     fn set_qy(self: &mut Self, qy: f32) -> Result<(), LinalgError>;
+    /// This method is used to retrieve y component of a quaternion.
     fn get_qy(self: &Self) -> Result<f32, LinalgError>;
+    /// This method is used to set z component of a quaternion.
     fn set_qz(self: &mut Self, qz: f32) -> Result<(), LinalgError>;
+    /// This method is used to retrieve z component of a quaternion.
     fn get_qz(self: &Self) -> Result<f32, LinalgError>;
+    /// This method is used to retrieve vector part of a quaternion.
     fn get_vector_part(self: &Self) -> Result<Vector<f32>, LinalgError>;
+    /// This method is used to set all components of a quaternion.
     fn fillq(self: &mut Self, qw: f32, qx: f32, qy: f32, qz: f32) -> Result<(), LinalgError>;
-    fn conjugate(self: &mut Self) -> Result<(), LinalgError>;
-    fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError>;
+    /// This method is used to fill a quaternion as identity quaternion.
     fn fill_identity(self: &mut Self) -> Result<(), LinalgError>;
+    /// This method is used to conjugate a quaternion.
+    fn conjugate(self: &mut Self) -> Result<(), LinalgError>;
+    /// This method is used to create the conjugate of a quaternion.
+    //fn conjugate_new(self: &Self) -> Result<Vector<f32>, LinalgError>;
+    /// This method is used to perform Hamilton product between two quaternions.
+    fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError>;
+    /// This method is used to ...
+    //fn mul_new(self: &Self, other: &Self) -> Result<Vector<f32>, LinalgError>;
+    /// This method is used to invert a quaternion.
     fn invert(self: &mut Self) -> Result<(), LinalgError>;
+    /// This method is used to convert a quaternion into a Direct Cosine Matrix (DCM).
     fn convert_to_dcm(self: &Self) -> Result<Matrix, LinalgError>;
 
     //fn exp(self: &mut Self) -> Result<(), LinalgError>;
@@ -55,9 +73,9 @@ impl Quaternion for Vector<f32> {
     fn is_quaternion(self: &Self) -> Result<bool, LinalgError> {
         // Check that the vector size is 4x1.
         if self.get_rows()? != 4 {
-            Ok(false)
+            Ok(false)   // Return false with no error.
         } else {
-            Ok(true)
+            Ok(true)    // Return true with no error.
         }
     }
 
@@ -217,7 +235,7 @@ impl Quaternion for Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    // This function is used to conjugate a quaternion.
+    /// This method is used to conjugate a quaternion.
     fn conjugate(self: &mut Self) -> Result<(), LinalgError> {
         // Check that it is a quaternion.
         if !self.is_quaternion()? {
@@ -374,7 +392,7 @@ impl Quaternion for Vector<f32> {
         if allclose(n, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
             // The trace is -1, which implies that the real part of quaternion is null and therefore the quaternion is pure.
             let mut e = dcm.diag(None)?;
-            e.add_scalar(1.0)?;
+            e.add_scalar_in_place(1.0)?;
             e.mul_by_scalar(0.5)?;
             e.power_elements(0.5)?;
 
@@ -466,7 +484,7 @@ impl Quaternion for Vector<f32> {
 
         // Not very computationally efficient. Quaternions can be implicitly converted to a rotation-like matrix (12 multiplications and 12 additions/subtractions), which levels the following vectors rotating cost with the rotation matrix method.
         let dcm = self.convert_to_dcm()?;
-        let rotated_vect = dcm.muln(&vect.convert_to_matrix()?)?;
+        let rotated_vect = dcm.mul_new(&vect.convert_to_matrix()?)?;
 
         let rotated_vect = rotated_vect.col_to_vector(0)?;
 
@@ -490,9 +508,11 @@ impl Quaternion for Vector<f32> {
         }
 
         let dcm = self.convert_to_dcm()?;
-        let temp = dcm.muln(&vect.convert_to_matrix()?)?;
+        let temp = dcm.mul_new(&vect.convert_to_matrix()?)?;
         temp.get_col(vect, 0)?;
 
         Ok(())  // Return no error.
     }
+
+    //fn differentiation(self: &Self, other: &Self)
 }

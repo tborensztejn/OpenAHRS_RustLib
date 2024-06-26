@@ -248,13 +248,7 @@ impl Vector<f32> {
     /// This method is used to perform the vector addition operation of two vectors of size m x 1.
     pub fn add(self: &mut Self, vector1: &Self, vector2: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
-        if !self.is_same_size_as(vector1)? {
-            // The vectors do not have the same dimensions.
-            return Err(LinalgError::NotSameSize)    // Return an error.
-        }
-
-        // Check that the vectors have the same dimensions.
-        if !self.is_same_size_as(vector2)? {
+        if !self.is_same_size_as(vector1)? || !self.is_same_size_as(vector2)? {
             // The vectors do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
@@ -292,7 +286,40 @@ impl Vector<f32> {
     }
 
     /// This method is used to ...
-    pub fn add_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+    pub fn add_new(self: &Self, other: &Self) -> Result<Self, LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
+        result_vect.init(self.rows)?;               // Initialize it.
+
+        result_vect.add(&self, &other)?;            // Perform addition.
+
+        Ok(result_vect) // Return the result vector with no error.
+    }
+
+    /// This method is used to ...
+    pub fn add_scalar(self: &mut Self, other: &Self, scalar: f32) -> Result<(), LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            let element = other.get_element(row)? + scalar;
+
+            self.set_element(row, element)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to ...
+    pub fn add_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         for row in 0..self.rows {
             let element = self.get_element(row)? + scalar;
 
@@ -302,16 +329,30 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
+    /// This method is used to ...
+    pub fn add_scalar_new(self: &Self, scalar: f32) -> Result<Self, LinalgError> {
+        // Check that the vector is initialized.
+        if !self.initialized {
+            // The vector is not initialized.
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
+        result_vect.init(self.rows)?;               // Initialize it.
+
+        for row in 0..self.rows {
+            let element = self.get_element(row)? + scalar;
+
+            result_vect.set_element(row, element)?;
+        }
+
+        Ok(result_vect) // Return the result vector with no error.
+    }
+
     /// This method is used to perform the vector subtraction operation of two vectors of size m x 1.
     pub fn sub(self: &mut Self, vector1: &Self, vector2: &Self) -> Result<(), LinalgError> {
         // Check that the vectors have the same dimensions.
-        if !self.is_same_size_as(vector1)? {
-            // The vectors do not have the same dimensions.
-            return Err(LinalgError::NotSameSize)    // Return an error.
-        }
-
-        // Check that the vectors have the same dimensions.
-        if !self.is_same_size_as(vector2)? {
+        if !self.is_same_size_as(vector1)? || !self.is_same_size_as(vector2)? {
             // The vectors do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
@@ -349,7 +390,40 @@ impl Vector<f32> {
     }
 
     /// This method is used to ...
-    pub fn sub_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+    pub fn sub_new(self: &Self, other: &Self) -> Result<Self, LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
+        result_vect.init(self.rows)?;               // Initialize it.
+
+        result_vect.sub(&self, &other)?;            // Perform subtraction.
+
+        Ok(result_vect) // Return the result vector with no error.
+    }
+
+    /// This method is used to ...
+    pub fn sub_scalar(self: &mut Self, other: &Self, scalar: f32) -> Result<(), LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            let element = other.get_element(row)? - scalar;
+
+            self.set_element(row, element)?;
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to ...
+    pub fn sub_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         for row in 0..self.rows {
             let element = self.get_element(row)? - scalar;
 
@@ -357,6 +431,26 @@ impl Vector<f32> {
         }
 
         Ok(())  // Return no error.
+    }
+
+    /// This method is used to ...
+    pub fn sub_scalar_new(self: &Self, scalar: f32) -> Result<Self, LinalgError> {
+        // Check that the vector is initialized.
+        if !self.initialized {
+            // The vector is not initialized.
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
+        result_vect.init(self.rows)?;               // Initialize it.
+
+        for row in 0..self.rows {
+            let element = self.get_element(row)? - scalar;
+
+            result_vect.set_element(row, element)?;
+        }
+
+        Ok(result_vect) // Return the result vector with no error.
     }
 
     /// This method is used to calculate the norm of a vector of size m x 1.
@@ -407,7 +501,7 @@ impl Vector<f32> {
     }
 
     /// This method is used to perform dot product between two vectors of size m x 1.
-    pub fn dot_product(self: &mut Self, other: &Self) -> Result<f32, LinalgError> {
+    pub fn dot_product(self: &Self, other: &Self) -> Result<f32, LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
             // The vectors do not have the same dimensions.
@@ -439,7 +533,7 @@ impl Vector<f32> {
         }
 
         // Perform scalar product.
-        let scalar = dot_product(&vect1, &vect2)?;
+        let scalar = vect1.dot_product(&vect2)?;
         let theta = acosf(scalar);  // Angle between the axis of the first vector and the second one.
 
         // Create a copy of the first vector.
@@ -503,7 +597,7 @@ impl Vector<f32> {
         Ok(())  // Return no error.
     }
 
-    /// This function is used to convert a vector of size m x 1 into a matrix of size m x 1 in order to perform matrix operations.
+    /// This method is used to convert a vector of size m x 1 into a matrix of size m x 1 in order to perform matrix operations.
     pub fn convert_to_matrix(self: &Self) -> Result<Matrix, LinalgError> {
         let rows = self.get_rows()?;
 
@@ -514,22 +608,4 @@ impl Vector<f32> {
 
         Ok(mat) // Return the matrix with no error.
     }
-}
-
-/// This function is used to perform dot product between two vectors of size m x 1.
-pub fn dot_product(vect1: &Vector<f32>, vect2: &Vector<f32>) -> Result<f32, LinalgError> {
-    // Check that the vectors have the same dimensions.
-    if !vect1.is_same_size_as(vect2)? {
-        // The vectors do not have the same dimensions.
-        return Err(LinalgError::NotSameSize)    // Return an error.
-    }
-
-    let mut scalar: f32 = 0.0;  // Initialize the result of the dot product to zero.
-
-    // Iterate through each element, multiply corresponding elements, and accumulate the sum.
-    for row in 0..vect1.get_rows()? {
-        scalar += vect1.get_element(row)? * vect2.get_element(row)?;
-    }
-
-    Ok(scalar)  // Return the result with no error.
 }

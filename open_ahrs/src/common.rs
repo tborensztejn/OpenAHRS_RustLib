@@ -59,8 +59,6 @@ use linalg::common::is_valid_cols_number;
 #[cfg(feature = "std")]
 use quaternion::quaternion::Quaternion;
 #[cfg(feature = "std")]
-use linalg::vector::dot_product;
-#[cfg(feature = "std")]
 use linalg::vector::Vector;
 
 #[cfg(feature = "std")]
@@ -115,7 +113,7 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
 
 
         // Perform scalar product.
-        let scalar = dot_product(&actual_quat, &previous_quat)?;
+        let scalar = actual_quat.dot_product(&previous_quat)?;
         let theta = acosf(scalar);  // Angle between the axis of the current quaternion and that of the previous quaternion.
 
         /*

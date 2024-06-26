@@ -460,13 +460,7 @@ impl Matrix {
     /// This method is used to perform the matrix addition operation of two matrices of size m x n.
     pub fn add(&mut self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
-        if !self.is_same_size_as(matrix1)? {
-            // The matrices do not have the same dimensions.
-            return Err(LinalgError::NotSameSize)    // Return an error.
-        }
-
-        // Check that the matrices have the same dimensions.
-        if !self.is_same_size_as(matrix2)? {
+        if !self.is_same_size_as(matrix1)? || !self.is_same_size_as(matrix2)?{
             // The matrices do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
@@ -507,8 +501,43 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
+    /// This method is used to ...
+    pub fn add_new(self: &Self, other: &Self) -> Result<Self, LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
+        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+
+        result_matrix.add(&self, &other)?;          // Perform addition.
+
+        Ok(result_matrix)   // Return the result matrix with no error.
+    }
+
+    /// This method is used to ...
+    pub fn add_scalar(self: &mut Self, other: &Self, scalar: f32) -> Result<(), LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = other.get_element(row, col)? + scalar;
+
+                self.set_element(row, col, element)?;
+            }
+        }
+
+        Ok(())  // Return no error.
+    }
+
     // This method is used to ...
-    pub fn add_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+    pub fn add_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         for row in 0..self.rows {
             for col in 0..self.cols {
                 let element = self.get_element(row, col)? + scalar;
@@ -520,16 +549,32 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
+    /// This method is used to ...
+    pub fn add_scalar_new(self: &Self, scalar: f32) -> Result<Self, LinalgError> {
+        // Check that the matrix is initialized.
+        if !self.initialized {
+            // The matrix is not initialized.
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
+        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(row, col)? + scalar;
+
+                result_matrix.set_element(row, col, element)?;
+            }
+        }
+
+        Ok(result_matrix)   // Return the result matrix with no error.
+    }
+
     /// This method is used to perform the matrix subtraction operation of two matrices of size m x n.
     pub fn sub(self: &mut Self, matrix1: &Self, matrix2: &Self) -> Result<(), LinalgError> {
         // Check that the matrices have the same dimensions.
-        if !self.is_same_size_as(matrix1)? {
-            // The matrices do not have the same dimensions.
-            return Err(LinalgError::NotSameSize)    // Return an error.
-        }
-
-        // Check that the matrices have the same dimensions.
-        if !self.is_same_size_as(matrix2)? {
+        if !self.is_same_size_as(matrix1)? || !self.is_same_size_as(matrix2)? {
             // The matrices do not have the same dimensions.
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
@@ -570,8 +615,43 @@ impl Matrix {
         Ok(()) // Return no error.
     }
 
+    /// This method is used to ...
+    pub fn sub_new(self: &Self, other: &Self) -> Result<Self, LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
+        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+
+        result_matrix.sub(&self, &other)?;          // Perform addition.
+
+        Ok(result_matrix)   // Return the result matrix with no error.
+    }
+
+    /// This method is used to ...
+    pub fn sub_scalar(self: &mut Self, other: &Self, scalar: f32) -> Result<(), LinalgError> {
+        // Check that the matrices have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The matrices do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = other.get_element(row, col)? - scalar;
+
+                self.set_element(row, col, element)?;
+            }
+        }
+
+        Ok(())  // Return no error.
+    }
+
     // This method is used to ...
-    pub fn sub_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+    pub fn sub_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         for row in 0..self.rows {
             for col in 0..self.cols {
                 let element = self.get_element(row, col)? - scalar;
@@ -581,6 +661,28 @@ impl Matrix {
         }
 
         Ok(())  // Return no error.
+    }
+
+    /// This method is used to ...
+    pub fn sub_scalar_new(self: &Self, scalar: f32) -> Result<Self, LinalgError> {
+        // Check that the matrix is initialized.
+        if !self.initialized {
+            // The matrix is not initialized.
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        let mut result_matrix = Self::new();        // Create a new matrix to store the result.
+        result_matrix.init(self.rows, self.cols)?;  // Initialize it.
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(row, col)? - scalar;
+
+                result_matrix.set_element(row, col, element)?;
+            }
+        }
+
+        Ok(result_matrix)   // Return the result matrix with no error.
     }
 
     /// This method is used to perform the matrix multiplication operation on two matrices of sizes m x n and (n x k) respectively.
@@ -608,7 +710,8 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    pub fn muln(self: &Self, other: &Self) -> Result<Self, LinalgError> {
+    /// This method is used to ...
+    pub fn mul_new(self: &Self, other: &Self) -> Result<Self, LinalgError> {
         let mut result_matrix = Self::new();
         let m = self.get_rows()?;
         let k = other.get_cols()?;
@@ -715,7 +818,7 @@ impl Matrix {
     }
 
     /// This method is used to apply an exponent to all elements of a matrix of size m x n.
-    pub fn power_exponent(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
+    pub fn power_elements(self: &mut Self, exponent: f32) -> Result<(), LinalgError> {
         // Iterate through each element and apply exponent.
         for row in 0..self.rows {
             for col in 0..self.cols {
@@ -1137,26 +1240,6 @@ impl Matrix {
     // k: int, optional, is the diagonal in question. The default is 0. Use k>0 for diagonals above the main diagonal, and k<0 for diagonals below the main diagonal.
     pub fn diag(self: &Self, k: Option<i8>) -> Result<Vector<f32>, LinalgError> {
         let mut vect: Vector<f32> = Vector::new();
-
-        /*
-        // Check if the matrix is square.
-        if self.is_square()? {  // The matrix is square.
-            let m = self.rows()?;
-
-            vect.init(m)?;
-
-            for row in 0..m {
-                for col in 0..m {
-                    if row == col {
-                        let element = self.get_element(row, col)?;
-                        vect.set_element(row, element)?;
-                    }
-                }
-            }
-        } else {    // The matrix is not square.
-            // Add some code here.
-        }
-        */
 
         // Retrieve matrix dimensions.
         let m = self.rows as i8;
