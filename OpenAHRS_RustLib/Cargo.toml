@@ -1,9 +1,0 @@
-[workspace]
-
-members = [
-    "linalg",
-    "open_ahrs",
-    "pid",
-    "quaternion",
-    "utils",
-]
