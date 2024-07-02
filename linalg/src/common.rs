@@ -6,6 +6,7 @@ pub const M_MAX: usize = 16;            /// Maximum number of rows in a matrix a
 pub const N_MAX: usize = 16;            /// Maximum number of columns in a matrix.
 pub const EPSILON: f32 = 0.0001;        /// ...
 pub const PI: f32 = 3.141592653589793;  /// ...
+pub const E: f32 = 2.718281828459045;   /// Euler number, exponential function base, Napier constant.
 
 //pub type Result<T> = core::result::Result<T, LinalgError>;
 

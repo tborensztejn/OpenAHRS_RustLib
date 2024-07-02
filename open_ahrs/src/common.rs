@@ -3,7 +3,7 @@ extern crate linalg;
 use linalg::matrix::Matrix;
 use linalg::common::{LinalgError};
 
-//pub(crate) const MAX_ORDER: usize = 5;  /// Maximum order of numerical integration methods.
+//pub(crate) const MAX_ORDER: usize = 5;      /// Maximum order of numerical integration methods.
 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -149,7 +149,7 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
     Ok(attitudes)
 }
 
-// This function is used to calculate the transformation matrix Ω(ω) from components of the angular velocity pseudovector.
+/// This function is used to calculate the transformation matrix Ω(ω) from components of the angular velocity pseudovector.
 pub(crate) fn calculate_omega_matrix(p: f32, q: f32, r: f32) -> Result<Matrix, OpenAHRSError> {
     // Create the matrix.
     let mut omega = Matrix::new();

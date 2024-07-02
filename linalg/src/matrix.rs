@@ -743,7 +743,7 @@ impl Matrix {
                 }
             }
         } else {
-            // TO DO : optimize if if it's possible.
+            // TODO : optimize it if it's possible.
             // The matrix is rectangular.
             let mut temp: Self = Self::new();
             temp.init(self.cols, self.rows)?;
@@ -1054,7 +1054,7 @@ impl Matrix {
         Ok(true)    // Return the result with no error.
     }
 
-    /// This method is used to ...
+    /// This method is used to perform Cholesky decomposition of a Hermitian positive-definite matrix (A=LL^T).
     pub fn chol(self: &Self) -> Result<Self, LinalgError> {
         // Check that the matrix is positive-definite.
         if !self.is_positive_definite()? {
@@ -1127,6 +1127,16 @@ impl Matrix {
 
         Ok(l)
     }
+
+    /*
+    pub fn cholupdate(self: &Self) -> Result<Self, LinalgError> {
+        // Check that the matrix is square.
+        if !self.is_square()? {
+            // A non-square matrix can't be symmetric.
+            return Ok(false);   // Return the result with no error.
+        }
+    }
+    */
 
     /// This method is used to ...
     pub fn dlyap(self: &Self, q: &Self) -> Result<Self, LinalgError> {

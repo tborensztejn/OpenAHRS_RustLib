@@ -11,6 +11,7 @@ pub mod aqua;
 #[cfg(feature = "std")]
 mod open_ahrs_tests {
     extern crate linalg;
+    extern crate libm;
     extern crate quaternion;
 
     use crate::ar::AR;
@@ -20,6 +21,7 @@ mod open_ahrs_tests {
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
     use quaternion::quaternion::Quaternion;
+    use libm::{cosf, sinf};
 
     #[test]
     fn ar_series_method_test() {
@@ -157,6 +159,21 @@ mod open_ahrs_tests {
             q_dot.mul_by_scalar(1.0_f32 / 2.0_f32).unwrap();
             //print!("q_dot (calculated):\n");
             //q_dot.print().unwrap();
+
+            let mut acc_global: Vector<f32> = Vector::new();
+            acc_global.init(4).unwrap();
+            acc_global.fill(0.0).unwrap();
+            acc_global.set_element(3, -9.81).unwrap();
+            acc_global.print().unwrap();
+            let mut acc_local = q_now.mul_new(&acc_global.get_vector_part().unwrap()).unwrap();
+            acc_local.mul_in_place(&q_now.conjugate_new().unwrap()).unwrap();
+
+            let mut mag_global: Vector<f32> = Vector::new();
+            mag_global.init(4).unwrap();
+            mag_global.fill(0.0).unwrap();
+            mag_global.set_element(1, 48.0*cosf(15.0*0.0174533)).unwrap();
+            mag_global.set_element(3, 48.0*sinf(15.0*0.0174533)).unwrap();
+            mag_global.print().unwrap();
         }
 
         print!("Angular rates:\n");
@@ -221,6 +238,15 @@ mod open_ahrs_tests {
         //Quat::fillq(&mut quat, 0.5, 0.5, 0.5, 0.5).unwrap();   // Appel non implicite.
         //quat.set_qw(0.5).unwrap();  // Appel implicite de la fonction.
         quat.fillq(0.5, 0.5, 0.5, 0.5).unwrap();
+        */
+
+        /*
+        let mut quat: Vector<f32> = Vector::new();
+        quat.init(4).unwrap();
+        quat.fillq(1.0, -2.0, 3.0, -4.0).unwrap();
+        quat.print().unwrap();
+        quat.exp().unwrap();
+        quat.print().unwrap();
         */
     }
 }
