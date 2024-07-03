@@ -48,7 +48,7 @@ pub trait Quaternion {
     /// This method is used to perform Hamilton product between two quaternions.
     fn mul(self: &mut Self, quat1: &Self, quat2: &Self) -> Result<(), LinalgError>;
     /// This method is used to ...
-    //fn mul_new(self: &Self, other: &Self) -> Result<Vector<f32>, LinalgError>;
+    fn mul_new(self: &Self, other: &Self) -> Result<Vector<f32>, LinalgError>;
     /// This method is used to invert a quaternion.
     fn invert(self: &mut Self) -> Result<(), LinalgError>;
     /// This method is used to convert a quaternion into a Direct Cosine Matrix (DCM).
@@ -113,7 +113,7 @@ impl Quaternion for Vector<f32> {
             return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
-        // Check if the real part componentof the quaternion is equal to 0.
+        // Check if the real part component of the quaternion is equal to 0.
         if !allclose(self.get_element(0)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
             return Ok(false);   // Return false wwith no error.
         }
@@ -343,6 +343,42 @@ impl Quaternion for Vector<f32> {
         self.set_element(3, qz)?;
 
         Ok(())  // Return no error.
+    }
+
+    fn mul_new(self: &Self, other: &Self) -> Result<Vector<f32>, LinalgError> {
+        // Check that these are all quaternions.
+        if !self.is_quaternion()? || !other.is_quaternion()? {
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        // Extract components of the first quaternion (quat1).
+        let qw1 = self.get_element(0)?;
+        let qx1 = self.get_element(1)?;
+        let qy1 = self.get_element(2)?;
+        let qz1 = self.get_element(3)?;
+
+        // Extract components of the second quaternion (quat2).
+        let qw2 = other.get_element(0)?;
+        let qx2 = other.get_element(1)?;
+        let qy2 = other.get_element(2)?;
+        let qz2 = other.get_element(3)?;
+
+        // Calculate the components of the resulting quaternion (self).
+        let qw = qw1*qw2 - qx1*qx2 - qy1*qy2 - qz1*qz2;
+        let qx = qw1*qx2 + qx1*qw2 - qz1*qy2 + qy1*qz2;
+        let qy = qw1*qy2 + qz1*qx2 + qw2*qy1 - qx1*qz2;
+        let qz = qw1*qz2 - qy1*qx2 + qx1*qy2 + qw2*qz1;
+
+        let mut result_quat = Self::new();
+        result_quat.init(4)?;
+
+        // Store the calculated components in the resulting quaternion.
+        result_quat.set_element(0, qw)?;
+        result_quat.set_element(1, qx)?;
+        result_quat.set_element(2, qy)?;
+        result_quat.set_element(3, qz)?;
+
+        Ok(result_quat) // Return no error.
     }
 
     // This method is used to fill a quaternion as identity quaternion.

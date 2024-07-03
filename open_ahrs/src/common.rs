@@ -32,6 +32,7 @@ pub enum OpenAHRSError {
 
     // AR filter errors.
     ARMethodError,
+    ARFilterNotInit,
 
     // AQUA filter errors.
     AQUAFilterAlreadyInit,

@@ -16,7 +16,9 @@ mod open_ahrs_tests {
 
     use crate::ar::AR;
     use crate::gyrometer::GyrometerConfig;
-    //use crate::aqua::AQUA;
+    use crate::accelerometer::AccelerometerConfig;
+    use crate::magnetometer::MagnetometerConfig;
+    use crate::aqua::AQUA;
     use crate::common::{NumericalIntegrationMethod as NIM, generate_random_attitudes};
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
@@ -25,161 +27,226 @@ mod open_ahrs_tests {
 
     #[test]
     fn ar_series_method_test() {
-        // Generate random attitudes.
+        const RAG_2_DEG: f32 = 57.2958;     /// Conversion factor between radians to degrees.
+        const DEG_2_RAD: f32 = 0.0174533;   /// Conversion factor between degrees to radians.
+
         let niter: u8 = 10;     // Number of iterations.
-        let ts: f32 = 0.01;     // Sampling period (s).
+        let ts: f32 = 0.01;     // Sampling period [s].
+        let g: f32 = -9.81;     // Gravitational acceleration [m/s²].
+        let b: f32 = 48.0;      // Magnetic field magnitude [µT].
+        let i: f32 = 35.0;      // Magnetic field dip [°].
 
-        let attitudes: Matrix = generate_random_attitudes(niter + 1).unwrap();
+        let bx = b*cosf(i*DEG_2_RAD);
+        let bz = -b*sinf(i*DEG_2_RAD);
 
-        print!("\nAttitudes:\n");
+        /*
+        let mut acc_global: Vector<f32> = Vector::new();            // Create the acceleration vector described in the global reference frame.
+        acc_global.init(3).unwrap();                                // Initialize it.
+        // Fill it.
+        acc_global.fill(0.0).unwrap();
+        acc_global.set_element(2, g).unwrap();
+
+        let mut mag_global: Vector<f32> = Vector::new();            // Create the acceleration vector described in the global reference frame.
+        mag_global.init(3).unwrap();                                // Initialize it.
+        // Fill it.
+        mag_global.set_element(0, b*cosf(i*DEG_2_RAD)).unwrap();
+        mag_global.set_element(1, 0.0).unwrap();
+        mag_global.set_element(2, -b*sinf(i*DEG_2_RAD)).unwrap();
+        */
+
+        let mut acc_global: Vector<f32> = Vector::new();            // Create the acceleration quaternion described in the global reference frame.
+        acc_global.init(4).unwrap();                                // Initialize it.
+        acc_global.fillq(0.0, 0.0, 0.0, g).unwrap();                // Fill it.
+
+        let mut mag_global: Vector<f32> = Vector::new();            // Create the acceleration quaternion described in the global reference frame.
+        mag_global.init(4).unwrap();                                // Initialize it.
+        mag_global.fillq(0.0, bx, 0.0, bz).unwrap();                // Fill it.
+
+        let attitudes: Matrix = generate_random_attitudes(niter + 1).unwrap();  // Generate random attitudes.
+
+        print!("\nRandomly generated attitudes:\n\n");
+
+        for n in 0..niter+1 {
+            print!("q[{:}Δt]\t", n);
+        }
+
+        print!("\n\n");
+
         attitudes.print().unwrap();
 
-        let mut gyrometer_measurements: Matrix = Matrix::new();
-        gyrometer_measurements.init(3, niter).unwrap();
-        gyrometer_measurements.fill(0.0).unwrap();
+        let mut angular_rates = Matrix::new();              // Create a new matrix to store calculated angular rates from the local frame.
+        angular_rates.init(3, 3).unwrap();                  // Initialize it.
+        angular_rates.fill(0.0).unwrap();                   // Fill it with zero value.
 
-        let mut accelerometer_measurements: Matrix = Matrix::new();
-        accelerometer_measurements.init(3, niter).unwrap();
-        accelerometer_measurements.fill(0.0).unwrap();
+        let mut gyrometer_measurements = Matrix::new();     // Create a new matrix to store simulated raw measurements of the gyrometer.
+        gyrometer_measurements.init(3, niter).unwrap();     // Initialize it.
+        gyrometer_measurements.fill(0.0).unwrap();          // Fill it with zero value.
 
-        let mut magnetometer_measurements: Matrix = Matrix::new();
-        magnetometer_measurements.init(3, niter).unwrap();
-        magnetometer_measurements.fill(0.0).unwrap();
+        let mut accelerometer_measurements = Matrix::new(); // Create a new matrix to store simulated raw measurements of the accelerometer.
+        accelerometer_measurements.init(3, niter).unwrap(); // Initialize it.
+        accelerometer_measurements.fill(0.0).unwrap();      // Fill it with zero value.
+
+        let mut magnetometer_measurements = Matrix::new();  // Create a new matrix to store simulated raw measurements of the magnetometer.
+        magnetometer_measurements.init(3, niter).unwrap();  // Initialize it.
+        magnetometer_measurements.fill(0.0).unwrap();       // Fill it with zero value.
 
         for n in 0..niter {
-            let mut q_now: Vector<f32> = Vector::new();     // Attitude at time t.
-            q_now.init(4).unwrap();
-            let mut q_next: Vector<f32> = Vector::new();    // Attitude at time t + Δt.
-            q_next.init(4).unwrap();
-            let mut q_dot: Vector<f32> = Vector::new();     // Quaternion derivative.
-            q_dot.init(4).unwrap();
+            let mut q_now: Vector<f32> = Vector::new();     // Create a new quaternion to store the attitude at time t.
+            q_now.init(4).unwrap();                         // Initialize it.
+            let mut q_next: Vector<f32> = Vector::new();    // Create a new quaternion to store the attitude at time t + Δt.
+            q_next.init(4).unwrap();                        // Initialize it.
+            let mut q_dot: Vector<f32> = Vector::new();     // Create a new quaternion to store the quaternion derivative.
+            q_dot.init(4).unwrap();                         // Initialize it.
 
-            // Extract quaternion elements from randomnly generated "attitudes" matrix.
+            // Extract the coordinates of the quaternion representing the attitude at time nt.
             let mut qw = attitudes.get_element(0, n).unwrap();
             let mut qx = attitudes.get_element(1, n).unwrap();
             let mut qy = attitudes.get_element(2, n).unwrap();
             let mut qz = attitudes.get_element(3, n).unwrap();
 
-            q_now.fillq(qw, qx, qy, qz).unwrap();
+            q_now.fillq(qw, qx, qy, qz).unwrap();   // Fill it.
 
-            // Extract quaternion elements from randomnly generated "attitudes" matrix.
+            // Extract the coordinates of the quaternion representing the attitude at time nt + Δt.
             qw = attitudes.get_element(0, n + 1).unwrap();
             qx = attitudes.get_element(1, n + 1).unwrap();
             qy = attitudes.get_element(2, n + 1).unwrap();
             qz = attitudes.get_element(3, n + 1).unwrap();
 
-            q_next.fillq(qw, qx, qy, qz).unwrap();
+            q_next.fillq(qw, qx, qy, qz).unwrap();  // Fill it.
 
             // Calculate the derivative using formula q_dot = (q_next - q_now) / dt.
             q_dot.sub(&q_next, &q_now).unwrap();
-            q_dot.mul_by_scalar(1.0_f32 / ts).unwrap();
-            //print!("q_dot (reference):\n");
-            //q_dot.print().unwrap(); // REFERENCE RESULT.
+            q_dot.mul_by_scalar(1.0 / ts).unwrap();
+            //q_dot.print().unwrap();
 
             /* Method 1. OK. */
             //Please note that the missing scalar part does not allow you to calculate the derivative of q(t) from w(t).
-            /*
-            //let mut w: Vector<f32> = Vector::new();           // Angular rates vector.
-            //w.init(3).unwrap();
-            let mut w: Quaternion = Quaternion::new().unwrap(); // Angular rates qauternion.
+            let mut w: Vector<f32> = Vector::new(); // Create angular rates vector.
+            w.init(3).unwrap();                     // Initialize it.
+
+            // Calculate components of the angular rates vector.
             let wx: f32 = q_now.get_qw().unwrap()*q_next.get_qx().unwrap() - q_now.get_qx().unwrap()*q_next.get_qw().unwrap() - q_now.get_qy().unwrap()*q_next.get_qz().unwrap() + q_now.get_qz().unwrap()*q_next.get_qy().unwrap();
             let wy: f32 = q_now.get_qw().unwrap()*q_next.get_qy().unwrap() + q_now.get_qx().unwrap()*q_next.get_qz().unwrap() - q_now.get_qy().unwrap()*q_next.get_qw().unwrap() - q_now.get_qz().unwrap()*q_next.get_qx().unwrap();
             let wz: f32 = q_now.get_qw().unwrap()*q_next.get_qz().unwrap() - q_now.get_qx().unwrap()*q_next.get_qy().unwrap() + q_now.get_qy().unwrap()*q_next.get_qx().unwrap() - q_now.get_qz().unwrap()*q_next.get_qw().unwrap();
-            //w.set_element(0, wx).unwrap();
-            //w.set_element(1, wy).unwrap();
-            //w.set_element(2, wz).unwrap();
-            w.fill(0.0_f32, wx, wy, wz).unwrap();
-            w.mul_by_scalar(2.0_f32 / ts).unwrap();
-            w.print().unwrap();
-            */
+
+            // Fill it.
+            w.set_element(0, wx).unwrap();
+            w.set_element(1, wy).unwrap();
+            w.set_element(2, wz).unwrap();
+
+            w.mul_by_scalar(2.0 / ts).unwrap();
+            angular_rates.set_col(&w, 0).unwrap();
+            //w.print().unwrap();
 
             /* Method 2. OK. */
             // Calculate transformation matrix Q.
-            /*
-            let mut transformation_matrix: Matrix = Matrix::new();
-            transformation_matrix.init(4, 3).unwrap();
-            transformation_matrix.set_element(0, 0, -q_now.get_qx().unwrap()).unwrap();
-            transformation_matrix.set_element(1, 0, q_now.get_qw().unwrap()).unwrap();
-            transformation_matrix.set_element(2, 0, q_now.get_qz().unwrap()).unwrap();
-            transformation_matrix.set_element(3, 0, -q_now.get_qy().unwrap()).unwrap();
-            transformation_matrix.set_element(0, 1, -q_now.get_qy().unwrap()).unwrap();
-            transformation_matrix.set_element(1, 1, -q_now.get_qz().unwrap()).unwrap();
-            transformation_matrix.set_element(2, 1, q_now.get_qw().unwrap()).unwrap();
-            transformation_matrix.set_element(3, 1, q_now.get_qx().unwrap()).unwrap();
-            transformation_matrix.set_element(0, 2, -q_now.get_qz().unwrap()).unwrap();
-            transformation_matrix.set_element(1, 2, q_now.get_qy().unwrap()).unwrap();
-            transformation_matrix.set_element(2, 2, -q_now.get_qx().unwrap()).unwrap();
-            transformation_matrix.set_element(3, 2, q_now.get_qw().unwrap()).unwrap();
+            let mut q_mat = Matrix::new();  // Create the Q transformation matrix.
+            q_mat.init(4, 3).unwrap();      // Initialize it.
+
+            // Fill it.
+            q_mat.set_element(0, 0, -q_now.get_qx().unwrap()).unwrap();
+            q_mat.set_element(1, 0, q_now.get_qw().unwrap()).unwrap();
+            q_mat.set_element(2, 0, q_now.get_qz().unwrap()).unwrap();
+            q_mat.set_element(3, 0, -q_now.get_qy().unwrap()).unwrap();
+            q_mat.set_element(0, 1, -q_now.get_qy().unwrap()).unwrap();
+            q_mat.set_element(1, 1, -q_now.get_qz().unwrap()).unwrap();
+            q_mat.set_element(2, 1, q_now.get_qw().unwrap()).unwrap();
+            q_mat.set_element(3, 1, q_now.get_qx().unwrap()).unwrap();
+            q_mat.set_element(0, 2, -q_now.get_qz().unwrap()).unwrap();
+            q_mat.set_element(1, 2, q_now.get_qy().unwrap()).unwrap();
+            q_mat.set_element(2, 2, -q_now.get_qx().unwrap()).unwrap();
+            q_mat.set_element(3, 2, q_now.get_qw().unwrap()).unwrap();
 
             // Make a copy of the matrix Q to perform modifications on it.
-            let mut transformation_matrix_copy: Matrix = Matrix::new();
-            transformation_matrix_copy.init(transformation_matrix.get_rows().unwrap(), transformation_matrix.get_cols().unwrap()).unwrap();
-            transformation_matrix_copy.copy_from(&transformation_matrix).unwrap();
+            let mut q_mat_copy = q_mat.duplicate().unwrap();
 
             // Calculate angular rate vector using formula w = 2Q^T q_dot
-            transformation_matrix_copy.transpose().unwrap();         // Transpose the matrix Q.
-            transformation_matrix_copy.mul_by_scalar(2.0).unwrap();  // Multiply each element by 2.
+            q_mat_copy.transpose().unwrap();        // Transpose the matrix Q.
+            q_mat_copy.mul_by_scalar(2.0).unwrap(); // Multiply each element by 2.
+
             // Angular rate vector at time t.
-            let w: Vector<f32> = col_to_vector(&mul(&transformation_matrix_copy, &vector_to_matrix(&q_dot.get_vect().unwrap()).unwrap()).unwrap(), 0).unwrap();
-            set_col(&mut angular_rates, &w, n).unwrap();
+            let w = q_mat_copy.mul_new(&q_dot.convert_to_matrix().unwrap()).unwrap();
+            let w = w.col_to_vector(0).unwrap();
+            angular_rates.set_col(&w, 1).unwrap();
             //w.print().unwrap();
 
-            /* Used to find derivative of q(t) from w(t). */
-            transformation_matrix.mul_by_scalar(1.0_f32 / 2.0_f32).unwrap();    // Divide each element by 2.
-            let w: Matrix = vector_to_matrix(&w).unwrap();
-            let q_dot: Matrix = mul(&transformation_matrix, &w).unwrap();
-            print!("q_dot (calculated):\n");
-            q_dot.print().unwrap();
-            */
+            // Used to find derivative of q(t) from w(t).
+            q_mat.mul_by_scalar(1.0 / 2.0).unwrap();    // Divide each element by 2.
+            let q_dot_ = q_mat.mul_new(&w.convert_to_matrix().unwrap()).unwrap();
+            //q_dot_.print().unwrap();
 
             /* Method 3. OK. */
-            let mut w: Vector<f32> = Vector::new();
-            w.init(4).unwrap();
-            let mut q_now_conj: Vector<f32> = Vector::new();
-            q_now_conj.init(4).unwrap();
-            q_now_conj.copy_from(&q_now).unwrap();
-            q_now_conj.conjugate().unwrap();
-            q_now_conj.mul_by_scalar(2.0_f32).unwrap();
-            w.mul(&q_now_conj, &q_dot).unwrap();
+            let mut q_now_conj = q_now.conjugate_new().unwrap();
+            q_now_conj.mul_by_scalar(2.0).unwrap();
+            let w = q_now_conj.mul_new(&q_dot).unwrap();
+            let w_ = w.get_vector_part().unwrap();
+            angular_rates.set_col(&w_, 2).unwrap();
+            //w_.print().unwrap();
 
-            let wx = w.get_qx().unwrap();
-            let wy = w.get_qy().unwrap();
-            let wz = w.get_qz().unwrap();
-
-            let mut w_vect: Vector<f32> = Vector::new();
-            w_vect.init(3).unwrap();
-            w_vect.set_element(0, wx).unwrap();
-            w_vect.set_element(1, wy).unwrap();
-            w_vect.set_element(2, wz).unwrap();
-
-            gyrometer_measurements.set_col(&w_vect, n).unwrap();
-
-            /* Used to find derivative of q(t) from w(t). */
+            // Used to find derivative of q(t) from w(t).
             q_dot.mul(&q_now, &w).unwrap();
-            q_dot.mul_by_scalar(1.0_f32 / 2.0_f32).unwrap();
-            //print!("q_dot (calculated):\n");
+            q_dot.mul_by_scalar(1.0 / 2.0).unwrap();
             //q_dot.print().unwrap();
 
-            let mut acc_global: Vector<f32> = Vector::new();
-            acc_global.init(4).unwrap();
-            acc_global.fill(0.0).unwrap();
-            acc_global.set_element(3, -9.81).unwrap();
-            acc_global.print().unwrap();
-            let mut acc_local = q_now.mul_new(&acc_global.get_vector_part().unwrap()).unwrap();
-            acc_local.mul_in_place(&q_now.conjugate_new().unwrap()).unwrap();
+            gyrometer_measurements.set_col(&w_, n).unwrap();
+            //angular_rates.print().unwrap();
 
-            let mut mag_global: Vector<f32> = Vector::new();
-            mag_global.init(4).unwrap();
-            mag_global.fill(0.0).unwrap();
-            mag_global.set_element(1, 48.0*cosf(15.0*0.0174533)).unwrap();
-            mag_global.set_element(3, 48.0*sinf(15.0*0.0174533)).unwrap();
-            mag_global.print().unwrap();
+
+            // Add some code here.
+            let mut acc_local = q_now.mul_new(&acc_global).unwrap();
+            acc_local.mul(&acc_local.duplicate().unwrap(), &q_now.conjugate_new().unwrap()).unwrap();
+            let acc_local = acc_local.get_vector_part().unwrap();
+            accelerometer_measurements.set_col(&acc_local, n).unwrap();
+            //acc_local.print().unwrap();
+
+            let mut mag_local = q_now.mul_new(&mag_global).unwrap();
+            mag_local.mul(&mag_local.duplicate().unwrap(), &q_now.conjugate_new().unwrap()).unwrap();
+            let mag_local = mag_local.get_vector_part().unwrap();
+            magnetometer_measurements.set_col(&mag_local, n).unwrap();
+            //mag_local.print().unwrap();
+
         }
 
-        print!("Angular rates:\n");
+        print!("Raw gyrometer measurements:\n\n");
+
+        for n in 0..niter {
+            print!("ω[{:}Δt]\t", n);
+        }
+
+        print!("\n\n");
+
         gyrometer_measurements.print().unwrap();
 
-        let mut ar_filter: AR = AR::new().unwrap();
+        print!("Raw accelerometer measurements:\n\n");
+
+        for n in 0..niter {
+            print!("ω[{:}Δt]\t", n);
+        }
+
+        print!("\n\n");
+
+        accelerometer_measurements.print().unwrap();
+
+        print!("Raw magnetometer measurements:\n\n");
+
+        for n in 0..niter {
+            print!("ω[{:}Δt]\t", n);
+        }
+
+        print!("\n\n");
+
+        magnetometer_measurements.print().unwrap();
+
+
+
+
+
+
+
+
+
+
+        let mut ar_filter = AR::new().unwrap();
 
         // Extract initial quaternion elements.
         let qw = attitudes.get_element(0, 0).unwrap();
@@ -222,31 +289,59 @@ mod open_ahrs_tests {
             3_u8
         ).unwrap();
 
+        let mut ar_filter_estimated_attitude = Matrix::new();   // Create a new matrix to store estimated attitude from the AR filter.
+        ar_filter_estimated_attitude.init(4, niter).unwrap();   // Initialize it.
+        ar_filter_estimated_attitude.fill(0.0).unwrap();        // Fill it with zero value.
+
         for n in 0..niter {
             let gx = gyrometer_measurements.get_element(0, n).unwrap();
             let gy = gyrometer_measurements.get_element(1, n).unwrap();
             let gz = gyrometer_measurements.get_element(2, n).unwrap();
 
             ar_filter.update(gx, gy, gz).unwrap();
-            ar_filter.print_attitude().unwrap();
+            ar_filter_estimated_attitude.set_col(&ar_filter.get_attitude().unwrap(), n).unwrap();
+            //ar_filter.print_attitude().unwrap();
         }
 
-        /*
-        let mut quat: Vector<f32> = Vector::new();
-        quat.init(3).unwrap();
-        //quat.fill(0.5, 5.5, 56.2, 89.8).unwrap();
-        //Quat::fillq(&mut quat, 0.5, 0.5, 0.5, 0.5).unwrap();   // Appel non implicite.
-        //quat.set_qw(0.5).unwrap();  // Appel implicite de la fonction.
-        quat.fillq(0.5, 0.5, 0.5, 0.5).unwrap();
-        */
+        print!("Estimated attitudes (AR filter):\n\n");
 
+        for n in 1..niter+1 {
+            print!("q[{:}Δt]\t", n);
+        }
+
+        print!("\n\n");
+
+        ar_filter_estimated_attitude.print().unwrap();
+
+
+
+
+
+
+
+
+
+
+
+
+
+        let mut aqua_filter = AQUA::new().unwrap();
+
+        // Extract initial quaternion elements.
+        let qw = attitudes.get_element(0, 0).unwrap();
+        let qx = attitudes.get_element(1, 0).unwrap();
+        let qy = attitudes.get_element(2, 0).unwrap();
+        let qz = attitudes.get_element(3, 0).unwrap();
+
+        let default_gyrometer_config = GyrometerConfig::default();
+        let default_accelerometer_config = AccelerometerConfig::default();
+        let default_magnetometer_config = MagnetometerConfig::default();
+
+        // Add some code here.
         /*
-        let mut quat: Vector<f32> = Vector::new();
-        quat.init(4).unwrap();
-        quat.fillq(1.0, -2.0, 3.0, -4.0).unwrap();
-        quat.print().unwrap();
-        quat.exp().unwrap();
-        quat.print().unwrap();
+        aqua_filter.init(
+
+        ).unwrap();
         */
     }
 }

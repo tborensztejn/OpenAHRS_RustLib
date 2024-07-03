@@ -155,6 +155,16 @@ impl AR {
         Ok(())  // Return no error.
     }
 
+    pub fn get_attitude(self: &Self) -> Result<Vector<f32>, OpenAHRSError> {
+        // Check if the filter has already been initialized.
+        if !self.initialized {
+            // The filter has already been initialized.
+            return Err(OpenAHRSError::ARFilterNotInit); // Return an error.
+        }
+
+        Ok(self.attitude.duplicate()?)  // Return estimated attitude with no error.
+    }
+
     #[cfg(feature = "std")]
     pub fn print_attitude(self: &Self) -> Result<(), OpenAHRSError> {
         self.attitude.print()?;
