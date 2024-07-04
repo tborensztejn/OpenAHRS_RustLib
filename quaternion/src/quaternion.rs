@@ -71,9 +71,9 @@ pub trait Quaternion {
     /// This method is used to convert a quaternion into Tait-Bryan (Euler) angles.
     //fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError>;
     fn convert_to_euler(self: &mut Self) -> Result<(f32, f32, f32), LinalgError>;
-    /// This method is used to convert Tait-Bryan (Euler) angles into a quaternion.
+    // This method is used to convert Tait-Bryan (Euler) angles into a quaternion.
     //fn convert_from_euler(self: &mut Self, euler_angles: &Self) -> Result<(), LinalgError>;
-    fn convert_from_euler(self: &mut Self, phi: f32, theta: f32, psi: f32) -> Result<(), LinalgError>;
+    //fn convert_from_euler(self: &mut Self, phi: f32, theta: f32, psi: f32) -> Result<(), LinalgError>;
 }
 
 impl Quaternion for Vector<f32> {
@@ -394,7 +394,7 @@ impl Quaternion for Vector<f32> {
         self.conjugate()?;                  // Conjugate the quaternion.
 
         if norm > EPSILON {
-            self.mul_by_scalar(1.0_f32 / (norm * norm))?;
+            self.mul_by_scalar_in_place(1.0_f32 / (norm * norm))?;
         } else {
             self.fillq(0.0, 0.0, 0.0, 0.0)?;
         }
@@ -462,7 +462,7 @@ impl Quaternion for Vector<f32> {
         let qv_norm = qv.calculate_norm()?;     // Calculate its norm.
         qv.normalize()?;                        // Normalize it.
 
-        qv.mul_by_scalar(sinf(qv_norm))?;
+        qv.mul_by_scalar_in_place(sinf(qv_norm))?;
 
         self.fillq(cosf(qv_norm), qv.get_element(0)?, qv.get_element(1)?, qv.get_element(2)?)?;
 
@@ -471,7 +471,7 @@ impl Quaternion for Vector<f32> {
             return Ok(());  // Return no error.
         }
 
-        self.mul_by_scalar(powf(E, qw))?;
+        self.mul_by_scalar_in_place(powf(E, qw))?;
 
         Ok(())  // Return no error.
     }
@@ -492,7 +492,7 @@ impl Quaternion for Vector<f32> {
         let qv_norm = qv.calculate_norm()?;     // Calculate its norm.
         qv.normalize()?;                        // Normalize it.
 
-        qv.mul_by_scalar(sinf(qv_norm))?;
+        qv.mul_by_scalar_in_place(sinf(qv_norm))?;
 
         q_exp.fillq(cosf(qv_norm), qv.get_element(0)?, qv.get_element(1)?, qv.get_element(2)?)?;
 
@@ -501,7 +501,7 @@ impl Quaternion for Vector<f32> {
             return Ok(q_exp);   // Return the result with no error.
         }
 
-        q_exp.mul_by_scalar(powf(E, qw))?;
+        q_exp.mul_by_scalar_in_place(powf(E, qw))?;
 
         Ok(q_exp)   // Return the result with no error.
     }
@@ -545,7 +545,7 @@ impl Quaternion for Vector<f32> {
             // The trace is -1, which implies that the real part of quaternion is null and therefore the quaternion is pure.
             let mut e = dcm.diag(None)?;
             e.add_scalar_in_place(1.0)?;
-            e.mul_by_scalar(0.5)?;
+            e.mul_by_scalar_in_place(0.5)?;
             e.power_elements(0.5)?;
 
             qx = e.get_element(0)?;
@@ -645,6 +645,7 @@ impl Quaternion for Vector<f32> {
     }
 
     // This method is used to convert Tait-Bryan (Euler) angles into a quaternion.
+    /*
     //fn convert_from_euler(self: &mut Self, euler_angles: &Self) -> Result<(), LinalgError>;
     fn convert_from_euler(self: &mut Self, phi: f32, theta: f32, psi: f32) -> Result<(), LinalgError> {
 
@@ -652,6 +653,7 @@ impl Quaternion for Vector<f32> {
 
         Ok(())  // Return no error.
     }
+    */
 
     // This method is used to rotate a vector of size 3 x 1 using quaternion.
     fn rotate(self: &Self, vect: &Self) -> Result<Vector<f32>, LinalgError> {

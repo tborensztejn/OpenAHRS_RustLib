@@ -6,7 +6,8 @@ extern crate libm;
 use crate::gyrometer::{GyrometerConfig, Gyrometer};
 use crate::accelerometer::{AccelerometerConfig, Accelerometer};
 use crate::magnetometer::{MagnetometerConfig, Magnetometer};
-use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_omega_matrix};
+//use crate::common::{OpenAHRSError, NumericalIntegrationMethod as NIM, calculate_omega_matrix};
+use crate::common::{OpenAHRSError, calculate_omega_matrix};
 
 use quaternion::quaternion::Quaternion;
 use linalg::matrix::Matrix;
@@ -39,8 +40,8 @@ pub struct AQUA {
     t_acc: f32,             // Interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
     t_mag: f32,             // Interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
     mode: Mode,             // Mode of the filter.
-    order: u8,              // Order of the numerical integration method.
-    method: NIM,            // Numerical integration method.
+    //order: u8,              // Order of the numerical integration method.
+    //method: NIM,            // Numerical integration method.
 
     initialized: bool,      // Initialization status.
 }
@@ -50,24 +51,24 @@ impl AQUA {
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
             // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
-            gyr: Gyrometer::new()?,         // ...
-            acc: Accelerometer::new()?,     // ...
-            mag: Magnetometer::new()?,      // ...
+            gyr: Gyrometer::new()?,
+            acc: Accelerometer::new()?,
+            mag: Magnetometer::new()?,
 
             attitude: Vector::new(),        // Estimated attitude by the filter as a quaternion.
 
             // Filter settings.
             ts:         0.01,               // Default sampling period.
             adaptive:   true,               // Default adaptive gain is activated by default.
-            alpha:      0.01_f32,           // Default interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
-            beta:       0.01_f32,           // Default interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
-            t1:         0.1_f32,            // Default adaptative gain first treshold.
-            t2:         0.2_f32,            // Default adaptative gain second treshold.
-            t_acc:      0.9_f32,            // Default interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
-            t_mag:      0.9_f32,            // Default interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
+            alpha:      0.01,               // Default interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
+            beta:       0.01,               // Default interpolation parameter for the SLERP and LERP algorithm for the magnetometer.
+            t1:         0.1,                // Default adaptative gain first treshold.
+            t2:         0.2,                // Default adaptative gain second treshold.
+            t_acc:      0.9,                // Default interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
+            t_mag:      0.9,                // Default interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
             mode:       Mode::MARG,         // Default mode of the filter.
-            order:      2_u8,               // Default order of the numerical integration method.
-            method:     NIM::ClosedForm,    // Default numerical integration method.
+            //order:      2,                  // Default order of the numerical integration method.
+            //method:     NIM::ClosedForm,    // Default numerical integration method.
 
             initialized: false,             // Default initialization status.
         };
@@ -137,6 +138,9 @@ impl AQUA {
         //self.order = order;         // Set the order of the method.
 
         // Add some code here.
+
+        self.initialized = true;                // Set initialization status flag to true.
+        self.mode = mode;
 
         Ok(())  // Return no error.
     }
@@ -299,7 +303,7 @@ impl AQUA {
 
 
             let mut delta_quat = derivative_quat.col_to_vector(0)?;
-            delta_quat.mul_by_scalar(self.ts)?;
+            delta_quat.mul_by_scalar_in_place(self.ts)?;
 
             let mut gyr_quat: Vector<f32> = Vector::new();  // Quaternion defining the orientation of the system and determined by gyrometer measurements.
             gyr_quat.init(4)?;
@@ -423,5 +427,15 @@ impl AQUA {
         self.attitude.normalize()?;
 
         Ok(())  // Return no error.
+    }
+
+    pub fn get_attitude(self: &Self) -> Result<Vector<f32>, OpenAHRSError> {
+        // Check if the filter has already been initialized.
+        if !self.initialized {
+            // The filter has already been initialized.
+            return Err(OpenAHRSError::AQUAFilterNotInit); // Return an error.
+        }
+
+        Ok(self.attitude.duplicate()?)  // Return estimated attitude with no error.
     }
 }

@@ -131,7 +131,7 @@ impl AR {
                 //let mut w: Vector<f32> = Vector::new();
                 //w.init(4)?;
                 w.fillq(0.0, p, q, r)?;
-                w.mul_by_scalar(0.5 * self.ts)?;
+                w.mul_by_scalar_in_place(0.5 * self.ts)?;
 
                 let mut delta: Vector<f32> = Vector::new();
                 delta.init(4)?;

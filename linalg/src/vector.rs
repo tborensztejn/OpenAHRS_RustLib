@@ -67,6 +67,7 @@ impl<T: Default + Copy> Vector<T> {
         Ok(self.rows)   // Return the value with no error.
     }
 
+    /*
     /// This method is used to set the number of rows (m) of a vector of size m x 1.
     pub(crate) fn set_rows(self: &mut Self, rows: u8) -> Result<(), LinalgError> {
         // Check that the vector is initialized.
@@ -85,8 +86,9 @@ impl<T: Default + Copy> Vector<T> {
 
         Ok(())  // Return no error.
     }
+    */
 
-    /// This method is used to verify if a vector of size m x 1 is initialized or not.
+    /// This method is used to check if a vector of size m x 1 is initialized or not.
     pub fn is_initialized(self: &Self) -> bool {
         self.initialized
     }
@@ -196,7 +198,7 @@ impl Vector<f32> {
         }
     }
 
-    /// This method is used to check if two vectors are identical/equal or not.
+    /// This method is used to check if two vectors are identical/equal or not within a specified tolerance.
     pub fn is_equal_to(self: &Self, other: &Self, deviation: f32) -> Result<bool, LinalgError> {
         // Check that the vectors have the same dimensions.
         if !self.is_same_size_as(other)? {
@@ -216,7 +218,7 @@ impl Vector<f32> {
             }
         }
 
-        Ok(true)    // Return the value with no error.
+        Ok(true)    // Return the result with no error.
     }
 
     /// This method is used to copy a vector of size m x 1.
@@ -253,13 +255,11 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate the process for each row of the vector.
         for row in 0..self.rows {
-            let element1 = vector1.get_element(row)?;
-            let element2 = vector2.get_element(row)?;
+            let sum = vector1.get_element(row)? + vector2.get_element(row)?;    // Perform elements addition.
 
-            let sum = element1 + element2;
-
-            self.set_element(row, sum)?;
+            self.set_element(row, sum)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -273,13 +273,11 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate the process for each row of the vector.
         for row in 0..self.rows {
-            let element1 = self.get_element(row)?;
-            let element2 = other.get_element(row)?;
+            let sum = self.get_element(row)? + other.get_element(row)?; // Perform elements addition.
 
-            let sum = element1 + element2;
-
-            self.set_element(row, sum)?;
+            self.set_element(row, sum)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -294,7 +292,7 @@ impl Vector<f32> {
         }
 
         let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
-        result_vect.init(self.rows)?;               // Initialize it.
+        result_vect.init(self.rows)?;               // Initialise it with the same dimension as the original vector.
 
         result_vect.add(&self, &other)?;            // Perform addition.
 
@@ -309,10 +307,11 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate the process for each row of the vector.
         for row in 0..self.rows {
-            let element = other.get_element(row)? + scalar;
+            let element = other.get_element(row)? + scalar; // Perform addition.
 
-            self.set_element(row, element)?;
+            self.set_element(row, element)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -321,9 +320,9 @@ impl Vector<f32> {
     /// This method is used to ...
     pub fn add_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         for row in 0..self.rows {
-            let element = self.get_element(row)? + scalar;
+            let element = self.get_element(row)? + scalar;  // Perform addition.
 
-            self.set_element(row, element)?;
+            self.set_element(row, element)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -338,13 +337,9 @@ impl Vector<f32> {
         }
 
         let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
-        result_vect.init(self.rows)?;               // Initialize it.
+        result_vect.init(self.rows)?;               // Initialise it with the same dimension as the original vector.
 
-        for row in 0..self.rows {
-            let element = self.get_element(row)? + scalar;
-
-            result_vect.set_element(row, element)?;
-        }
+        result_vect.add_scalar(&self, scalar)?;     // Perform addition.
 
         Ok(result_vect) // Return the result vector with no error.
     }
@@ -358,12 +353,9 @@ impl Vector<f32> {
         }
 
         for row in 0..self.rows {
-            let element1 = vector1.get_element(row)?;
-            let element2 = vector2.get_element(row)?;
+            let difference = vector1.get_element(row)? - vector2.get_element(row)?; // Perform elements subtraction.
 
-            let difference = element1 - element2;
-
-            self.set_element(row, difference)?;
+            self.set_element(row, difference)?; // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -378,12 +370,9 @@ impl Vector<f32> {
         }
 
         for row in 0..self.rows {
-            let element1 = self.get_element(row)?;
-            let element2 = other.get_element(row)?;
+            let difference = self.get_element(row)? - other.get_element(row)?;  // Perform elements subtraction.
 
-            let difference = element1 - element2;
-
-            self.set_element(row, difference)?;
+            self.set_element(row, difference)?; // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -398,7 +387,7 @@ impl Vector<f32> {
         }
 
         let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
-        result_vect.init(self.rows)?;               // Initialize it.
+        result_vect.init(self.rows)?;               // Initialise it with the same dimension as the original vector.
 
         result_vect.sub(&self, &other)?;            // Perform subtraction.
 
@@ -414,9 +403,9 @@ impl Vector<f32> {
         }
 
         for row in 0..self.rows {
-            let element = other.get_element(row)? - scalar;
+            let element = other.get_element(row)? - scalar; // Perform subtraction.
 
-            self.set_element(row, element)?;
+            self.set_element(row, element)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -425,9 +414,9 @@ impl Vector<f32> {
     /// This method is used to ...
     pub fn sub_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         for row in 0..self.rows {
-            let element = self.get_element(row)? - scalar;
+            let element = self.get_element(row)? - scalar;  // Perform subtraction.
 
-            self.set_element(row, element)?;
+            self.set_element(row, element)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
@@ -442,13 +431,9 @@ impl Vector<f32> {
         }
 
         let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
-        result_vect.init(self.rows)?;               // Initialize it.
+        result_vect.init(self.rows)?;               // Initialise it with the same dimension as the original vector.
 
-        for row in 0..self.rows {
-            let element = self.get_element(row)? - scalar;
-
-            result_vect.set_element(row, element)?;
-        }
+        result_vect.sub_scalar(&self, scalar)?;     // Perform subtraction.
 
         Ok(result_vect) // Return the result vector with no error.
     }
@@ -476,28 +461,64 @@ impl Vector<f32> {
     pub fn normalize(self: &mut Self) ->  Result<(), LinalgError> {
         let norm: f32 = self.calculate_norm()?; // Calculate the norm of the vector.
 
-        // Normalize the vector.
-        for row in 0..self.rows {
-            if norm > EPSILON {
-                let element: f32 = self.get_element(row)? / norm;
+        // Check if the vector is zero or not.
+        if norm > EPSILON {
+            // Normalize the vector.
+            for row in 0..self.rows {
+                let element = self.get_element(row)? / norm;
                 self.set_element(row, element)?;
-            } else {
-                self.set_element(row, 0.0)?;
             }
+        } else {
+            self.fill(0.0)?;
         }
 
         Ok(())  // Return no error.
     }
 
     /// This method is used to multiply by a scalar all elements of a vector of size m x 1.
-    pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+    pub fn mul_by_scalar(self: &mut Self, other: &Self, scalar: f32) -> Result<(), LinalgError> {
+        // Check that the vectors have the same dimensions.
+        if !self.is_same_size_as(other)? {
+            // The vectors do not have the same dimensions.
+            return Err(LinalgError::NotSameSize)    // Return an error.
+        }
+
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
-            let element = self.get_element(row)? * scalar;
-            self.set_element(row, element)?;
+            let element = other.get_element(row)? * scalar;  // Peform multiplication.
+
+            self.set_element(row, element)?;    // Set the new value of the element.
         }
 
         Ok(())  // Return no error.
+    }
+
+    /// This method is used to ...
+    pub fn mul_by_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        // Iterate through each element and multiply it by the scalar.
+        for row in 0..self.rows {
+            let element = self.get_element(row)? * scalar;  // Peform multiplication.
+
+            self.set_element(row, element)?;    // Set the new value of the element.
+        }
+
+        Ok(())  // Return no error.
+    }
+
+    /// This method is used to ...
+    pub fn mul_by_scalar_new(self: &Self, scalar: f32) -> Result<Self, LinalgError> {
+        // Check that the vector is initialized.
+        if !self.initialized {
+            // The vector is not initialized.
+            return Err(LinalgError::NotInit);   // Return an error.
+        }
+
+        let mut result_vect: Self = Self::new();    // Create a new vector to store the result.
+        result_vect.init(self.rows)?;               // Initialise it with the same dimension as the original vector.
+
+        result_vect.mul_by_scalar(&self, scalar)?;  // Perform multiplication.
+
+        Ok(result_vect) // Return the result vector with no error.
     }
 
     /// This method is used to perform dot product between two vectors of size m x 1.
@@ -546,8 +567,8 @@ impl Vector<f32> {
         v2.init(self.get_rows()?)?;
         v2.copy_from(&vect2)?;
 
-        v1.mul_by_scalar(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
-        v2.mul_by_scalar(sinf(alpha*theta) / sinf(theta))?;
+        v1.mul_by_scalar_in_place(sinf((1.0_f32 - alpha)*theta) / sinf(theta))?;
+        v2.mul_by_scalar_in_place(sinf(alpha*theta) / sinf(theta))?;
 
         self.add(&v1, &v2)?;
 
@@ -578,8 +599,8 @@ impl Vector<f32> {
         v2.init(self.get_rows()?)?;
         v2.copy_from(&vect2)?;
 
-        v1.mul_by_scalar(1.0_f32 - alpha)?;
-        v2.mul_by_scalar(alpha)?;
+        v1.mul_by_scalar_in_place(1.0_f32 - alpha)?;
+        v2.mul_by_scalar_in_place(alpha)?;
 
         self.add(&v1, &v2)?;
 

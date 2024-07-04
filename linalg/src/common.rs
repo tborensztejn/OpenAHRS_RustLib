@@ -4,9 +4,9 @@ use utils::utils::UtilsError;
 
 pub const M_MAX: usize = 16;            /// Maximum number of rows in a matrix and a vector.
 pub const N_MAX: usize = 16;            /// Maximum number of columns in a matrix.
-pub const EPSILON: f32 = 0.0001;        /// ...
-pub const PI: f32 = 3.141592653589793;  /// ...
-pub const E: f32 = 2.718281828459045;   /// Euler number, exponential function base, Napier constant.
+pub const EPSILON: f32 = 0.0001;        /// Constant value representing a minimal error in numerical analysis.
+pub const PI: f32 = 3.141592653589793;  /// Approximate value of constant π.
+pub const E: f32 = 2.718281828459045;   /// Approximate value of Euler's number (aka exponential function base or Napier's constant).
 
 //pub type Result<T> = core::result::Result<T, LinalgError>;
 
@@ -25,7 +25,7 @@ pub enum LinalgError {
     NotSameSize,            /// This error occurs when an operation on a vector or matrix that requires them to have the same dimensions is not carried out.
     UnchangedSize,          /// This error occurs when the number of lines remains unchanged when the dimension is modified.
     InvalidSize,            /// ...
-    Unsolvable,             /// ...
+    Unsolvable,             /// This error occurs when a system can't be solved.
     Singular,               /// This error occurs when the matrix is singular.
     NotPositiveDefinite,    /// ...
     NotSymetric,            /// This error occurs when the matrix is not symmetrical.
@@ -77,7 +77,7 @@ pub fn is_valid_row(row: u8, rows: u8) -> Result<(), LinalgError> {
         return Err(LinalgError::InvalidRow);    // Return an error.
     }
 
-    Ok(())  // Return an error.
+    Ok(())  // Return no error.
 }
 
 /// This function is used to check if the index is valid (column number less than number of columns).

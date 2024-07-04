@@ -18,7 +18,7 @@ mod open_ahrs_tests {
     use crate::gyrometer::GyrometerConfig;
     use crate::accelerometer::AccelerometerConfig;
     use crate::magnetometer::MagnetometerConfig;
-    use crate::aqua::AQUA;
+    use crate::aqua::{AQUA, Mode};
     use crate::common::{NumericalIntegrationMethod as NIM, generate_random_attitudes};
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
@@ -27,8 +27,8 @@ mod open_ahrs_tests {
 
     #[test]
     fn ar_series_method_test() {
-        const RAG_2_DEG: f32 = 57.2958;     /// Conversion factor between radians to degrees.
-        const DEG_2_RAD: f32 = 0.0174533;   /// Conversion factor between degrees to radians.
+        //const RAG_2_DEG: f32 = 57.2958;     // Conversion factor between radians to degrees.
+        const DEG_2_RAD: f32 = 0.0174533;   // Conversion factor between degrees to radians.
 
         let niter: u8 = 10;     // Number of iterations.
         let ts: f32 = 0.01;     // Sampling period [s].
@@ -116,7 +116,7 @@ mod open_ahrs_tests {
 
             // Calculate the derivative using formula q_dot = (q_next - q_now) / dt.
             q_dot.sub(&q_next, &q_now).unwrap();
-            q_dot.mul_by_scalar(1.0 / ts).unwrap();
+            q_dot.mul_by_scalar_in_place(1.0 / ts).unwrap();
             //q_dot.print().unwrap();
 
             /* Method 1. OK. */
@@ -134,7 +134,7 @@ mod open_ahrs_tests {
             w.set_element(1, wy).unwrap();
             w.set_element(2, wz).unwrap();
 
-            w.mul_by_scalar(2.0 / ts).unwrap();
+            w.mul_by_scalar_in_place(2.0 / ts).unwrap();
             angular_rates.set_col(&w, 0).unwrap();
             //w.print().unwrap();
 
@@ -170,23 +170,27 @@ mod open_ahrs_tests {
             angular_rates.set_col(&w, 1).unwrap();
             //w.print().unwrap();
 
+            /*
             // Used to find derivative of q(t) from w(t).
             q_mat.mul_by_scalar(1.0 / 2.0).unwrap();    // Divide each element by 2.
             let q_dot_ = q_mat.mul_new(&w.convert_to_matrix().unwrap()).unwrap();
             //q_dot_.print().unwrap();
+            */
 
             /* Method 3. OK. */
             let mut q_now_conj = q_now.conjugate_new().unwrap();
-            q_now_conj.mul_by_scalar(2.0).unwrap();
+            q_now_conj.mul_by_scalar_in_place(2.0).unwrap();
             let w = q_now_conj.mul_new(&q_dot).unwrap();
             let w_ = w.get_vector_part().unwrap();
             angular_rates.set_col(&w_, 2).unwrap();
             //w_.print().unwrap();
 
+            /*
             // Used to find derivative of q(t) from w(t).
             q_dot.mul(&q_now, &w).unwrap();
-            q_dot.mul_by_scalar(1.0 / 2.0).unwrap();
+            q_dot.mul_by_scalar_in_place(1.0 / 2.0).unwrap();
             //q_dot.print().unwrap();
+            */
 
             gyrometer_measurements.set_col(&w_, n).unwrap();
             //angular_rates.print().unwrap();
@@ -286,7 +290,7 @@ mod open_ahrs_tests {
             default_gyrometer_config,
             ts,
             NIM::Euler,
-            3_u8
+            3
         ).unwrap();
 
         let mut ar_filter_estimated_attitude = Matrix::new();   // Create a new matrix to store estimated attitude from the AR filter.
@@ -327,21 +331,59 @@ mod open_ahrs_tests {
 
         let mut aqua_filter = AQUA::new().unwrap();
 
-        // Extract initial quaternion elements.
-        let qw = attitudes.get_element(0, 0).unwrap();
-        let qx = attitudes.get_element(1, 0).unwrap();
-        let qy = attitudes.get_element(2, 0).unwrap();
-        let qz = attitudes.get_element(3, 0).unwrap();
-
         let default_gyrometer_config = GyrometerConfig::default();
         let default_accelerometer_config = AccelerometerConfig::default();
         let default_magnetometer_config = MagnetometerConfig::default();
 
         // Add some code here.
-        /*
         aqua_filter.init(
-
+            Mode::AM,
+            //qw, qx, qy, qz,               // Initial orientation.
+            None, None, None, None,         // No initial orientation.
+            default_gyrometer_config,       // Gyrometer configuration.
+            default_accelerometer_config,   // Accelerometer configuration.
+            default_magnetometer_config,    // Magnetometer configuration.
+            ts,                             // Sampling perdiod.
+            false,                          // Disable adaptive.
+            0.01,
+            0.01,
+            0.1,
+            0.2,
+            0.9,
+            0.9
         ).unwrap();
-        */
+
+        let mut aqua_filter_estimated_attitude = Matrix::new(); // Create a new matrix to store estimated attitude from the AR filter.
+        aqua_filter_estimated_attitude.init(4, niter).unwrap(); // Initialize it.
+        aqua_filter_estimated_attitude.fill(0.0).unwrap();      // Fill it with zero value.
+
+        for n in 0..niter {
+            let gx = gyrometer_measurements.get_element(0, n).unwrap();
+            let gy = gyrometer_measurements.get_element(1, n).unwrap();
+            let gz = gyrometer_measurements.get_element(2, n).unwrap();
+
+            let ax = accelerometer_measurements.get_element(0, n).unwrap();
+            let ay = accelerometer_measurements.get_element(1, n).unwrap();
+            let az = accelerometer_measurements.get_element(2, n).unwrap();
+
+            let mx = magnetometer_measurements.get_element(0, n).unwrap();
+            let my = magnetometer_measurements.get_element(1, n).unwrap();
+            let mz = magnetometer_measurements.get_element(2, n).unwrap();
+
+            //aqua_filter.update(None, None, None, ax, ay, az, mx, my, mz).unwrap();
+            aqua_filter.update(Some(gx), Some(gy), Some(gz), ax, ay, az, mx, my, mz).unwrap();
+            aqua_filter_estimated_attitude.set_col(&aqua_filter.get_attitude().unwrap(), n).unwrap();
+            //aqua_filter.print_attitude().unwrap();
+        }
+
+        print!("Estimated attitudes (AQUA filter):\n\n");
+
+        for n in 1..niter+1 {
+            print!("q[{:}Δt]\t", n);
+        }
+
+        print!("\n\n");
+
+        aqua_filter_estimated_attitude.print().unwrap();
     }
 }
