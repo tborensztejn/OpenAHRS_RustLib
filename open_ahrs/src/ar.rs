@@ -53,6 +53,12 @@ impl AR {
         //order: Option<u8>                   // Order of the numerical integration method.
         order: u8
         ) -> Result<(), OpenAHRSError> {
+            // Check if the filter has already been initialized.
+            if self.initialized {
+                // The filter has already been initialized.
+                return Err(OpenAHRSError::ARFilterAlreadyInit); // Return an error.
+            }
+
             self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
             self.attitude.init(4)?;                 // Initialize the vector that will be used as quaternion.
             self.attitude.fillq(qw, qx, qy, qz)?;   // Set initial attitude.
@@ -67,6 +73,12 @@ impl AR {
 
     // This function is used to update the AR filter.
     pub fn update(self: &mut Self, gx: f32, gy: f32, gz: f32) -> Result<(), OpenAHRSError> {
+        // Check that the filter is initialized.
+        if !self.initialized {
+            // The filter is not initialized.
+            return Err(OpenAHRSError::ARFilterNotInit); // Return an error.
+        }
+
         let mut temp = Matrix::new();   // Create a temporary matrix
         temp.init(4, 4)?;               // Initialize it.
         temp.fill_identity()?;          // Configuring it into an identity matrix.
@@ -78,6 +90,7 @@ impl AR {
         let q = self.gyr.get_y_angular_rate()?;
         let r = self.gyr.get_z_angular_rate()?;
 
+        // Retrieve quaternion's components of previous estimated attitude.
         let mut qw = self.attitude.get_qw()?;
         let mut qx = self.attitude.get_qx()?;
         let mut qy = self.attitude.get_qy()?;
@@ -101,11 +114,11 @@ impl AR {
             // Closed form method (not very suitable for numerical implementations).
             if self.method == NIM::ClosedForm || self.method == NIM::TaylorSeries {
                 if self.method == NIM::ClosedForm {
-                    temp.mul_by_scalar(cosf(theta))?;
-                    omega.mul_by_scalar(sinf(theta) / w_norm)?;
+                    temp.mul_by_scalar_in_place(cosf(theta))?;
+                    omega.mul_by_scalar_in_place(sinf(theta) / w_norm)?;
                     temp.add_in_place(&omega)?;
                 } else if self.method == NIM::TaylorSeries {
-                    omega.mul_by_scalar(0.5 * self.ts)?;
+                    omega.mul_by_scalar_in_place(0.5 * self.ts)?;
 
                     for n in 1..=self.order {
                         // S = 0.5 * dt * Omega
@@ -113,7 +126,7 @@ impl AR {
                         // A' = S^n / !n
                         s.power_elements(n as f32)?;
                         let factor = factorial(n);
-                        s.mul_by_scalar(1.0 / factor as f32)?;
+                        s.mul_by_scalar_in_place(1.0 / factor as f32)?;
                         // A = A + A'
                         temp.add_in_place(&s)?;
                     }
@@ -162,11 +175,18 @@ impl AR {
             return Err(OpenAHRSError::ARFilterNotInit); // Return an error.
         }
 
+        // TODO: use more efficient way.
         Ok(self.attitude.duplicate()?)  // Return estimated attitude with no error.
     }
 
     #[cfg(feature = "std")]
     pub fn print_attitude(self: &Self) -> Result<(), OpenAHRSError> {
+        // Check if the filter has already been initialized.
+        if !self.initialized {
+            // The filter has already been initialized.
+            return Err(OpenAHRSError::ARFilterNotInit); // Return an error.
+        }
+
         self.attitude.print()?;
 
         Ok(())  // Return no error.

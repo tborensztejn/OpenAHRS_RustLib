@@ -255,7 +255,7 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
-        // Iterate the process for each row of the vector.
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let sum = vector1.get_element(row)? + vector2.get_element(row)?;    // Perform elements addition.
 
@@ -273,7 +273,7 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
-        // Iterate the process for each row of the vector.
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let sum = self.get_element(row)? + other.get_element(row)?; // Perform elements addition.
 
@@ -307,7 +307,7 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
-        // Iterate the process for each row of the vector.
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let element = other.get_element(row)? + scalar; // Perform addition.
 
@@ -319,6 +319,7 @@ impl Vector<f32> {
 
     /// This method is used to ...
     pub fn add_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let element = self.get_element(row)? + scalar;  // Perform addition.
 
@@ -352,6 +353,7 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let difference = vector1.get_element(row)? - vector2.get_element(row)?; // Perform elements subtraction.
 
@@ -369,6 +371,7 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let difference = self.get_element(row)? - other.get_element(row)?;  // Perform elements subtraction.
 
@@ -402,6 +405,7 @@ impl Vector<f32> {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let element = other.get_element(row)? - scalar; // Perform subtraction.
 
@@ -413,6 +417,7 @@ impl Vector<f32> {
 
     /// This method is used to ...
     pub fn sub_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        // Iterate for each row of the vector.
         for row in 0..self.rows {
             let element = self.get_element(row)? - scalar;  // Perform subtraction.
 

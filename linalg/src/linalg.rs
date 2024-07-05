@@ -158,7 +158,7 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Ma
             //A = R*Q + s*I
 
             // Apply QR decomposition with shift.
-            i.mul_by_scalar(s)?;
+            i.mul_by_scalar_in_place(s)?;
             tmp.sub(&a, &i)?;
             a.copy_from(&tmp)?;
             let (q_tmp, r_tmp) = a.qr_decomp()?;

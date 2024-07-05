@@ -162,7 +162,7 @@ mod open_ahrs_tests {
 
             // Calculate angular rate vector using formula w = 2Q^T q_dot
             q_mat_copy.transpose().unwrap();        // Transpose the matrix Q.
-            q_mat_copy.mul_by_scalar(2.0).unwrap(); // Multiply each element by 2.
+            q_mat_copy.mul_by_scalar_in_place(2.0).unwrap(); // Multiply each element by 2.
 
             // Angular rate vector at time t.
             let w = q_mat_copy.mul_new(&q_dot.convert_to_matrix().unwrap()).unwrap();
@@ -172,7 +172,7 @@ mod open_ahrs_tests {
 
             /*
             // Used to find derivative of q(t) from w(t).
-            q_mat.mul_by_scalar(1.0 / 2.0).unwrap();    // Divide each element by 2.
+            q_mat.mul_by_scalar_in_place(1.0 / 2.0).unwrap();    // Divide each element by 2.
             let q_dot_ = q_mat.mul_new(&w.convert_to_matrix().unwrap()).unwrap();
             //q_dot_.print().unwrap();
             */

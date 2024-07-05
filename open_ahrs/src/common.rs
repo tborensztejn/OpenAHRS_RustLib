@@ -31,8 +31,9 @@ pub enum OpenAHRSError {
     MagAlreadyInit,
 
     // AR filter errors.
-    ARMethodError,
+    ARFilterAlreadyInit,
     ARFilterNotInit,
+    ARMethodError,
 
     // AQUA filter errors.
     AQUAFilterAlreadyInit,

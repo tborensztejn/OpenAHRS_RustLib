@@ -87,7 +87,9 @@ impl Matrix {
             return Err(LinalgError::NotInit);   // Return an error.
         }
 
+        // Check if the number of rows is different from the current one.
         if rows == self.rows {
+             // The number of rows remains unchanged.
             return Err(LinalgError::UnchangedSize); // Return an error.
         }
 
@@ -117,7 +119,9 @@ impl Matrix {
             return Err(LinalgError::NotInit);   // Return an error.
         }
 
+        // Check if the number of columns is different from the current one.
         if cols == self.cols {
+            // The number of rows remains unchanged.
             return Err(LinalgError::UnchangedSize); // Return an error.
         }
 
@@ -144,7 +148,7 @@ impl Matrix {
 
     /// This method is used to verify if a matrix of size m x 1 is initialized or not.
     pub fn is_initialized(self: &Self) -> bool {
-        self.initialized
+        self.initialized    // Return the result.
     }
 
     /// This method is used to assign a value to a specific element of a matrix of size m x n.
@@ -211,8 +215,9 @@ impl Matrix {
             return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
+        // Iterate for each column of the matrix, staying on the same row.
         for col in 0..self.cols {
-            self.set_element(row, col, vect.get_element(col)?)?;
+            self.set_element(row, col, vect.get_element(col)?)?;    // Set the new element value.
         }
 
         Ok(())  // Return no error.
@@ -226,8 +231,9 @@ impl Matrix {
             return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
+        // Iterate for each row of the matrix, staying on the same column.
         for row in 0..self.rows {
-            self.set_element(row, col, vect.get_element(row)?)?;
+            self.set_element(row, col, vect.get_element(row)?)?;    // Set the new element value.
         }
 
         Ok(())  // Return no error.
@@ -241,8 +247,9 @@ impl Matrix {
             return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
+        // Iterate for each column of the matrix, staying on the same row.
         for col in 0..self.cols {
-            vect.set_element(col, self.get_element(row, col)?)?;
+            vect.set_element(col, self.get_element(row, col)?)?;    // Retrieve element value and store it into the vector.
         }
 
         Ok(())  // Return no error.
@@ -256,8 +263,9 @@ impl Matrix {
             return Err(LinalgError::InvalidSize);   // Return an error.
         }
 
+        // Iterate for each row of the matrix, staying on the same column.
         for row in 0..self.rows {
-            vect.set_element(row, self.get_element(row, col)?)?;
+            vect.set_element(row, self.get_element(row, col)?)?;    // Retrieve element value and store it into the vector.
         }
 
         Ok(())  // Return no error.
@@ -268,9 +276,7 @@ impl Matrix {
         let mut vect: Vector<f32> = Vector::new();
         vect.init(self.cols)?;
 
-        for col in 0..self.cols {
-            vect.set_element(col, self.get_element(row, col)?)?;
-        }
+        self.get_row(&mut vect, row)?;
 
         Ok(vect)    // Return the vector with no error.
     }
@@ -280,43 +286,41 @@ impl Matrix {
         let mut vect: Vector<f32> = Vector::new();
         vect.init(self.rows)?;
 
-        for row in 0..self.rows {
-            vect.set_element(row, self.get_element(row, col)?)?;
-        }
+        self.get_col(&mut vect, col)?;
 
         Ok(vect)    // Return the vector with no error.
     }
 
     /// This method is used to add a row to a matrix of size m x n from a vector of size n x 1. The result is a matrix of size m+1 x n.
     pub fn add_row(self: &mut Self, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
-        let rows = self.rows + 1;
+        let rows = self.rows + 1;   // Calculate the new matrix rows number.
+        self.set_rows(rows)?;       // Update it.
 
-        self.set_rows(rows)?;
-
+        // Shift current matrix elements.
         for m in (row + 1..rows).rev() {
             for col in 0..self.cols {
                 self.set_element(m, col, self.get_element(m - 1, col)?)?;
             }
         }
 
-        self.set_row(&vect, row)?;
+        self.set_row(&vect, row)?;  // Add new elements to the matrix from the vector.
 
         Ok(())  // Return no error.
     }
 
     /// This method is used to add a column to a matrix of size m x n from a vector of size m x 1. The result is a matrix of size m x n+1.
     pub fn add_col(self: &mut Self, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
-        let cols = self.cols + 1;
+        let cols = self.cols + 1;   // Calculate the new matrix columns number.
+        self.set_cols(cols)?;       // Update it.
 
-        self.set_cols(cols)?;
-
+        // Shift current matrix elements.
         for n in (col + 1..cols).rev() {
             for row in 0..self.rows {
                 self.set_element(row, n, self.get_element(row, n - 1)?)?;
             }
         }
 
-        self.set_col(&vect, col)?;
+        self.set_col(&vect, col)?;  // Add new elements to the matrix from the vector.
 
         Ok(())  // Return no error.
     }
@@ -342,8 +346,8 @@ impl Matrix {
     /// This method is used to fill an entire matrix of size m x n with a given value.
     pub fn fill(self: &mut Self, value: f32) -> Result<(), LinalgError> {
         // Assign the value to each element of the matrix.
-        for row in 0..self.rows {
-            for col in 0..self.cols {
+        for row in 0..self.rows {                   // Iterate for each row of the matrix.
+            for col in 0..self.cols {               // Iterate for each column of the matrix.
                 self.set_element(row, col, value)?; // Set the value.
             }
         }
@@ -359,6 +363,7 @@ impl Matrix {
             return Err(LinalgError::NotInit);   // Return an error.
         }
 
+        // Check if dimensions are the same.
         if (self.rows != other.rows) || (self.cols != other.cols) {
             Ok(false)   // Return the result with no error.
         } else {
@@ -437,7 +442,9 @@ impl Matrix {
             return Err(LinalgError::NotSameSize);   // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
                 let element = other.get_element(row, col)?; // Retrieve the element from the reference matrix.
                 self.set_element(row, col, element)?;       // Put it inside the target matrix.
@@ -465,14 +472,13 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element1 = matrix1.get_element(row, col)?;
-                let element2 = matrix2.get_element(row, col)?;
+                let sum =  matrix1.get_element(row, col)? + matrix2.get_element(row, col)?; // Perform elements addition.
 
-                let sum = element1 + element2;
-
-                self.set_element(row, col, sum)?;
+                self.set_element(row, col, sum)?;   // Set the new value of the element.
             }
         }
 
@@ -487,14 +493,13 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element1 = self.get_element(row, col)?;
-                let element2 = other.get_element(row, col)?;
+                let sum = self.get_element(row, col)? + other.get_element(row, col)?;   // Perform elements addition.
 
-                let sum = element1 + element2;
-
-                self.set_element(row, col, sum)?;
+                self.set_element(row, col, sum)?;   // Set the new value of the element.
             }
         }
 
@@ -510,7 +515,7 @@ impl Matrix {
         }
 
         let mut result_mat = Self::new();       // Create a new matrix to store the result.
-        result_mat.init(self.rows, self.cols)?; // Initialize it.
+        result_mat.init(self.rows, self.cols)?; // Initialise it with the same dimension as the original matrix.
 
         result_mat.add(&self, &other)?;         // Perform addition.
 
@@ -525,11 +530,13 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element = other.get_element(row, col)? + scalar;
+                let element = other.get_element(row, col)? + scalar;    // Perform addition.
 
-                self.set_element(row, col, element)?;
+                self.set_element(row, col, element)?;   // Set the new value of the element.
             }
         }
 
@@ -538,11 +545,13 @@ impl Matrix {
 
     // This method is used to ...
     pub fn add_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element = self.get_element(row, col)? + scalar;
+                let element = self.get_element(row, col)? + scalar; // Perform addition.
 
-                self.set_element(row, col, element)?;
+                self.set_element(row, col, element)?;   // Set the new value of the element.
             }
         }
 
@@ -558,13 +567,15 @@ impl Matrix {
         }
 
         let mut result_mat = Self::new();       // Create a new matrix to store the result.
-        result_mat.init(self.rows, self.cols)?; // Initialize it.
+        result_mat.init(self.rows, self.cols)?; // Initialise it with the same dimension as the original matrix.
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element = self.get_element(row, col)? + scalar;
+                let element = self.get_element(row, col)? + scalar; // Perform addition.
 
-                result_mat.set_element(row, col, element)?;
+                result_mat.set_element(row, col, element)?; // Set the new value of the element.
             }
         }
 
@@ -579,14 +590,13 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element1 = matrix1.get_element(row, col)?;
-                let element2 = matrix2.get_element(row, col)?;
+                let difference = matrix1.get_element(row, col)? - matrix2.get_element(row, col)?;   // Perform elements subtraction.
 
-                let difference = element1 - element2;
-
-                self.set_element(row, col, difference)?;
+                self.set_element(row, col, difference)?;     // Set the new value of the element.
             }
         }
 
@@ -601,14 +611,13 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element1 = self.get_element(row, col)?;
-                let element2 = other.get_element(row, col)?;
+                let difference = self.get_element(row, col)? - other.get_element(row, col)?;    // Perform elements subtraction.
 
-                let difference = element1 - element2;
-
-                self.set_element(row, col, difference)?;
+                self.set_element(row, col, difference)?;    // Set the new value of the element.
             }
         }
 
@@ -624,7 +633,7 @@ impl Matrix {
         }
 
         let mut result_mat = Self::new();       // Create a new matrix to store the result.
-        result_mat.init(self.rows, self.cols)?; // Initialize it.
+        result_mat.init(self.rows, self.cols)?; // // Initialise it with the same dimension as the original matrix.
 
         result_mat.sub(&self, &other)?;         // Perform addition.
 
@@ -639,11 +648,13 @@ impl Matrix {
             return Err(LinalgError::NotSameSize)    // Return an error.
         }
 
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element = other.get_element(row, col)? - scalar;
+                let element = other.get_element(row, col)? - scalar;    // Perform subtraction.
 
-                self.set_element(row, col, element)?;
+                self.set_element(row, col, element)?;   // Set the new value of the element.
             }
         }
 
@@ -652,11 +663,13 @@ impl Matrix {
 
     // This method is used to ...
     pub fn sub_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+        // Iterate for each row of the matrix.
         for row in 0..self.rows {
+            // Iterate for each column of the matrix.
             for col in 0..self.cols {
-                let element = self.get_element(row, col)? - scalar;
+                let element = self.get_element(row, col)? - scalar; // Perform subtraction.
 
-                self.set_element(row, col, element)?;
+                self.set_element(row, col, element)?;   // Set the new value of the element.
             }
         }
 
@@ -672,15 +685,9 @@ impl Matrix {
         }
 
         let mut result_mat = Self::new();       // Create a new matrix to store the result.
-        result_mat.init(self.rows, self.cols)?; // Initialize it.
+        result_mat.init(self.rows, self.cols)?; // Initialise it with the same dimension as the original matrix.
 
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let element = self.get_element(row, col)? - scalar;
-
-                result_mat.set_element(row, col, element)?;
-            }
-        }
+        result_mat.sub_scalar(&self, scalar)?;  // Perform subtraction.
 
         Ok(result_mat)  // Return the result matrix with no error.
     }
@@ -805,7 +812,7 @@ impl Matrix {
     }
 
     /// This method is used to multiply by a scalar all elements of a matrix of size m x n.
-    pub fn mul_by_scalar(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
+    pub fn mul_by_scalar_in_place(self: &mut Self, scalar: f32) -> Result<(), LinalgError> {
         // Iterate through each element and multiply it by the scalar.
         for row in 0..self.rows {
             for col in 0..self.cols {
@@ -930,7 +937,7 @@ impl Matrix {
     pub fn is_upper_triangular(self: &Self) -> Result<bool, LinalgError> {
         // Loops on every row except the first (which doesn't need to have null elements).
         for row in 1..self.rows {
-            // We loop over the columns corresponding to the lower triangular matrix as a function of the current row.
+            // We loop for the columns corresponding to the lower triangular matrix as a function of the current row.
             for col in 0..row {
                 // If the matrix is upper diagonal, the element must always be zero, otherwise the matrix cannot be upper diagonal.
                 if !allclose(self.get_element(row, col)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
@@ -946,7 +953,7 @@ impl Matrix {
     pub fn is_lower_triangular(self: &Self) -> Result<bool, LinalgError> {
         // Loops on every row except the last (which doesn't need to have null elements).
         for row in 0..self.rows - 1 {
-            // We loop over the columns corresponding to the upper triangular matrix as a function of the current row.
+            // We loop for the columns corresponding to the upper triangular matrix as a function of the current row.
             for col in row + 1..self.cols {
                 // If the matrix is lower triangular, the element must always be zero, otherwise the matrix cannot be lower triangular.
                 if !allclose(self.get_element(row, col)?, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
@@ -1290,7 +1297,7 @@ impl Matrix {
         transposed_mat.transpose()?;                // Tranpose it.
 
         let mut result_mat = self.sub_new(&transposed_mat)?;
-        result_mat.mul_by_scalar(theta / (2.0 * sinf(theta)))?;
+        result_mat.mul_by_scalar_in_place(theta / (2.0 * sinf(theta)))?;
 
         Ok(result_mat)  // Return the result matrix with no error.
     }
@@ -1315,7 +1322,7 @@ impl Matrix {
         transposed_mat.transpose()?;                // Tranpose it.
 
         self.sub_in_place(&transposed_mat)?;
-        self.mul_by_scalar(theta / (2.0 * sinf(theta)))?;
+        self.mul_by_scalar_in_place(theta / (2.0 * sinf(theta)))?;
 
         Ok(())  // Return no error.
     }
@@ -1338,7 +1345,7 @@ impl Matrix {
 
         self.transpose()?;              // Tranpose the matrix.
 
-        self.mul_by_scalar(determinant)?;
+        self.mul_by_scalar_in_place(determinant)?;
 
         Ok(())  // Return no error.
     }
