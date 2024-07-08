@@ -379,26 +379,31 @@ mod open_ahrs_tests {
 
         let mut aqua_filter = AQUA::new().unwrap();
 
-        let default_gyrometer_config = GyrometerConfig::default();
+        //let default_gyrometer_config = GyrometerConfig::default();
         let default_accelerometer_config = AccelerometerConfig::default();
         let default_magnetometer_config = MagnetometerConfig::default();
 
         // Add some code here.
         aqua_filter.init(
             Mode::AM,
+            //Mode::MARG,
             //qw, qx, qy, qz,               // Initial orientation.
             None, None, None, None,         // No initial orientation.
-            default_gyrometer_config,       // Gyrometer configuration.
+            //Some(default_gyrometer_config), // Gyrometer configuration.
+            None,
             default_accelerometer_config,   // Accelerometer configuration.
             default_magnetometer_config,    // Magnetometer configuration.
             ts,                             // Sampling perdiod.
             false,                          // Disable adaptive.
+            //true,
             0.01,
             0.01,
             0.1,
             0.2,
             0.9,
-            0.9
+            0.9,
+            None,
+            None
         ).unwrap();
 
         let mut aqua_filter_estimated_attitude = Matrix::new(); // Create a new matrix to store estimated attitude from the AR filter.
@@ -406,9 +411,11 @@ mod open_ahrs_tests {
         aqua_filter_estimated_attitude.fill(0.0).unwrap();      // Fill it with zero value.
 
         for n in 0..niter {
+            /*
             let gx = gyrometer_measurements.get_element(0, n).unwrap();
             let gy = gyrometer_measurements.get_element(1, n).unwrap();
             let gz = gyrometer_measurements.get_element(2, n).unwrap();
+            */
 
             let ax = accelerometer_measurements.get_element(0, n).unwrap();
             let ay = accelerometer_measurements.get_element(1, n).unwrap();
@@ -418,8 +425,8 @@ mod open_ahrs_tests {
             let my = magnetometer_measurements.get_element(1, n).unwrap();
             let mz = magnetometer_measurements.get_element(2, n).unwrap();
 
-            //aqua_filter.update(None, None, None, ax, ay, az, mx, my, mz).unwrap();
-            aqua_filter.update(Some(gx), Some(gy), Some(gz), ax, ay, az, mx, my, mz).unwrap();
+            aqua_filter.update(None, None, None, ax, ay, az, mx, my, mz).unwrap();
+            //aqua_filter.update(Some(gx), Some(gy), Some(gz), ax, ay, az, mx, my, mz).unwrap();
             aqua_filter_estimated_attitude.set_col(&aqua_filter.get_attitude().unwrap(), n).unwrap();
             //aqua_filter.print_attitude().unwrap();
         }

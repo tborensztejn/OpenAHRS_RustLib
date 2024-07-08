@@ -12,6 +12,7 @@ use crate::common::{OpenAHRSError, calculate_omega_matrix};
 use quaternion::quaternion::Quaternion;
 use linalg::matrix::Matrix;
 use linalg::vector::Vector;
+use linalg::common::EPSILON;
 use utils::utils::in_range;
 use libm::{sqrtf, fabsf};
 
@@ -24,7 +25,9 @@ pub enum Mode {
 
 #[derive(Debug)]
 pub struct AQUA {
-    // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
+    mode: Mode,             // Mode of the filter.
+
+    // Filter sensors (gyrometer (optional), accelerometer and magnetometer (used to perform gyro drift correction)).
     gyr: Gyrometer,
     acc: Accelerometer,
     mag: Magnetometer,
@@ -39,7 +42,8 @@ pub struct AQUA {
     t2: f32,                // Adaptative gain second treshold.
     t_acc: f32,             // Interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
     t_mag: f32,             // Interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
-    mode: Mode,             // Mode of the filter.
+    g: f32,                 // Earth gravitational acceleration magnitude.
+    h: f32,                 // Earth magnetic field magnitude.
     //order: u8,              // Order of the numerical integration method.
     //method: NIM,            // Numerical integration method.
 
@@ -50,7 +54,9 @@ impl AQUA {
     /// This method is used to create a new AQUA filter.
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
-            // Filter sensors (gyrometer (optionnal), accelerometer and magnetometer (used to perform gyro drift correction)).
+            mode:       Mode::MARG,         // Default mode of the filter.
+
+            // Filter sensors (gyrometer (optional), accelerometer and magnetometer (used to perform gyro drift correction)).
             gyr: Gyrometer::new()?,
             acc: Accelerometer::new()?,
             mag: Magnetometer::new()?,
@@ -66,7 +72,8 @@ impl AQUA {
             t2:         0.2,                // Default adaptative gain second treshold.
             t_acc:      0.9,                // Default interpolation treshold for the partial attitude quaternion determined from accelerometer measurements.
             t_mag:      0.9,                // Default interpolation treshold for the partial attitude quaternion determined from magnetometer measurements.
-            mode:       Mode::MARG,         // Default mode of the filter.
+            g:          9.81,               // Default Earth gravitational acceleration magnitude.
+            h:          48.0,               // Default Earth magnetic field magnitude.
             //order:      2,                  // Default order of the numerical integration method.
             //method:     NIM::ClosedForm,    // Default numerical integration method.
 
@@ -78,10 +85,9 @@ impl AQUA {
 
     // This function is used to initialize the AQUA filter.
     pub fn init(self: &mut Self,
-        //mode: u8,
         mode: Mode,                                                         // Define the mode of the filter.
-        qw: Option<f32>, qx: Option<f32>, qy: Option<f32>, qz: Option<f32>, // Define the initial attitude (optionnal).
-        gyrometer_config: GyrometerConfig,                                  // Define the gyrometer configuration.
+        qw: Option<f32>, qx: Option<f32>, qy: Option<f32>, qz: Option<f32>, // Define the initial attitude (optional).
+        gyrometer_config: Option<GyrometerConfig>,                          // Define the gyrometer configuration (optional).
         accelerometer_config: AccelerometerConfig,                          // Define the accelerometer configuration.
         magnetometer_config: MagnetometerConfig,                            // Define the magnetometer configuration.
         ts: f32,                                                            // Define the sampling period.
@@ -92,6 +98,8 @@ impl AQUA {
         t2: f32,                                                            // Define the second treshold used to calculate adaptative interpolation parameter. The second treshold must be strictly greater than the first one.
         t_acc: f32,                                                         // Define the interpolation treshold for the SLERP and LERP algorithm for the partial attitude quaternion determined from accelerometer measurements.
         t_mag: f32,                                                         // Define the interpolation treshold for the SLERP and LERP algorithm for the partial attitude quaternion determined from magnetometer measurements.
+        g: Option<f32>,                                                     // Define Earth gravitational acceleration magnitude (optional).
+        h: Option<f32>                                                      // Define Earth magnetic field magnitude (optional).
     ) -> Result<(), OpenAHRSError> {
         // Check if the filter has already been initialized.
         if self.initialized {
@@ -99,24 +107,33 @@ impl AQUA {
             return Err(OpenAHRSError::AQUAFilterAlreadyInit); // Return an error.
         }
 
-        self.attitude.init(4)?;                     // Initialize the attitude quaternion.
+        self.attitude.init(4)?;         // Initialize the attitude quaternion.
+        self.attitude.fill_identity()?; // Fill it as identity quaternion.
 
+        // Check the mode.
         if mode == Mode::MARG {
-            self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
+            // Check if the gyrometer configuration is present or absent.
+            let config = match gyrometer_config {
+                Some(config) => config,                             // The gyrometer configuration is present.
+                None => return Err(OpenAHRSError::NoGyroconfig),    // No gyrometer configuration and it's required. Return an error.
+            };
+
+            self.gyr.init(config)?;                 // Initialize the gyrometer.
             self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
             self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
         } else if mode == Mode::AM {
             self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
             self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
         } else {
-            return Err(OpenAHRSError::InvalidAQUAMode);
+            // Invalid mode.
+            return Err(OpenAHRSError::InvalidAQUAMode); // Return an error.
         }
 
         // Check if all quaternion coordinates are present or absent.
         let quat = match (qw, qx, qy, qz) {
-            (Some(qw), Some(qx), Some(qy), Some(qz)) => Some((qw, qx, qy, qz)),
-            (None, None, None, None) => None,
-            _ => return Err(OpenAHRSError::InvalidQuaternion),
+            (Some(qw), Some(qx), Some(qy), Some(qz)) => Some((qw, qx, qy, qz)), // All components supplied, initial quaternion present.
+            (None, None, None, None) => None,                                   // No components supplied, no initial quaternion.
+            _ => return Err(OpenAHRSError::InvalidInitQuaternion),              // The quaternion is not valid (some components were not supplied). Return an error.
         };
 
         // Set initial attitude manually.
@@ -124,23 +141,27 @@ impl AQUA {
             self.attitude.fillq(qw, qx, qy, qz)?;
         } else {    // Automatically initialize attitude.
             // Add some code here.
+            // In MARG mode, the initial quaternion is determined from the accelerometer and magnetometer in the same way as in AM mode.
         }
 
-        self.ts = ts;               // Set sampling rate.
-        self.adaptive = adaptive;   // ...
-        self.alpha = alpha;         // Set
-        self.beta = beta;
-        self.t1 = t1;
-        self.t2 = t2;
-        self.t_acc = t_acc;
-        self.t_mag = t_mag;
-        //self.method = method;       // Set the numerical integration method that will be used to estimate the attitude.
-        //self.order = order;         // Set the order of the method.
+        self.mode = mode;               // Set the mode.
+
+        self.ts = ts;                   // Set sampling rate.
+        self.adaptive = adaptive;       // Set ...
+        self.alpha = alpha;             // Set ...
+        self.beta = beta;               // Set ...
+        self.t1 = t1;                   // Set ...
+        self.t2 = t2;                   // Set ...
+        self.t_acc = t_acc;             // Set ...
+        self.t_mag = t_mag;             // Set ...
+        self.g = g.unwrap_or(self.g);   // Set Earth gravitational acceleration magnitude.
+        self.h = h.unwrap_or(self.h);   // Set Earth magnetic field magnitude.
+        //self.method = method;           // Set the numerical integration method that will be used to estimate the attitude.
+        //self.order = order;             // Set the order of the method.
 
         // Add some code here.
 
-        self.initialized = true;                // Set initialization status flag to true.
-        self.mode = mode;
+        self.initialized = true;        // Set initialization status flag to true.
 
         Ok(())  // Return no error.
     }
@@ -177,7 +198,7 @@ impl AQUA {
         // Check if the second treshold is strictly greater than the first one.
         if self.t2 <= self.t1 {
             // The second treshold is not striclty greater than the first one.
-            //return Err(OpenAHRSError::) // Return an error.
+            return Err(OpenAHRSError::InvalidAdaptiveGainTresholds) // Return an error.
         }
 
         let vect_norm = vect_global.calculate_norm()?;
@@ -242,12 +263,15 @@ impl AQUA {
         a_local.set_element(1, ay)?;
         a_local.set_element(2, az)?;
 
-        a_local.normalize()?;   // Normalize it.
+        //a_local.normalize()?;   // Normalize it.
+        let a_local_norm = a_local.calculate_norm()?;
 
-        // Retrieve vector components.
-        ax = a_local.get_element(0)?;
-        ay = a_local.get_element(1)?;
-        az = a_local.get_element(2)?;
+        // Retrieve vector components and normalize them (we want normalized components without normalizing the vector).
+        if a_local_norm > EPSILON {
+            ax = a_local.get_element(0)? / a_local_norm;
+            ay = a_local.get_element(1)? / a_local_norm;
+            az = a_local.get_element(2)? / a_local_norm;
+        }
 
         // Retrieve corrected magnetometer measurements.
         let mx = self.mag.get_x_magnetic_field()?;
@@ -337,7 +361,7 @@ impl AQUA {
             acc_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
 
             if self.adaptive {
-                self.alpha = self.calculate_adaptative_gain(self.alpha, &a_global, 9.81)?;
+                self.alpha = self.calculate_adaptative_gain(self.alpha, &a_global, self.g)?;
             }
 
             let acc_quat_interpolated = Self::interpolate(&acc_quat, self.alpha, self.t_acc)?;
@@ -370,7 +394,7 @@ impl AQUA {
             mag_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
 
             if self.adaptive {
-                self.beta =  self.calculate_adaptative_gain(self.alpha, &m_global, 48.0)?;
+                self.beta =  self.calculate_adaptative_gain(self.alpha, &m_global, self.g)?;
             }
 
             let mag_quat_interpolated = Self::interpolate(&mag_quat, self.beta, self.t_mag)?;
