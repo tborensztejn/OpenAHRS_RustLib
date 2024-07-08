@@ -27,7 +27,7 @@ mod open_ahrs_tests {
 
     #[test]
     fn ar_series_method_test() {
-        //const RAG_2_DEG: f32 = 57.2958;     // Conversion factor between radians to degrees.
+        const RAG_2_DEG: f32 = 57.2958;     // Conversion factor between radians to degrees.
         const DEG_2_RAD: f32 = 0.0174533;   // Conversion factor between degrees to radians.
 
         let niter: u8 = 10;     // Number of iterations.
@@ -67,12 +67,36 @@ mod open_ahrs_tests {
         print!("\nRandomly generated attitudes:\n\n");
 
         for n in 0..niter+1 {
-            print!("q[{:}Δt]\t", n);
+            //print!("q[{:}Δt]\t", n);
+            print!("[e{:}Δt]\t", n);
         }
 
         print!("\n\n");
 
-        attitudes.print().unwrap();
+        //attitudes.print().unwrap();
+        let mut attitudes_euler = Matrix::new();
+        attitudes_euler.init(3, niter+1).unwrap();
+
+        for n in 0..niter+1 {
+            let temp_q = attitudes.col_to_vector(n).unwrap();
+
+            let euler_angles = temp_q.convert_to_euler().unwrap();
+
+            let phi = euler_angles.0 * RAG_2_DEG;
+            let theta = euler_angles.1 * RAG_2_DEG;
+            let psi = euler_angles.2* RAG_2_DEG;
+
+            let mut euler_angles: Vector<f32> = Vector::new();
+            euler_angles.init(3).unwrap();
+
+            euler_angles.set_element(0, phi).unwrap();
+            euler_angles.set_element(1, theta).unwrap();
+            euler_angles.set_element(2, psi).unwrap();
+
+            attitudes_euler.set_col(&euler_angles, n).unwrap();
+        }
+
+        attitudes_euler.print().unwrap();
 
         let mut angular_rates = Matrix::new();              // Create a new matrix to store calculated angular rates from the local frame.
         angular_rates.init(3, 3).unwrap();                  // Initialize it.
@@ -310,12 +334,36 @@ mod open_ahrs_tests {
         print!("Estimated attitudes (AR filter):\n\n");
 
         for n in 1..niter+1 {
-            print!("q[{:}Δt]\t", n);
+            //print!("q[{:}Δt]\t", n);
+            print!("[e{:}Δt]\t", n);
         }
 
         print!("\n\n");
 
-        ar_filter_estimated_attitude.print().unwrap();
+        //ar_filter_estimated_attitude.print().unwrap();
+        let mut attitudes_euler = Matrix::new();
+        attitudes_euler.init(3, niter).unwrap();
+
+        for n in 0..niter {
+            let temp_q = ar_filter_estimated_attitude.col_to_vector(n).unwrap();
+
+            let euler_angles = temp_q.convert_to_euler().unwrap();
+
+            let phi = euler_angles.0 * RAG_2_DEG;
+            let theta = euler_angles.1 * RAG_2_DEG;
+            let psi = euler_angles.2* RAG_2_DEG;
+
+            let mut euler_angles: Vector<f32> = Vector::new();
+            euler_angles.init(3).unwrap();
+
+            euler_angles.set_element(0, phi).unwrap();
+            euler_angles.set_element(1, theta).unwrap();
+            euler_angles.set_element(2, psi).unwrap();
+
+            attitudes_euler.set_col(&euler_angles, n).unwrap();
+        }
+
+        attitudes_euler.print().unwrap();
 
 
 
@@ -378,12 +426,36 @@ mod open_ahrs_tests {
 
         print!("Estimated attitudes (AQUA filter):\n\n");
 
-        for n in 1..niter+1 {
-            print!("q[{:}Δt]\t", n);
+        for n in 0..niter {
+            //print!("q[{:}Δt]\t", n);
+            print!("[e{:}Δt]\t", n);
         }
 
         print!("\n\n");
 
-        aqua_filter_estimated_attitude.print().unwrap();
+        //aqua_filter_estimated_attitude.print().unwrap();
+        let mut attitudes_euler = Matrix::new();
+        attitudes_euler.init(3, niter).unwrap();
+
+        for n in 0..niter {
+            let temp_q = aqua_filter_estimated_attitude.col_to_vector(n).unwrap();
+
+            let euler_angles = temp_q.convert_to_euler().unwrap();
+
+            let phi = euler_angles.0 * RAG_2_DEG;
+            let theta = euler_angles.1 * RAG_2_DEG;
+            let psi = euler_angles.2* RAG_2_DEG;
+
+            let mut euler_angles: Vector<f32> = Vector::new();
+            euler_angles.init(3).unwrap();
+
+            euler_angles.set_element(0, phi).unwrap();
+            euler_angles.set_element(1, theta).unwrap();
+            euler_angles.set_element(2, psi).unwrap();
+
+            attitudes_euler.set_col(&euler_angles, n).unwrap();
+        }
+
+        attitudes_euler.print().unwrap();
     }
 }

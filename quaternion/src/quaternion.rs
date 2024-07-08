@@ -69,8 +69,8 @@ pub trait Quaternion {
     fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
     fn chiaverini(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
     /// This method is used to convert a quaternion into Tait-Bryan (Euler) angles.
-    //fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError>;
-    fn convert_to_euler(self: &mut Self) -> Result<(f32, f32, f32), LinalgError>;
+    //fn convert_to_euler(self: &Self) -> Result<Vector<f32>, LinalgError>;
+    fn convert_to_euler(self: &Self) -> Result<(f32, f32, f32), LinalgError>;
     // This method is used to convert Tait-Bryan (Euler) angles into a quaternion.
     //fn convert_from_euler(self: &mut Self, euler_angles: &Self) -> Result<(), LinalgError>;
     //fn convert_from_euler(self: &mut Self, phi: f32, theta: f32, psi: f32) -> Result<(), LinalgError>;
@@ -616,8 +616,8 @@ impl Quaternion for Vector<f32> {
     }
 
     // This method is used to convert a quaternion into Tait-Bryan (Euler) angles.
-    //fn convert_to_euler(self: &mut Self) -> Result<Vector<f32>, LinalgError> {
-    fn convert_to_euler(self: &mut Self) -> Result<(f32, f32, f32), LinalgError> {
+    //fn convert_to_euler(self: &Self) -> Result<Vector<f32>, LinalgError> {
+    fn convert_to_euler(self: &Self) -> Result<(f32, f32, f32), LinalgError> {
         /*
         let mut euler_angles: Vector<f32> = Vector::new();  // Create a new vector to store calculated Euler angles.
         euler_angles.init(3)?;                              // Initialize it.
@@ -645,11 +645,9 @@ impl Quaternion for Vector<f32> {
     }
 
     // This method is used to convert Tait-Bryan (Euler) angles into a quaternion.
-    /*
     //fn convert_from_euler(self: &mut Self, euler_angles: &Self) -> Result<(), LinalgError>;
+    /*
     fn convert_from_euler(self: &mut Self, phi: f32, theta: f32, psi: f32) -> Result<(), LinalgError> {
-
-        // Add some code here.
 
         Ok(())  // Return no error.
     }

@@ -41,7 +41,7 @@ pub enum OpenAHRSError {
     InvalidQuaternion,
     InvalidAQUAMode,
     InvalidAQUAInterpolationTreshold,
-
+    NoGyroRawMeasurements,
     InvalidGyroRawMeasurements,
 
 
@@ -100,7 +100,6 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
         actual_quat.init(4)?;
         actual_quat.fillq(qw, qx, qy, qz)?;
 
-
         /*
             In a context where the time step is fixed and variations between two attitudes can be significant, leading to high rotation vectors, it is crucial to adopt strategies
             to manage these variations and maintain the stability and accuracy of quaternion integration. If the variations between two successive quaternions are too great, intermediate
@@ -112,7 +111,6 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
             A common method for quaternion interpolation is Spherical Linear Interpolation (SLERP). Using SLERP, we insert intermediate quaternions between the two generated quaternions,
             thus reducing the angular variation at each fixed time step.
         */
-
 
         // Perform scalar product.
         let scalar = actual_quat.dot_product(&previous_quat)?;

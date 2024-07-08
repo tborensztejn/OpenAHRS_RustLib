@@ -153,9 +153,9 @@ impl AQUA {
             return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold) // Return an error.
         }
 
-        let mut idendity_quat: Vector<f32> = Vector::new(); // Create the identity quaternion.
-        idendity_quat.init(4)?;                             // Initialize it.
-        idendity_quat.fill_identity()?;                     // Fill it.
+        let mut idendity_quat: Vector<f32> = Vector::new();     // Create the identity quaternion.
+        idendity_quat.init(4)?;                                 // Initialize it.
+        idendity_quat.fill_identity()?;                         // Fill it.
 
         let mut interpolated_quat: Vector<f32> = Vector::new(); // Create the interpolated quaternion.
         interpolated_quat.init(4)?;                             // Initialize it.
@@ -210,7 +210,6 @@ impl AQUA {
             return Err(OpenAHRSError::AQUAFilterNotInit);   // Return an error.
         }
 
-
         // Check the type of mode.
         if self.mode == Mode::MARG {
             // Check if all gyrometer measurement are present or absent.
@@ -223,7 +222,7 @@ impl AQUA {
             if let Some((gx, gy, gz)) = gyro_raw_measurements {
                 self.gyr.update(gx, gy, gz)?;   // Update the gyrometer with raw measurements to correct them.
             } else {    // Attempt to use MARG mode without providing raw gyro readings.
-                //return Err(OpenAHRSError::);  // Return an error.
+                return Err(OpenAHRSError::NoGyroRawMeasurements);   // Return an error.
             }
         }
 
@@ -301,7 +300,6 @@ impl AQUA {
             omega.mul_by_scalar_in_place(0.5)?;
             let derivative_quat = omega.mul_new(&self.attitude.convert_to_matrix()?)?;
 
-
             let mut delta_quat = derivative_quat.col_to_vector(0)?;
             delta_quat.mul_by_scalar_in_place(self.ts)?;
 
@@ -339,7 +337,7 @@ impl AQUA {
             acc_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
 
             if self.adaptive {
-                self.alpha = self.calculate_adaptative_gain(self.alpha, &a_global, -9.81)?;
+                self.alpha = self.calculate_adaptative_gain(self.alpha, &a_global, 9.81)?;
             }
 
             let acc_quat_interpolated = Self::interpolate(&acc_quat, self.alpha, self.t_acc)?;
@@ -372,7 +370,7 @@ impl AQUA {
             mag_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
 
             if self.adaptive {
-                self.beta =  self.calculate_adaptative_gain(self.alpha, &m_global, 0.0)?;
+                self.beta =  self.calculate_adaptative_gain(self.alpha, &m_global, 48.0)?;
             }
 
             let mag_quat_interpolated = Self::interpolate(&mag_quat, self.beta, self.t_mag)?;
