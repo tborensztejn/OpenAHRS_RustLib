@@ -5,6 +5,7 @@ use linalg::vector::Vector;
 use crate::common::OpenAHRSError;
 
 // Gyrometer configuration.
+#[derive(Copy, Clone)]
 pub struct GyrometerConfig {
     // Scaling correction factors.
     pub x_axis_scale_correction: f32,

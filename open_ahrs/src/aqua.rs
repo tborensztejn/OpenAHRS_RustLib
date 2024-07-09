@@ -263,10 +263,9 @@ impl AQUA {
         a_local.set_element(1, ay)?;
         a_local.set_element(2, az)?;
 
-        //a_local.normalize()?;   // Normalize it.
-        let a_local_norm = a_local.calculate_norm()?;
+        let a_local_norm = a_local.calculate_norm()?;   // Calculate the norm of the acceleration vector.
 
-        // Retrieve vector components and normalize them (we want normalized components without normalizing the vector).
+        // Retrieve acceleration vector components and normalize them (we want normalized components without normalizing the vector).
         if a_local_norm > EPSILON {
             ax = a_local.get_element(0)? / a_local_norm;
             ay = a_local.get_element(1)? / a_local_norm;
@@ -285,6 +284,8 @@ impl AQUA {
         m_local.set_element(0, mx)?;
         m_local.set_element(1, my)?;
         m_local.set_element(2, mz)?;
+
+        //let m_local_norm = m_local.calculate_norm()?;   // Calculate the norm of the magnetic field intensity vector.
 
         m_local.normalize()?;   // Normalize it.
 
@@ -339,11 +340,13 @@ impl AQUA {
             let a_global = temp.col_to_vector(0)?;
 
             // Retrieve vector components.
+            // Predicted gravity (Source: Roberto G. Valenti, Ivan Dryanovski and Jizhong Xiao. Keeping a Good Attitude: A Quaternion-Based Orientation Filter for IMUs and MARGs. New York: Sensors, 2015, p. 16, eq. 44).
             let gx = a_global.get_element(0)?;
             let gy = a_global.get_element(1)?;
             let gz = a_global.get_element(2)?;
 
             // Determine the quaternion (partial orientation) from the accelerometer measurements.
+            // Source: Roberto G. Valenti, Ivan Dryanovski and Jizhong Xiao. Keeping a Good Attitude: A Quaternion-Based Orientation Filter for IMUs and MARGs. New York: Sensors, 2015, p. 16, eq. 47.
             if gz < 0.0 {
                 let l1 = sqrtf((1.0 - gz) / 2.0);
                 qw = l1;
@@ -361,24 +364,28 @@ impl AQUA {
             acc_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
 
             if self.adaptive {
-                self.alpha = self.calculate_adaptative_gain(self.alpha, &a_global, self.g)?;
+                self.alpha = self.calculate_adaptative_gain(self.alpha, &a_local, self.g)?;
             }
 
             let acc_quat_interpolated = Self::interpolate(&acc_quat, self.alpha, self.t_acc)?;
 
+            // Source: Roberto G. Valenti, Ivan Dryanovski and Jizhong Xiao. Keeping a Good Attitude: A Quaternion-Based Orientation Filter for IMUs and MARGs. New York: Sensors, 2015, p. 17, eq. 53.
             self.attitude.mul(&gyr_quat, &acc_quat_interpolated)?;
 
             // Magnetometer-based correction step.
             let mut dcm_local_to_global = self.attitude.convert_to_dcm()?;
             dcm_local_to_global.transpose()?;
             temp.mul(&dcm_local_to_global, &m_local.convert_to_matrix()?)?;
+            // Global frame magnetic vector (Source: Roberto G. Valenti, Ivan Dryanovski and Jizhong Xiao. Keeping a Good Attitude: A Quaternion-Based Orientation Filter for IMUs and MARGs. New York: Sensors, 2015, p. 18, eq. 54).
             let m_global = temp.col_to_vector(0)?;
 
             let lx = m_global.get_element(0)?;
             let ly = m_global.get_element(1)?;
 
+            // Source: Roberto G. Valenti, Ivan Dryanovski and Jizhong Xiao. Keeping a Good Attitude: A Quaternion-Based Orientation Filter for IMUs and MARGs. New York: Sensors, 2015, p. 10, eq. 28.
             let gamma = lx*lx + ly*ly;
 
+            /*
             if lx >= 0.0 {
                 qw = sqrtf(gamma + lx * sqrtf(gamma)) / sqrtf(2.0 * gamma);
                 qx = 0.0;
@@ -390,12 +397,22 @@ impl AQUA {
                 qy = 0.0;
                 qz = sqrtf(gamma - lx * sqrtf(gamma)) / sqrtf(2.0 * gamma);
             }
+            */
+
+            qw = sqrtf(gamma + lx * sqrtf(gamma)) / sqrtf(2.0 * gamma);
+            qx = 0.0;
+            qy = 0.0;
+            qz = ly / (sqrtf(2.0) * sqrtf(gamma + lx * sqrtf(gamma)));
 
             mag_quat.fillq(qw, qx, qy, qz)?;    // Fill it.
 
+            /*
             if self.adaptive {
-                self.beta =  self.calculate_adaptative_gain(self.alpha, &m_global, self.g)?;
+                m_local.mul_by_scalar_in_place(m_local_norm)?;
+                self.beta =  self.calculate_adaptative_gain(self.alpha, &m_local, self.h)?;
+                m_local.mul_by_scalar_in_place(1.0 / m_local_norm)?;
             }
+            */
 
             let mag_quat_interpolated = Self::interpolate(&mag_quat, self.beta, self.t_mag)?;
 

@@ -6,6 +6,7 @@ pub mod accelerometer;
 pub mod magnetometer;
 pub mod ar;
 pub mod aqua;
+pub mod davenport;
 
 #[cfg(test)]
 #[cfg(feature = "std")]
@@ -14,11 +15,14 @@ mod open_ahrs_tests {
     extern crate libm;
     extern crate quaternion;
 
-    use crate::ar::AR;
     use crate::gyrometer::GyrometerConfig;
     use crate::accelerometer::AccelerometerConfig;
     use crate::magnetometer::MagnetometerConfig;
+
+    use crate::ar::AR;
     use crate::aqua::{AQUA, Mode};
+    use crate::davenport::Davenport;
+
     use crate::common::{NumericalIntegrationMethod as NIM, generate_random_attitudes};
     use linalg::matrix::Matrix;
     use linalg::vector::Vector;
@@ -30,7 +34,7 @@ mod open_ahrs_tests {
         const RAG_2_DEG: f32 = 57.2958;     // Conversion factor between radians to degrees.
         const DEG_2_RAD: f32 = 0.0174533;   // Conversion factor between degrees to radians.
 
-        let niter: u8 = 10;     // Number of iterations.
+        let niter: u8 = 14;     // Number of iterations.
         let ts: f32 = 0.01;     // Sampling period [s].
         let g: f32 = -9.81;     // Gravitational acceleration [m/s²].
         let b: f32 = 48.0;      // Magnetic field magnitude [µT].
@@ -385,16 +389,16 @@ mod open_ahrs_tests {
 
         // Add some code here.
         aqua_filter.init(
-            Mode::AM,
-            //Mode::MARG,
-            //qw, qx, qy, qz,               // Initial orientation.
-            None, None, None, None,         // No initial orientation.
-            //Some(default_gyrometer_config), // Gyrometer configuration.
-            None,
-            default_accelerometer_config,   // Accelerometer configuration.
-            default_magnetometer_config,    // Magnetometer configuration.
-            ts,                             // Sampling perdiod.
-            false,                          // Disable adaptive.
+            //Mode::AM,
+            Mode::MARG,
+            Some(qw), Some(qx), Some(qy), Some(qz), // Initial orientation.
+            //None, None, None, None,                 // No initial orientation.
+            Some(default_gyrometer_config),         // Gyrometer configuration.
+            //None,
+            default_accelerometer_config,           // Accelerometer configuration.
+            default_magnetometer_config,            // Magnetometer configuration.
+            ts,                                     // Sampling perdiod.
+            false,                                  // Disable adaptive.
             //true,
             0.01,
             0.01,
@@ -411,11 +415,9 @@ mod open_ahrs_tests {
         aqua_filter_estimated_attitude.fill(0.0).unwrap();      // Fill it with zero value.
 
         for n in 0..niter {
-            /*
             let gx = gyrometer_measurements.get_element(0, n).unwrap();
             let gy = gyrometer_measurements.get_element(1, n).unwrap();
             let gz = gyrometer_measurements.get_element(2, n).unwrap();
-            */
 
             let ax = accelerometer_measurements.get_element(0, n).unwrap();
             let ay = accelerometer_measurements.get_element(1, n).unwrap();
@@ -425,8 +427,8 @@ mod open_ahrs_tests {
             let my = magnetometer_measurements.get_element(1, n).unwrap();
             let mz = magnetometer_measurements.get_element(2, n).unwrap();
 
-            aqua_filter.update(None, None, None, ax, ay, az, mx, my, mz).unwrap();
-            //aqua_filter.update(Some(gx), Some(gy), Some(gz), ax, ay, az, mx, my, mz).unwrap();
+            //aqua_filter.update(None, None, None, ax, ay, az, mx, my, mz).unwrap();
+            aqua_filter.update(Some(gx), Some(gy), Some(gz), ax, ay, az, mx, my, mz).unwrap();
             aqua_filter_estimated_attitude.set_col(&aqua_filter.get_attitude().unwrap(), n).unwrap();
             //aqua_filter.print_attitude().unwrap();
         }
