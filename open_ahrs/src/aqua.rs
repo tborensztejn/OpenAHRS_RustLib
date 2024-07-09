@@ -171,7 +171,7 @@ impl AQUA {
         // Check that the interpolation parameter is valid (it must be between 0 and 1 inclusive).
         if !in_range(treshold, 0.0_f32, 1.0_f32) {
             // The interpolation parameter is not valid.
-            return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold) // Return an error.
+            return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold);    // Return an error.
         }
 
         let mut idendity_quat: Vector<f32> = Vector::new();     // Create the identity quaternion.

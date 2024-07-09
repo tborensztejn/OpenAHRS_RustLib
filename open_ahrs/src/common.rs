@@ -48,7 +48,10 @@ pub enum OpenAHRSError {
     InvalidGyroRawMeasurements,
 
 
-
+    // Davenport's filter based on Q method errors.
+    DavenportFilterAlreadyInit, /// This error occurs when an attempt is made to initialize an Davenport's filter based on Q method that has already been initialised.
+    InvalidDavenportWeights,    /// This error occurs when an attempt is made to initialize an Davenport's filter based on Q method with invalid observations weight(s).
+    DavenportFilterNotInit,     /// This error occurs when an attempt is made to use an uninitialised Davenport's filter based on Q method.
 
     LinalgError(LinalgError),
 }
