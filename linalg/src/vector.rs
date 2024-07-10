@@ -544,6 +544,25 @@ impl Vector<f32> {
         Ok(scalar)  // Return the result with no error.
     }
 
+    /// This method is used to perform outer product between two vectors of size m x 1.
+    pub fn outer_product(self: &Self, other: &Self) -> Result<Matrix, LinalgError> {
+        let m = self.get_rows()?;   // Retrieve number of rows of the vector.
+        let n = other.get_rows()?;  // Retrieve number of rows of the other vector.
+
+        let mut result_mat = Matrix::new(); // Create a new matrix of size m x n to store the result.
+        result_mat.init(m, n)?;             // Initialize it.
+
+        // Peform outer product of the two vectors.
+        for row in 0..m {
+            for col in 0..n {
+                let element = self.get_element(row)? * other.get_element(col)?; // Calculate element.
+                result_mat.set_element(row, col, element)?;                     // Set it into the matrix.
+            }
+        }
+
+        Ok(result_mat)  // Return the result with no error.
+    }
+
     /// This method is used to perform the spherical interpolation (SLERP) of two vectors of size m x 1.
     pub fn slerp(self: &mut Self, vect1: &Self, vect2: &Self, alpha: f32) -> Result<(), LinalgError> {
         // Check that alpha is valid (alpha must be between 0 and 1 inclusive).

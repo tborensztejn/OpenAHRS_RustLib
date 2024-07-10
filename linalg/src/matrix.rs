@@ -773,6 +773,14 @@ impl Matrix {
         Ok(())
     }
 
+    /// This method is used to ...
+    pub fn transpose_new(self: &Self) -> Result<Matrix, LinalgError> {
+        let mut transposed_mat = self.duplicate()?; // Duplicate the original matrix to avoid modifying it.
+        transposed_mat.transpose()?;                // Transpose the copy.
+
+        Ok(transposed_mat)  // Return the transposed matrix with no error.
+    }
+
     /// This method is used to invert a square matrix of size m x m.
     pub fn invert(self: &mut Self) -> Result<(), LinalgError> {
         // Check that the matrix is square.

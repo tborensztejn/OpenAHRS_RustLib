@@ -13,7 +13,7 @@ use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use linalg::common::EPSILON;
 use utils::utils::in_range;
-//use libm::{sqrtf, fabsf};
+use libm::{cosf, sinf};
 
 #[derive(Debug)]
 pub struct Davenport {
@@ -131,7 +131,55 @@ impl Davenport {
         m_local.set_element(1, my)?;
         m_local.set_element(2, mz)?;
 
-        // Add some code here.
+
+
+
+        let mut g_q: Vector<f32> = Vector::new();   // Create ...
+        g_q.init(3)?;                               // Initialize it.
+        // Fill it.
+        g_q.set_element(0, 0.0)?;
+        g_q.set_element(0, 0.0)?;
+        g_q.set_element(0, -self.g)?;
+
+        let mut m_q: Vector<f32> = Vector::new();   // Create ...
+        m_q.init(3)?;                               // Initialize it.
+        // Fill it.
+        m_q.set_element(0, cosf(self.mdip))?;
+        m_q.set_element(0, 0.0)?;
+        m_q.set_element(0, -sinf(self.mdip))?;
+
+
+        let mut b1 = a_local.outer_product(&g_q)?;
+        let mut b2 = m_local.outer_product(&m_q)?;
+
+        b1.mul_by_scalar_in_place(self.w1)?;
+        b2.mul_by_scalar_in_place(self.w2)?;
+
+        let b = b1.add_new(&b2)?;
+
+        let sigma = b.trace()?;
+
+        let z1 = b.get_element(1, 2)? - b.get_element(2, 1)?;
+        let z2 = b.get_element(2, 0)? - b.get_element(0, 2)?;
+        let z3 = b.get_element(0, 1)? - b.get_element(1, 0)?;
+
+        let mut z: Vector<f32> = Vector::new();
+        z.init(3)?;
+
+        z.set_element(0, z1)?;
+        z.set_element(1, z2)?;
+        z.set_element(2, z3)?;
+
+        let s = b.add_new(&b.transpose_new()?)?;
+
+        let mut k = Matrix::new();
+        k.init(4, 4)?;
+        k.fill(0.0)?;
+
+        k.set_element(0, 0, sigma)?;
+
+
+
 
         Ok(())  // Return no error.
     }
