@@ -10,7 +10,7 @@ utils = {path = "../utils" }
 linalg = {path = "../linalg", default-features = false}
 quaternion = {path = "../quaternion", default-features = false}
 libm = "0.2.8"
-rand = "0.8.5"
+rand = { version = "0.8.5", features = ["small_rng"], default-features = false }
 
 [features]
 default = ["no_std"]

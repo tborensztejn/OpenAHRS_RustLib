@@ -75,6 +75,10 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
     extern crate rand;
     extern crate libm;
 
+    use rand::{Rng, SeedableRng};
+    use rand::rngs::SmallRng;
+    use rand::RngCore;
+
     use rand::prelude::*;
     use linalg::common::PI;
     use libm::{sqrtf, cosf, sinf, acosf, fabsf};
@@ -87,10 +91,12 @@ pub fn generate_random_attitudes(number: u8) -> Result<Matrix, LinalgError> {
     previous_quat.init(4)?;
     previous_quat.fill_identity()?;
 
+    let mut small_rng = SmallRng::seed_from_u64(0u64);
+
     for n in 0..number {
-        let u1: f32 = rand::thread_rng().gen();  // Generates a random number between 0 and 1.
-        let u2: f32 = rand::thread_rng().gen();  // Generates a random number between 0 and 1.
-        let u3: f32 = rand::thread_rng().gen();  // Generates a random number between 0 and 1.
+        let u1: f32 = small_rng.next_u64() / u64::MAX;  // Generates a random number between 0 and 1.
+        let u2: f32 = small_rng.next_u64() / u64::MAX;  // Generates a random number between 0 and 1.
+        let u3: f32 = small_rng.next_u64() / u64::MAX;  // Generates a random number between 0 and 1.
 
         let s1 = sqrtf(1.0_f32 - u1);
         let s2 = sqrtf(u1);
