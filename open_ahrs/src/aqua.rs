@@ -24,7 +24,7 @@ pub enum Mode {
 }
 
 #[derive(Debug)]
-pub struct AQUA {
+pub struct Aqua {
     mode: Mode,             // Mode of the filter.
 
     // Filter sensors (gyrometer (optional), accelerometer and magnetometer (used to perform gyro drift correction)).
@@ -50,8 +50,8 @@ pub struct AQUA {
     initialized: bool,      // Initialization status.
 }
 
-impl AQUA {
-    /// This method is used to create a new AQUA filter.
+impl Aqua {
+    /// This method is used to create a new Aqua filter.
     pub fn new() -> Result<Self, OpenAHRSError> {
         let aqua = Self {
             mode:       Mode::MARG,         // Default mode of the filter.
@@ -83,13 +83,13 @@ impl AQUA {
         Ok(aqua)    // Return the new filter with no error.
     }
 
-    // This function is used to initialize the AQUA filter.
+    // This function is used to initialize the Aqua filter.
     pub fn init(self: &mut Self,
         mode: Mode,                                                         // Define the mode of the filter.
         qw: Option<f32>, qx: Option<f32>, qy: Option<f32>, qz: Option<f32>, // Define the initial attitude (optional).
-        gyrometer_config: Option<GyrometerConfig>,                          // Define the gyrometer configuration (optional).
-        accelerometer_config: AccelerometerConfig,                          // Define the accelerometer configuration.
-        magnetometer_config: MagnetometerConfig,                            // Define the magnetometer configuration.
+        gyrometer_config: Option<&GyrometerConfig>,                         // Define the gyrometer configuration (optional).
+        accelerometer_config: &AccelerometerConfig,                         // Define the accelerometer configuration.
+        magnetometer_config: &MagnetometerConfig,                           // Define the magnetometer configuration.
         ts: f32,                                                            // Define the sampling period.
         adaptive: bool,                                                     // Define if the interpolation parameter is adaptive or fixed.
         alpha: f32,                                                         // Define the (initial) interpolation parameter for the SLERP and LERP algorithm for the accelerometer.
@@ -104,7 +104,7 @@ impl AQUA {
         // Check if the filter has already been initialized.
         if self.initialized {
             // The filter has already been initialized.
-            return Err(OpenAHRSError::AQUAFilterAlreadyInit); // Return an error.
+            return Err(OpenAHRSError::AquaFilterAlreadyInit); // Return an error.
         }
 
         self.attitude.init(4)?;         // Initialize the attitude quaternion.
@@ -118,15 +118,15 @@ impl AQUA {
                 None => return Err(OpenAHRSError::NoGyroconfig),    // No gyrometer configuration and it's required. Return an error.
             };
 
-            self.gyr.init(config)?;                 // Initialize the gyrometer.
-            self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
-            self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
+            self.gyr.init(&config)?;                 // Initialize the gyrometer.
+            self.acc.init(&accelerometer_config)?;   // Initialize the accelerometer.
+            self.mag.init(&magnetometer_config)?;    // Initialize the magnetometer.
         } else if mode == Mode::AM {
-            self.acc.init(accelerometer_config)?;   // Initialize the accelerometer.
-            self.mag.init(magnetometer_config)?;    // Initialize the magnetometer.
+            self.acc.init(&accelerometer_config)?;   // Initialize the accelerometer.
+            self.mag.init(&magnetometer_config)?;    // Initialize the magnetometer.
         } else {
             // Invalid mode.
-            return Err(OpenAHRSError::InvalidAQUAMode); // Return an error.
+            return Err(OpenAHRSError::InvalidAquaMode); // Return an error.
         }
 
         // Check if all quaternion coordinates are present or absent.
@@ -166,12 +166,48 @@ impl AQUA {
         Ok(())  // Return no error.
     }
 
+    // This function sets the accelerometer cnnfiguration
+    pub fn set_accelerometer_config(&mut self, config: &AccelerometerConfig) -> Result<(), OpenAHRSError> {
+        self.acc.set_config(&config)?;   // Configure the accelerometer.
+        Ok(())
+    }
+
+    // This function sets the gyrometer cnnfiguration
+    pub fn set_gyrometer_config(&mut self, config: &GyrometerConfig) -> Result<(), OpenAHRSError> {
+        self.gyr.set_config(&config)?;   // Configure the gyrometer.
+        Ok(())
+    }
+
+    // This function sets the magnetometer cnnfiguration
+    pub fn set_magnetometer_config(&mut self, config: &MagnetometerConfig) -> Result<(), OpenAHRSError> {
+        self.mag.set_config(&config)?;   // Configure the magnetometer.
+        Ok(())
+    }
+
+    // This function gets the accelerometer cnnfiguration
+    pub fn get_accelerometer_config(&mut self) -> Result<AccelerometerConfig, OpenAHRSError> {
+        let config = self.acc.get_config()?;   // Get the accelerometer configuration.
+        Ok(config)
+    }
+
+    // This function gets the gyrometer cnnfiguration
+    pub fn get_gyrometer_config(&mut self) -> Result<GyrometerConfig, OpenAHRSError> {
+        let config = self.gyr.get_config()?;   // Get the gyrometer configuration.
+        Ok(config)
+    }
+
+    // This function gets the magnetometer cnnfiguration
+    pub fn get_magnetometer_config(&mut self) -> Result<MagnetometerConfig, OpenAHRSError> {
+        let config = self.mag.get_config()?;   // Get the magnetometer configuration.
+        Ok(config)
+    }
+
     // This function is used to perform adaptive quaternion interpolation based on LERP and SLERP.
     fn interpolate(quat: &Vector<f32>, alpha: f32, treshold: f32) -> Result<Vector<f32>, OpenAHRSError> {
         // Check that the interpolation parameter is valid (it must be between 0 and 1 inclusive).
         if !in_range(treshold, 0.0_f32, 1.0_f32) {
             // The interpolation parameter is not valid.
-            return Err(OpenAHRSError::InvalidAQUAInterpolationTreshold);    // Return an error.
+            return Err(OpenAHRSError::InvalidAquaInterpolationTreshold);    // Return an error.
         }
 
         let mut idendity_quat: Vector<f32> = Vector::new();     // Create the identity quaternion.
@@ -219,16 +255,16 @@ impl AQUA {
         Ok(new_gain)    // Return the new gain with no error.
     }
 
-    // This function is used to update the AQUA filter.
+    // This function is used to update the Aqua filter.
     pub fn update(self: &mut Self,
         gx: Option<f32>, gy: Option<f32>, gz: Option<f32>,  // Gyrometer raw measurements.
         ax: f32, ay: f32, az: f32,                          // Accelerometer raw measurements.
         mx: f32, my: f32, mz: f32                           // Magnetometer raw measurements.
     ) -> Result<(), OpenAHRSError> {
-        // Check that the AQUA filter is initialized.
+        // Check that the Aqua filter is initialized.
         if !self.initialized {
-            // The AQUA filter is not initialized.
-            return Err(OpenAHRSError::AQUAFilterNotInit);   // Return an error.
+            // The Aqua filter is not initialized.
+            return Err(OpenAHRSError::AquaFilterNotInit);   // Return an error.
         }
 
         // Check the type of mode.
@@ -472,7 +508,7 @@ impl AQUA {
         // Check if the filter has already been initialized.
         if !self.initialized {
             // The filter has already been initialized.
-            return Err(OpenAHRSError::AQUAFilterNotInit); // Return an error.
+            return Err(OpenAHRSError::AquaFilterNotInit); // Return an error.
         }
 
         Ok(self.attitude.duplicate()?)  // Return estimated attitude with no error.

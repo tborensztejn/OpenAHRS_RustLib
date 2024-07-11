@@ -3,9 +3,8 @@ extern crate linalg;
 extern crate utils;
 extern crate libm;
 
-use crate::gyrometer::{GyrometerConfig, Gyrometer};
-use crate::accelerometer::{AccelerometerConfig, Accelerometer};
-use crate::magnetometer::{MagnetometerConfig, Magnetometer};
+use crate::accelerometer::Accelerometer;
+use crate::magnetometer::Magnetometer;
 use crate::common::OpenAHRSError;
 
 use quaternion::quaternion::Quaternion;
@@ -23,7 +22,7 @@ pub struct Davenport {
 
     attitude: Vector<f32>,  // Estimated attitude by the filter.
 
-    ts: f32,                // Sampling period.
+    //ts: f32,                // Sampling period.
     w1: f32,                // Accelerometer observations weight.
     w2: f32,                // Magnetometer observations weight.
     g: f32,                 // Earth gravitational acceleration magnitude.
@@ -43,7 +42,7 @@ impl Davenport {
             attitude: Vector::new(),    // Estimated attitude by the filter as a quaternion.
 
             // Filter settings.
-            ts:         0.01,           // Default sampling period.
+            // ts:         0.01,           // Default sampling period.
             w1:         1.0,            // Default accelerometer observations weight.
             w2:         1.0,            // Default magnetometer observations weight.
             g:          9.81,           // Default Earth gravitational acceleration magnitude.
@@ -57,9 +56,9 @@ impl Davenport {
 
     /// This method is used to initialize the Davenport's filter based on Q method.
     pub fn init(self: &mut Self,
-        accelerometer_config: AccelerometerConfig,  // Define the accelerometer configuration.
-        magnetometer_config: MagnetometerConfig,    // Define the magnetometer configuration.
-        ts: f32,                                    // Define the sampling period.
+        // accelerometer_config: AccelerometerConfig,  // Define the accelerometer configuration.
+        // magnetometer_config: MagnetometerConfig,    // Define the magnetometer configuration.
+        // ts: f32,                                    // Define the sampling period.
         w1: f32,                                    // Define accelerometer observations weight.
         w2: f32,                                    // Define magnetometer observations weight.
         g: Option<f32>,                             // Define Earth gravitational acceleration magnitude (optional).
@@ -106,9 +105,9 @@ impl Davenport {
         self.mag.update(mx, my, mz)?;   // Update the magnetometer with raw measurements to correct them.
 
         // Retrieve corrected accelerometer measurements.
-        let mut ax = self.acc.get_x_acceleration()?;
-        let mut ay = self.acc.get_y_acceleration()?;
-        let mut az = self.acc.get_z_acceleration()?;
+        let ax = self.acc.get_x_acceleration()?;
+        let ay = self.acc.get_y_acceleration()?;
+        let az = self.acc.get_z_acceleration()?;
 
         let mut a_local: Vector<f32> = Vector::new();   // Create the acceleration vector expressed in the local reference frame.
         a_local.init(3)?;                               // Initialize it.
@@ -170,7 +169,7 @@ impl Davenport {
         z.set_element(1, z2)?;
         z.set_element(2, z3)?;
 
-        let s = b.add_new(&b.transpose_new()?)?;
+        // let s = b.add_new(&b.transpose_new()?)?;
 
         let mut k = Matrix::new();
         k.init(4, 4)?;

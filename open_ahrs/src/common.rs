@@ -35,13 +35,13 @@ pub enum OpenAHRSError {
     ARFilterNotInit,
     ARMethodError,
 
-    // AQUA filter errors.
-    AQUAFilterAlreadyInit,              /// This error occurs when an attempt is made to initialize an AQUA filter that has already been initialised.
-    AQUAFilterNotInit,                  /// This error occurs when an attempt is made to use an uninitialised AQUA filter.
-    NoGyroconfig,                       /// This error occurs when an attempt is made to use an AQUA filter in MARG mode without giving the gyrometer configuration.
-    InvalidAQUAMode,                    /// This errors occurs when an attempt is made to use an AQUA filter with invalide mode.
+    // Aqua filter errors.
+    AquaFilterAlreadyInit,              /// This error occurs when an attempt is made to initialize an Aqua filter that has already been initialised.
+    AquaFilterNotInit,                  /// This error occurs when an attempt is made to use an uninitialised Aqua filter.
+    NoGyroconfig,                       /// This error occurs when an attempt is made to use an Aqua filter in MARG mode without giving the gyrometer configuration.
+    InvalidAquaMode,                    /// This errors occurs when an attempt is made to use an Aqua filter with invalide mode.
     InvalidInitQuaternion,              /// This errors occurs when ...
-    InvalidAQUAInterpolationTreshold,   /// This errors occurs when ...
+    InvalidAquaInterpolationTreshold,   /// This errors occurs when ...
     InvalidAdaptiveGainTresholds,       /// This errors occurs when ...
 
     NoGyroRawMeasurements,

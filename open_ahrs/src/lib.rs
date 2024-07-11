@@ -20,7 +20,7 @@ mod open_ahrs_tests {
     use crate::magnetometer::MagnetometerConfig;
 
     use crate::ar::AR;
-    use crate::aqua::{AQUA, Mode};
+    use crate::aqua::{Aqua, Mode};
     use crate::davenport::Davenport;
 
     use crate::common::{NumericalIntegrationMethod as NIM, generate_random_attitudes};
@@ -381,7 +381,7 @@ mod open_ahrs_tests {
 
 
 
-        let mut aqua_filter = AQUA::new().unwrap();
+        let mut aqua_filter = Aqua::new().unwrap();
 
         //let default_gyrometer_config = GyrometerConfig::default();
         let default_accelerometer_config = AccelerometerConfig::default();
@@ -433,7 +433,7 @@ mod open_ahrs_tests {
             //aqua_filter.print_attitude().unwrap();
         }
 
-        print!("Estimated attitudes (AQUA filter):\n\n");
+        print!("Estimated attitudes (Aqua filter):\n\n");
 
         for n in 0..niter {
             //print!("q[{:}Δt]\t", n);

@@ -5,6 +5,7 @@ use linalg::vector::Vector;
 use crate::common::OpenAHRSError;
 
 // Magnetometer configuration.
+#[derive(Copy, Clone)]
 pub struct MagnetometerConfig {
     // Scaling correction factors.
     pub x_axis_scale_correction: f32,
@@ -112,31 +113,77 @@ impl Magnetometer {
     }
 
     // This function is used to initialize a magnetometer.
-    pub fn init(
-        self: &mut Self, config: MagnetometerConfig) -> Result<(), OpenAHRSError> {
+    fn private_set_config(self: &mut Self, config: &MagnetometerConfig) -> Result<(), OpenAHRSError> {
+        self.scale_and_soft_iron_correction.set_element(0, 0, config.x_axis_scale_correction)?;
+        self.scale_and_soft_iron_correction.set_element(1, 1, config.y_axis_scale_correction)?;
+        self.scale_and_soft_iron_correction.set_element(2, 2, config.z_axis_scale_correction)?;
+
+        self.scale_and_soft_iron_correction.set_element(0, 1, config.xy_soft_iron_correction)?;
+        self.scale_and_soft_iron_correction.set_element(1, 0, config.xz_soft_iron_correction)?;
+        self.scale_and_soft_iron_correction.set_element(0, 2, config.yx_soft_iron_correction)?;
+        self.scale_and_soft_iron_correction.set_element(2, 0, config.yz_soft_iron_correction)?;
+        self.scale_and_soft_iron_correction.set_element(1, 2, config.zx_soft_iron_correction)?;
+        self.scale_and_soft_iron_correction.set_element(2, 1, config.zy_soft_iron_correction)?;
+
+        self.hard_iron_biases.set_element(0, config.x_axis_hard_iron_bias)?;
+        self.hard_iron_biases.set_element(1, config.y_axis_hard_iron_bias)?;
+        self.hard_iron_biases.set_element(2, config.z_axis_hard_iron_bias)?;
+
+        Ok(())
+    }
+
+    // This function is used to initialize a magnetometer.
+    pub fn init(self: &mut Self, config: &MagnetometerConfig) -> Result<(), OpenAHRSError> {
             // Check if the magnetometer has already been initialized.
             if self.initialized {
                 // The magnetometer has already been configured.
                 Err(OpenAHRSError::MagAlreadyInit)
             } else {    // Apply the configuration to the magnetometer.
-                self.scale_and_soft_iron_correction.set_element(0, 0, config.x_axis_scale_correction)?;
-                self.scale_and_soft_iron_correction.set_element(1, 1, config.y_axis_scale_correction)?;
-                self.scale_and_soft_iron_correction.set_element(2, 2, config.z_axis_scale_correction)?;
-
-                self.scale_and_soft_iron_correction.set_element(0, 1, config.xy_soft_iron_correction)?;
-                self.scale_and_soft_iron_correction.set_element(1, 0, config.xz_soft_iron_correction)?;
-                self.scale_and_soft_iron_correction.set_element(0, 2, config.yx_soft_iron_correction)?;
-                self.scale_and_soft_iron_correction.set_element(2, 0, config.yz_soft_iron_correction)?;
-                self.scale_and_soft_iron_correction.set_element(1, 2, config.zx_soft_iron_correction)?;
-                self.scale_and_soft_iron_correction.set_element(2, 1, config.zy_soft_iron_correction)?;
-
-                self.hard_iron_biases.set_element(0, config.x_axis_hard_iron_bias)?;
-                self.hard_iron_biases.set_element(1, config.y_axis_hard_iron_bias)?;
-                self.hard_iron_biases.set_element(2, config.z_axis_hard_iron_bias)?;
-
+                self.private_set_config(&config)?;
                 self.initialized = true;    // Set the initialization flag to true.
-
                 Ok(())  // Return no error.
+            }
+    }
+
+    // This function sets the configuration
+    pub fn set_config(self: &mut Self, config: &MagnetometerConfig) -> Result<(), OpenAHRSError> {
+            // Check if the magnetometer has already been initialized.
+            if self.initialized {
+                // Apply the configuration to the magnetometer.
+                self.private_set_config(&config)?;
+                Ok(())  // Return no error.
+            } else {
+                // The magnetometer has not been configured.
+                Err(OpenAHRSError::MagNotInit)
+            }
+    }
+
+    // This function sets the configuration
+    pub fn get_config(self: &mut Self) -> Result<MagnetometerConfig, OpenAHRSError> {
+            // Check if the magnetometer has already been initialized.
+            if self.initialized {
+                // Apply the configuration to the magnetometer.
+                let mut config = MagnetometerConfig::default();
+
+                config.x_axis_scale_correction = self.scale_and_soft_iron_correction.get_element(0, 0)?;
+                config.y_axis_scale_correction = self.scale_and_soft_iron_correction.get_element(1, 1)?;
+                config.z_axis_scale_correction = self.scale_and_soft_iron_correction.get_element(2, 2)?;
+
+                config.xy_soft_iron_correction = self.scale_and_soft_iron_correction.get_element(0, 1)?;
+                config.xz_soft_iron_correction = self.scale_and_soft_iron_correction.get_element(1, 0)?;
+                config.yx_soft_iron_correction = self.scale_and_soft_iron_correction.get_element(0, 2)?;
+                config.yz_soft_iron_correction = self.scale_and_soft_iron_correction.get_element(2, 0)?;
+                config.zx_soft_iron_correction = self.scale_and_soft_iron_correction.get_element(1, 2)?;
+                config.zy_soft_iron_correction = self.scale_and_soft_iron_correction.get_element(2, 1)?;
+
+                config.x_axis_hard_iron_bias = self.hard_iron_biases.get_element(0)?;
+                config.y_axis_hard_iron_bias = self.hard_iron_biases.get_element(1)?;
+                config.z_axis_hard_iron_bias = self.hard_iron_biases.get_element(2)?;
+
+                Ok(config)  // Return no error.
+            } else {
+                // The magnetometer has not been configured.
+                Err(OpenAHRSError::MagNotInit)
             }
     }
 

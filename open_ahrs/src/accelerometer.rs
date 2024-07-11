@@ -4,8 +4,8 @@ use linalg::matrix::Matrix;
 use linalg::vector::Vector;
 use crate::common::OpenAHRSError;
 
-//#[derive(Default)]
 // Accelerometer configuration.
+#[derive(Copy, Clone)]
 pub struct AccelerometerConfig {
     // Scaling correction factors.
     pub x_axis_scale_correction: f32,
@@ -105,31 +105,78 @@ impl Accelerometer {
         Ok(acc) // Return the new structure with no error.
     }
 
+    // This function sets the configuration privately
+    fn private_set_config(self: &mut Self, config: &AccelerometerConfig) -> Result<(), OpenAHRSError> {
+        self.scale_and_axes_misalignment_correction.set_element(0, 0, config.x_axis_scale_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(1, 1, config.y_axis_scale_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(2, 2, config.z_axis_scale_correction)?;
+
+        self.scale_and_axes_misalignment_correction.set_element(1, 0, config.xy_axes_misalignment_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(2, 0, config.xz_axes_misalignment_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(0, 1, config.yx_axes_misalignment_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(2, 1, config.yz_axes_misalignment_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(0, 2, config.zx_axes_misalignment_correction)?;
+        self.scale_and_axes_misalignment_correction.set_element(1, 2, config.zy_axes_misalignment_correction)?;
+
+        self.static_biases.set_element(0, config.x_axis_static_bias)?;
+        self.static_biases.set_element(1, config.y_axis_static_bias)?;
+        self.static_biases.set_element(2, config.z_axis_static_bias)?;
+
+        Ok(())
+    }
+
     // This function is used to initialize a accelerometer.
-    pub fn init(self: &mut Self, config: AccelerometerConfig) -> Result<(), OpenAHRSError> {
+    pub fn init(self: &mut Self, config: &AccelerometerConfig) -> Result<(), OpenAHRSError> {
         // Check if the accelerometer has already been initialized.
         if self.initialized {
             // The accelerometer has already been configured.
             Err(OpenAHRSError::AccAlreadyInit)  // Return an error.
         } else {    // Apply the configuration to the accelerometer.
-            self.scale_and_axes_misalignment_correction.set_element(0, 0, config.x_axis_scale_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(1, 1, config.y_axis_scale_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(2, 2, config.z_axis_scale_correction)?;
-
-            self.scale_and_axes_misalignment_correction.set_element(1, 0, config.xy_axes_misalignment_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(2, 0, config.xz_axes_misalignment_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(0, 1, config.yx_axes_misalignment_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(2, 1, config.yz_axes_misalignment_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(0, 2, config.zx_axes_misalignment_correction)?;
-            self.scale_and_axes_misalignment_correction.set_element(1, 2, config.zy_axes_misalignment_correction)?;
-
-            self.static_biases.set_element(0, config.x_axis_static_bias)?;
-            self.static_biases.set_element(1, config.y_axis_static_bias)?;
-            self.static_biases.set_element(2, config.z_axis_static_bias)?;
-
-            self.initialized = true;    // Set the initialization flag to true.
-
+            self.private_set_config(&config)?;
+            self.initialized = true;
             Ok(())  // Return no error.
+        }
+    }
+
+    // This function sets the configuration
+    pub fn set_config(self: &mut Self, config: &AccelerometerConfig) -> Result<(), OpenAHRSError> {
+        // Check if the accelerometer has already been initialized.
+        if self.initialized {
+            // Apply the configuration to the accelerometer.
+            self.private_set_config(&config)?;
+            Ok(())  // Return no error.
+        } else {
+            // The accelerometer has not been configured.
+            Err(OpenAHRSError::AccNotInit)  // Return an error.
+        }
+    }
+
+    // This function gets the configuration
+    pub fn get_config(self: &mut Self) -> Result<AccelerometerConfig, OpenAHRSError> {
+        // Check if the accelerometer has already been initialized.
+        if self.initialized {
+            // Apply the configuration to the accelerometer.
+            let mut config = AccelerometerConfig::default();
+
+            config.x_axis_scale_correction = self.scale_and_axes_misalignment_correction.get_element(0, 0)?;
+            config.y_axis_scale_correction = self.scale_and_axes_misalignment_correction.get_element(1, 1)?;
+            config.z_axis_scale_correction = self.scale_and_axes_misalignment_correction.get_element(2, 2)?;
+
+            config.xy_axes_misalignment_correction = self.scale_and_axes_misalignment_correction.get_element(1, 0)?;
+            config.xz_axes_misalignment_correction = self.scale_and_axes_misalignment_correction.get_element(2, 0)?;
+            config.yx_axes_misalignment_correction = self.scale_and_axes_misalignment_correction.get_element(0, 1)?;
+            config.yz_axes_misalignment_correction = self.scale_and_axes_misalignment_correction.get_element(2, 1)?;
+            config.zx_axes_misalignment_correction = self.scale_and_axes_misalignment_correction.get_element(0, 2)?;
+            config.zy_axes_misalignment_correction = self.scale_and_axes_misalignment_correction.get_element(1, 2)?;
+
+            config.x_axis_static_bias = self.static_biases.get_element(0)?;
+            config.y_axis_static_bias = self.static_biases.get_element(1)?;
+            config.z_axis_static_bias = self.static_biases.get_element(2)?;
+
+            Ok(config)  // Return no error.
+        } else {
+            // The accelerometer has not been configured.
+            Err(OpenAHRSError::AccNotInit)  // Return an error.
         }
     }
 

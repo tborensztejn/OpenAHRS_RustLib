@@ -46,11 +46,11 @@ impl AR {
 
     // This function is used to initialize the AR filter.
     pub fn init(self: &mut Self,
-        qw: f32, qx: f32, qy: f32, qz: f32, // Initial attitude (quaternion coordinates).
-        gyrometer_config: GyrometerConfig,  // Gyrometer configuration.
-        ts: f32,                            // Sampling period.
-        method: NIM,                        // Numerical integration method.
-        //order: Option<u8>                   // Order of the numerical integration method.
+        qw: f32, qx: f32, qy: f32, qz: f32,  // Initial attitude (quaternion coordinates).
+        gyrometer_config: &GyrometerConfig,  // Gyrometer configuration.
+        ts: f32,                             // Sampling period.
+        method: NIM,                         // Numerical integration method.
+        //order: Option<u8>                  // Order of the numerical integration method.
         order: u8
         ) -> Result<(), OpenAHRSError> {
             // Check if the filter has already been initialized.
@@ -59,7 +59,7 @@ impl AR {
                 return Err(OpenAHRSError::ARFilterAlreadyInit); // Return an error.
             }
 
-            self.gyr.init(gyrometer_config)?;       // Initialize the gyrometer.
+            self.gyr.init(&gyrometer_config)?;      // Initialize the gyrometer.
             self.attitude.init(4)?;                 // Initialize the vector that will be used as quaternion.
             self.attitude.fillq(qw, qx, qy, qz)?;   // Set initial attitude.
             self.ts = ts;                           // Set sampling rate.
