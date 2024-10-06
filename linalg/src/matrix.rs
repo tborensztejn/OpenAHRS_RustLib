@@ -1,12 +1,14 @@
 extern crate utils;
 extern crate libm;
 
-use utils::utils::{is_valid_value, allclose, min};
+use utils::utils::{is_valid_value, allclose, min, factorial};
 use libm::{powf, sqrtf, fabsf, acosf, sinf};
 
 use crate::common::{M_MAX, N_MAX, EPSILON, LinalgError, is_valid_rows_number, is_valid_cols_number, is_valid_row, is_valid_col};
 use crate::linalg::{lup, solve};
 use crate::vector::Vector;
+
+pub(crate) const FACTORIAL_MAX_N: u64 = factorial(N_MAX as u8);
 
 #[derive(Debug)]
 /// Matrix structure.
@@ -68,6 +70,26 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
+    /*
+    /// This method is used to initialize (or reinitialize) a matrix of size m x n.
+    pub fn init(self: &mut Self, rows: u8, cols: u8, force: bool) -> Result<(), LinalgError> {
+        // Check that the matrix is initialized.
+        if self.initialized && !force {
+            // The matrix has already been initialized.
+            return Err(LinalgError::AlreadyInit);
+        }
+
+        is_valid_rows_number(rows)?;    // Check that the number of rows does not exceed M_MAX.
+        is_valid_cols_number(cols)?;    // Check that the number of columns does not exceed N_MAX.
+
+        self.rows = rows;               // Set the number of rows in the matrix.
+        self.cols = cols;               // Set the number of columns in the matrix.
+        self.initialized = true;        // Set the initialization flag to true.
+
+        Ok(())  // Return no error.
+    }
+    */
+
     /// This method is used to get the number of rows (m) of a matrix of size m x n.
     pub fn get_rows(self: &Self) -> Result<u8, LinalgError> {
         // Check that the matrix is initialized.
@@ -127,6 +149,7 @@ impl Matrix {
 
         is_valid_cols_number(cols)?;    // Check that the number of columns does not exceed N_MAX.
 
+        /*
         let new_elements = {
             let mut new_elements = [0.0; M_MAX * N_MAX];
 
@@ -139,6 +162,18 @@ impl Matrix {
 
             new_elements
         };
+        */
+
+        let mut new_elements = [0.0; M_MAX * N_MAX];
+
+        for row in 0..self.rows {
+            let old_offset = row as usize * self.cols as usize;
+            let new_offset = row as usize * cols as usize;
+
+            for col in 0..self.cols as usize {
+                new_elements[new_offset + col] = self.elements[old_offset + col];
+            }
+        }
 
         self.cols = cols;               // Set the number of columns.
         self.elements = new_elements;   // Set the new elements.
@@ -164,7 +199,8 @@ impl Matrix {
         is_valid_row(row, self.rows)?;  // Check if the row exists.
         is_valid_col(col, self.cols)?;  // Check if the column exists.
 
-        let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
+        //let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
+        let index = (row as usize * self.cols as usize) + col as usize;
 
         self.elements[index] = value;   // Set the value to the specified matrix element.
 
@@ -182,7 +218,8 @@ impl Matrix {
         is_valid_row(row, self.rows)?;  // Check if the row exists.
         is_valid_col(col, self.cols)?;  // Check if the column exists.
 
-        let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
+        //let index: usize = (row * self.cols + col) as usize;    // Calculate the index.
+        let index = (row as usize * self.cols as usize) + col as usize;
 
         let value = self.elements[index];                       // Retrieve the value of the specified element from the matrix.
 
@@ -293,8 +330,11 @@ impl Matrix {
 
     /// This method is used to add a row to a matrix of size m x n from a vector of size n x 1. The result is a matrix of size m+1 x n.
     pub fn add_row(self: &mut Self, vect: &Vector<f32>, row: u8) -> Result<(), LinalgError> {
-        let rows = self.rows + 1;   // Calculate the new matrix rows number.
-        self.set_rows(rows)?;       // Update it.
+        let rows = self.rows + 1;   // Calculate the new rows number.
+
+        is_valid_rows_number(rows)?;    // Check that the new number of rows does not exceed M_MAX.
+
+        self.set_rows(rows)?;   // Update it.
 
         // Shift current matrix elements.
         for m in (row + 1..rows).rev() {
@@ -310,8 +350,11 @@ impl Matrix {
 
     /// This method is used to add a column to a matrix of size m x n from a vector of size m x 1. The result is a matrix of size m x n+1.
     pub fn add_col(self: &mut Self, vect: &Vector<f32>, col: u8) -> Result<(), LinalgError> {
-        let cols = self.cols + 1;   // Calculate the new matrix columns number.
-        self.set_cols(cols)?;       // Update it.
+        let cols = self.cols + 1;   // Calculate the new columns number.
+
+        is_valid_cols_number(cols)?;    // Check that the new number of columns does not exceed N_MAX.
+
+        self.set_cols(cols)?;   // Update it.
 
         // Shift current matrix elements.
         for n in (col + 1..cols).rev() {
@@ -325,12 +368,85 @@ impl Matrix {
         Ok(())  // Return no error.
     }
 
-    /*
-    pub fn del_row(self: &mut Self, row: u8) -> Result<Vector<f32, LinalgError> {
-        // Add some code here.
+    /// This method is used to delete a row of a matrix of size m x n and save the deleted row into a vector of size n x 1. The result is a matrix of size m-1 x n.
+    pub fn del_row(self: &mut Self, row: u8) -> Result<Vector<f32>, LinalgError> {
+        let rows = self.rows - 1;   // Calculate the new rows number.
+
+        is_valid_row(row, self.rows)?;  // Check if the row you want to delete exists.
+        is_valid_rows_number(rows)?;    // Check that the new number of rows is not zero.
+
+        /*
+        let mut new_elements = [0.0; M_MAX * N_MAX];
+
+        let mut new_row_index = 0;
+
+        // Skip the row you want to delete.
+        for old_row in 0..self.rows {
+            if old_row == row {
+                continue;
+            }
+
+            let old_offset = old_row * self.cols;
+            let new_offset = new_row_index * self.cols;
+
+            // Copy each row element into the new matrix.
+            for col in 0..self.cols {
+                new_elements[(new_offset + col) as usize] = self.elements[(old_offset + col) as usize];
+            }
+
+            new_row_index += 1;
+        }
+
+        self.rows = rows;               // Update number of rows.
+        self.elements = new_elements;   // Set new elements.
+
+        let row_offset = row * self.cols;
+
+        for col in 0..self.cols {
+            deleted_row.set_element(col, self.elements[(row_offset + col) as usize])?;
+        }
+        */
+
+        let mut deleted_row : Vector<f32> = Vector::new();
+        deleted_row.init(self.cols)?;
+
+        //let row_offset = row * self.cols;
+
+        // Save the deleted row.
+        for col in 0..self.cols {
+            //deleted_row.set_element(col, self.elements[(row_offset + col) as usize])?;
+            let element = self.get_element(row, col)?;  // Get element from the deleted row.
+            deleted_row.set_element(col, element)?;     // Save it in the deleted_row vector.
+        }
+
+        // Shift elements to overwrite the deleted row.
+        /*
+        for old_row in (row + 1)..self.rows {
+            let old_offset = old_row * self.cols;
+            let new_offset = (old_row - 1) * self.cols;
+
+            // Move elements directly in the same array.
+            for col in 0..self.cols {
+                self.elements[(new_offset + col) as usize] = self.elements[(old_offset + col) as usize];
+            }
+        }
+        */
+
+        for old_row in (row + 1)..self.rows {
+            for col in 0..self.cols {
+                let element = self.get_element(old_row, col)?;  // Get element from the next row.
+                self.set_element(old_row - 1, col, element)?;   // Set it in the current position.
+            }
+        }
+
+        // Update number of rows.
+        self.rows = rows;
+
+        Ok(deleted_row)
     }
 
-    pub fn del_column(self: &mut Self, col: u8) -> Result<Vector<f32, LinalgError> {
+    /*
+    pub fn del_col(self: &mut Self, col: u8) -> Result<Vector<f32, LinalgError> {
         // Add some code here.
     }
 
@@ -871,6 +987,163 @@ impl Matrix {
         Ok(trace)   // Return the computed trace with no error.
     }
 
+    /// This method is used to perform LR factorization (decomposition) of a matrix of size m x m (square and non-singular).
+    pub fn lr(self: &Self) -> Result<(Self, Self) , LinalgError> {
+        // Check that the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square.
+            return Err(LinalgError::NotSquare); // Return an error.
+        }
+
+        let n = self.rows;
+
+        // Create L and R matrices.
+        let mut l = Matrix::new();
+        let mut r = Matrix::new();
+
+        // Initialize L and R matrices.
+        l.init(n, n)?;
+        r.init(n, n)?;
+
+        l.fill_identity()?; // Set the diagonal elements of L to 1 (identity).
+
+        // Set the first row og R.
+        for col in 0..n {
+            let element = self.get_element(0, col)?;
+
+            r.set_element(0, col, element)?;
+        }
+
+        // Set the first column of L.
+        for row in 0..n {
+            let r_element = r.get_element(0, 0)?;
+
+            if !allclose(r_element, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+                //return Err(LinalgError::Singular);  // Return an error (avoid a division by 0).
+            }
+
+            let element = self.get_element(row, 0)? / r_element;
+
+            l.set_element(row, 0, element)?;
+        }
+
+        // Perform LR decomposition (factorization).
+        let mut sum: f32 = 0.0;
+
+        for col in 0..n {
+            for j in col..n {
+                for k in 0..col {
+                    sum += l.get_element(col, k)? * r.get_element(k, j)?;
+                }
+
+                let element = self.get_element(col, j)? - sum;
+
+                r.set_element(col, j, element)?;
+            }
+
+            let r_element = r.get_element(col, col)?;
+
+            if !allclose(r_element, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+                //return Err(LinalgError::Singular);  // Return an error (avoid a division by 0).
+            }
+
+            for row in (col+1)..n {
+                sum = 0.0;
+
+                for k in 0..col {
+                    sum += l.get_element(row, k)? * r.get_element(k, col)?;
+                }
+
+                let element = (self.get_element(row, col)? - sum) / r_element;
+
+                l.set_element(row, col, element)?;
+            }
+        }
+
+        /*
+        // Check that LR factorization is correct (Warning ! Time consumming).
+        // It would be interesting to find a more efficient way of checking the result.
+        let a_check = l.mul_new(&r)?;
+
+        if !a_check.is_equal_to(&self, EPSILON)? {
+            // LU factorization failed.
+            return Err(LinalgError::Singular);  // Return an error.
+        }
+        */
+
+        Ok((l, r))  // Return the result of LR factorization without no error.
+    }
+
+    /// This method is used to perform LU factorization of a matrix of size m x m (square and non-singular) using Crout's method.
+    pub fn lu_crout(self: &Self) -> Result<(Self, Self) , LinalgError> {
+        // Check that the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square.
+            return Err(LinalgError::NotSquare); // Return an error.
+        }
+
+        let n = self.rows;
+
+        // Create L and R matrices.
+        let mut l = Matrix::new();
+        let mut u = Matrix::new();
+
+        // Initialize L and R matrices.
+        l.init(n, n)?;
+        u.init(n, n)?;
+
+        l.fill_identity()?; // Set the diagonal elements of L to 1 (identity).
+
+        // Perform LU factorization.
+        let mut sum: f32 = 0.0;
+
+        for row in 0..n {
+            // Step 1 - Find U.
+            for col in row..n {
+                for k in 0..col {
+                    sum += l.get_element(row, k)? * u.get_element(k, col)?;
+                }
+
+                let element = self.get_element(row, col)? - sum;
+
+                u.set_element(row, col, element)?;
+            }
+
+            sum = 0.0;
+
+            // Step 2 - Find L using U.
+            for col in (row+1)..n {
+                for k in 0..col {
+                    sum += l.get_element(col, k)? * u.get_element(k, row)?;
+                }
+
+                let u_element = u.get_element(row, row)?;
+
+                // The matrix A may be singular (non-invertible) or poor conditionned (due to numerical errors).
+                if !allclose(u_element, 0.0, EPSILON).map_err(LinalgError::UtilsError)? {
+                    return Err(LinalgError::Singular);  // Return an error (avoid a division by 0).
+                }
+
+                let element = (self.get_element(col, row)? - sum) / u_element;
+
+                l.set_element(col, row, element)?;
+            }
+        }
+
+        /*
+        // Check that LU factorization is correct (Warning ! Time consumming).
+        // It may be more efficient and less computationally expensive to check that L is indeed lower triangular and U is indeed upper triangular.
+        let a_check = l.mul_new(&u)?;
+
+        if !a_check.is_equal_to(&self, EPSILON)? {
+            // LU factorization failed.
+            return Err(LinalgError::Singular);  // Return an error.
+        }
+        */
+
+        Ok((l, u))  // Return the result of LU factorization without no error.
+    }
+
     /*
         Notes:
 
@@ -1019,6 +1292,149 @@ impl Matrix {
 
         Ok(determinant) // Return the determinant with no error.
     }
+
+
+
+
+
+
+
+
+
+    /// This function is used to generate all permutations of indices 0, 1, ..., n-1.
+    // Warning ! Must be made reliable by checking for errors.
+    fn generate_permutations(row: u8) -> Result<[[usize; N_MAX]; FACTORIAL_MAX_N as usize], LinalgError> {
+        is_valid_rows_number(row)?; // Check that the number of rows does not exceed N_MAX.
+
+        let mut permutations: [[usize; N_MAX]; FACTORIAL_MAX_N as usize] = [[0; N_MAX]; FACTORIAL_MAX_N as usize];
+        let mut current_permutation: [usize; N_MAX] = [0; N_MAX];
+        let mut used: [bool; N_MAX] = [false; N_MAX];
+        let mut permutation_index: usize = 0;
+
+        // Warning ! Must be made reliable by checking for errors.
+        fn permute(
+            n: usize,
+            depth: usize,
+            permutations: &mut [[usize; N_MAX]; FACTORIAL_MAX_N as usize],
+            current_permutation: &mut [usize; N_MAX],
+            used: &mut [bool; N_MAX],
+            permutation_index: &mut usize,
+        ) {
+            if depth == n {
+                for i in 0..n {
+                    permutations[*permutation_index][i] = current_permutation[i];
+                }
+
+                *permutation_index += 1;
+            } else {
+                for i in 0..n {
+                    if !used[i] {
+                        used[i] = true;
+                        current_permutation[depth] = i;
+                        permute(n, depth + 1, permutations, current_permutation, used, permutation_index);
+                        used[i] = false;
+                    }
+                }
+            }
+        }
+
+        permute(row as usize, 0, &mut permutations, &mut current_permutation, &mut used, &mut permutation_index);
+
+        Ok(permutations)
+    }
+
+    /// This function is used to count the number of inversions in a permutation.
+    // Warning ! Must be made reliable by checking for errors.
+    fn count_inversions(permutation: &[usize; N_MAX], n: usize) -> usize {
+        let mut inversions = 0;
+
+        for i in 0..n {
+            for j in (i + 1)..n {
+                if permutation[i] > permutation[j] {
+                    inversions += 1;
+                }
+            }
+        }
+
+        inversions
+    }
+
+    /// This method is used to calculate the determinant of a square matrix (naive method).
+    // Warning ! Must be made reliable by checking for errors.
+    pub fn det_naive(self: &Self) -> Result<f32, LinalgError> {
+        let mut determinant: f32 = 0.0;
+
+        // Check that the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square.
+            return Err(LinalgError::NotSquare); // Return an error.
+        }
+
+        // Generate all permutations of line indices.
+        let permutations = Self::generate_permutations(self.rows)?;
+
+        // Iterate each permutation to calculate the determinant.
+        for permutation in permutations.iter().take(factorial(self.rows) as usize) {
+            // Calculate the product of elements according to the permutation.
+            let mut product: f32 = 1.0;
+
+            for row in 0..self.rows {
+                product *= self.get_element(row, permutation[row as usize] as u8)?;   // Accumulate the product of the current permutation.
+            }
+
+            // Determine the sign of the permutation.
+            let inversions = Self::count_inversions(permutation, self.rows as usize);
+            let sign = if inversions % 2 == 0 { 1.0 } else { -1.0 };    // Determine sign based on inversions.
+
+            determinant += sign * product;  // Add or subtract the product according to the sign.
+        }
+
+        Ok(determinant) // Return the determinant with no error.
+    }
+
+    /*
+    /// This method is used to extract the minor matrix obtained by deleting the i row and the j column.
+    pub fn minor(self: &Self, row: u8, col: u8) -> Result<(), LinalgError> {
+        let _deleted_row = self.del_row(row)?;  // Delete the row.
+        let _deleted_col = self.del_col(col)?;  // Delete the column.
+
+        Ok()    // Return no error.
+    }
+    */
+
+    /*
+    /// This method is used to calculate the determinant of a square matrix using cofactors and minors (naive method too).
+    // Warning ! Must be made reliable by checking for errors.
+    pub fn det_cofactors_and_minors(self: &Self) -> Result<f32, LinalgError> {
+        let mut determinant: f32 = 0.0;
+
+        // Check that the matrix is square.
+        if !self.is_square()? {
+            // The matrix is not square.
+            return Err(LinalgError::NotSquare); // Return an error.
+        }
+
+        // Deal with the basic case where m=1.
+        if self.rows == 1 {
+            determinant = self.get_element(0, 0)?;
+        }
+
+        // Deal with the basic case where m=2.
+        if self.rows == 2 {
+            determinant = self.get_element(0, 0)? * self.get_element(1, 1)? - self.get_element(0, 1)? * self.get_element(1, 0)?;
+        }
+
+        for col in 0..self.cols {
+            // Calculate the cofactor for each element in the first line.
+            let mut minor_mat = self.duplicate()?;
+            minor_mat.minor()?;
+            //cofactor = ((-1) ** col) * det_cofactors_and_minors(minor_matrix)
+            //det += matrix[0, col] * cofactor
+        }
+
+        Ok(determinant) // Return the determinant with no error.
+    }
+    */
 
     /// This method is used to check if a matrix of size m x n is symmetrical or not.
     pub fn is_symmetric(self: &Self) -> Result<bool, LinalgError> {

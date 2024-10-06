@@ -88,7 +88,7 @@ pub fn solve(mat: &Matrix, b: &Vector<f32>, p: &Vector<u8>) -> Result<Vector<f32
     Ok(x)
 }
 
-/// This function is used to calculate the eigen values and eigen vectors of a sqaure matrix.
+/// This function is used to calculate the eigen values and eigen vectors of a square matrix.
 pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Matrix), LinalgError> {
     // Check that the matrix is square.
     if !mat.is_square()? {
@@ -210,7 +210,77 @@ pub fn eigen(mat: &Matrix, niter: u16, shifted: bool) -> Result<(Vector<f32>, Ma
 }
 
 /*
+/// This method is used to calculate the eigein values and eigen vectors of a square matrix using Rutishauser's method.
+pub fn eigen_rutishauser(mat: &Matrix, niter: u16) -> Result<(Vector<f32>, Matrix), LinalgError> {
+    // Check that the matrix is square.
+    if !self.is_square()? {
+        // The matrix is not square and therefore Rutishauser's method can't be used.
+        return Err(LinalgError::NotSquare); // Return an error.
+    }
+
+    let n = self.rows;
+
+    let mut l_prime = Matrix::new();
+    l_prime.init(n, n)?;
+    l_prime.fill_identity()?;
+
+    let mut r_prime = Matrix::new();
+    r_prime.init(n, n)?;
+    r_prime.fill_identity()?;
+
+    let mut ai = self.duplicate()?;
+
+    let mut eigenvalues: Vector<f32> = Vector::new();
+    eigenvalues.init(n)?;
+
+    // Perform LR decomposition with iterations.
+    for iter in 0..niter {
+        let (l, r) = ai.lr()?;
+        let ai_plus = r.mul_new(&l)?;
+        let mut temp = l_prime.mul_new(&l)?;
+        l_prime.copy_from(&temp)?;
+        temp.mul(&r, &r_prime)?;
+        r_prime.copy_from(&temp)?;
+
+        ai.copy_from(&ai_plus)?;
+
+        // Check if it's the last iteration.
+        if iter == (niter-1) {
+            // Estimate eigenvalues of the matrix.
+            eigenvalues.copy_from(r.diag()?)?;
+        }
+    }
+}
+*/
+
+/*
 pub fn linsolve_lup() -> Result<(Vector<f32>, Matrix), LinalgError> {
 
 }
+*/
+
+/*
+/// This function is used to solve a system of linear equations Ax = b using Cramer's method.
+def solve_cramer(A, b):
+    n = A.shape[0]
+
+    det_A = det_naive(A)
+
+    if det_A == 0:
+        raise ValueError("The system has no unique solution, the determinant of the matrix is zero.")
+
+    x = np.zeros(n)
+
+    for i in range(n):
+        A_i = A.copy()
+
+        # Explicitly replace column i with the vector b.
+        for row in range(n):
+            A_i[row, i] = b[row]
+
+        det_A_i = det_naive(A_i)
+
+        x[i] = det_A_i / det_A
+
+    return x
 */

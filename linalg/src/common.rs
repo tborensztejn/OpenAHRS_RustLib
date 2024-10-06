@@ -2,8 +2,8 @@ extern crate utils;
 
 use utils::utils::UtilsError;
 
-pub const M_MAX: usize = 30;            /// Maximum number of rows in a matrix and a vector.
-pub const N_MAX: usize = 30;            /// Maximum number of columns in a matrix.
+pub const M_MAX: usize = 4;             /// Maximum number of rows in a matrix and a vector.
+pub const N_MAX: usize = 4;             /// Maximum number of columns in a matrix.
 pub const EPSILON: f32 = 0.0001;        /// Constant value representing a minimal error in numerical analysis.
 pub const PI: f32 = 3.141592653589793;  /// Approximate value of constant π.
 pub const E: f32 = 2.718281828459045;   /// Approximate value of Euler's number (aka exponential function base or Napier's constant).
@@ -32,6 +32,7 @@ pub enum LinalgError {
     NotInversible,          /// This error occurs when the matrix can't be inverted.
     InvalidAlpha,           /// This error occurs when ...
     InvalidDiagonalLength,  /// This error occurs when the specified diagonal to be extracted from a matrix is invalid.
+    LUFailed,               /// This error occurs when an attempt is made to perform LU factorization of a matrix.
     UtilsError(UtilsError),
 }
 

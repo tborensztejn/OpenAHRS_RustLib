@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "dsp",
     "linalg",
     "open_ahrs",
     "pid",

@@ -1,0 +1,35 @@
+digraph dependencies {
+	n0 [label="cfg-if"];
+	n1 [label="getrandom"];
+	n2 [label="libc"];
+	n3 [label="wasi"];
+	n4 [label="libm"];
+	n5 [label="linalg"];
+	n6 [label="utils"];
+	n7 [label="open_ahrs", shape=box];
+	n8 [label="quaternion"];
+	n9 [label="rand"];
+	n10 [label="ppv-lite86"];
+	n11 [label="rand_chacha"];
+	n12 [label="rand_core"];
+
+	n7 -> n4;
+	n7 -> n5;
+	n7 -> n8;
+	n7 -> n9;
+	n7 -> n6;
+	n8 -> n4;
+	n8 -> n5;
+	n5 -> n4;
+	n5 -> n6;
+	n6 -> n4;
+	n9 -> n2;
+	n9 -> n11;
+	n9 -> n12;
+	n11 -> n10;
+	n11 -> n12;
+	n12 -> n1;
+	n1 -> n0;
+	n1 -> n2;
+	n1 -> n3;
+}

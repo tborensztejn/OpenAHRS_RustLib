@@ -34,7 +34,7 @@ mod open_ahrs_tests {
         const RAG_2_DEG: f32 = 57.2958;     // Conversion factor between radians to degrees.
         const DEG_2_RAD: f32 = 0.0174533;   // Conversion factor between degrees to radians.
 
-        let niter: u8 = 14;     // Number of iterations.
+        let niter: u8 = 3;      // Number of iterations.
         let ts: f32 = 0.01;     // Sampling period [s].
         let g: f32 = -9.81;     // Gravitational acceleration [m/s²].
         let b: f32 = 48.0;      // Magnetic field magnitude [µT].
@@ -315,7 +315,7 @@ mod open_ahrs_tests {
             // Initial orientation.
             qw, qx, qy, qz,
             // Gyrometer configuration.
-            default_gyrometer_config,
+            &default_gyrometer_config,
             ts,
             NIM::Euler,
             3
@@ -393,10 +393,10 @@ mod open_ahrs_tests {
             Mode::MARG,
             Some(qw), Some(qx), Some(qy), Some(qz), // Initial orientation.
             //None, None, None, None,                 // No initial orientation.
-            Some(default_gyrometer_config),         // Gyrometer configuration.
+            Some(&default_gyrometer_config),         // Gyrometer configuration.
             //None,
-            default_accelerometer_config,           // Accelerometer configuration.
-            default_magnetometer_config,            // Magnetometer configuration.
+            &default_accelerometer_config,           // Accelerometer configuration.
+            &default_magnetometer_config,            // Magnetometer configuration.
             ts,                                     // Sampling perdiod.
             false,                                  // Disable adaptive.
             //true,

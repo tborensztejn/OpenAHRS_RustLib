@@ -1,0 +1,13 @@
+[package]
+name = "dsp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+utils = { path = "../utils" }
+libm = "0.2.8"
+
+[features]
+default = ["no_std"]
+std = []
+no_std = []

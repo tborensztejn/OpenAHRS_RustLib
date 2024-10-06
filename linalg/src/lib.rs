@@ -592,12 +592,94 @@ mod matrix_tests {
         mat.set_element(2, 1, 7.0).unwrap();
         mat.set_element(2, 2, 8.0).unwrap();
 
+        #[cfg(feature = "std")]
         mat.print().unwrap();
 
         //let v = mat.diag(None).unwrap();
         //let v = mat.diag(Some(1)).unwrap();
         let v = mat.diag(Some(-1)).unwrap();
 
+        #[cfg(feature = "std")]
         v.print().unwrap();
+    }
+
+
+    #[test]
+    //#[ignore]
+    fn lr_factorization_test() {
+        let n: u8 = 3;
+
+        let mut a: Matrix = Matrix::new();
+        a.init(n, n).unwrap();
+
+        a.set_element(0, 0, 7.0).unwrap();
+        a.set_element(0, 1, 1.0).unwrap();
+        a.set_element(0, 2, 3.0).unwrap();
+        a.set_element(1, 0, 4.0).unwrap();
+        a.set_element(1, 1, 8.0).unwrap();
+        a.set_element(1, 2, 5.0).unwrap();
+        a.set_element(2, 0, 2.0).unwrap();
+        a.set_element(2, 1, 3.0).unwrap();
+        a.set_element(2, 2, 6.0).unwrap();
+
+        let (l, r) = a.lr().unwrap();
+
+        #[cfg(feature = "std")]
+        l.print().unwrap();
+        #[cfg(feature = "std")]
+        r.print().unwrap();
+    }
+
+    #[test]
+    fn det_naive_test() {
+        let rows: u8 = 3;
+        let cols: u8 = 3;
+
+        let mut mat: Matrix = Matrix::new();
+        mat.init(rows, cols).unwrap();
+
+        mat.set_element(0, 0, 1.0).unwrap();
+        mat.set_element(0, 1, 2.0).unwrap();
+        mat.set_element(0, 2, 3.0).unwrap();
+
+        mat.set_element(1, 0, 4.0).unwrap();
+        mat.set_element(1, 1, 5.0).unwrap();
+        mat.set_element(1, 2, 6.5).unwrap();
+
+        mat.set_element(2, 0, 7.0).unwrap();
+        mat.set_element(2, 1, 8.0).unwrap();
+        mat.set_element(2, 2, 9.0).unwrap();
+
+        #[cfg(feature = "std")]
+        mat.print().unwrap();
+        #[cfg(feature = "std")]
+        println!("Determinant (naive method): {:.3}", mat.det_naive().unwrap());
+    }
+
+    #[test]
+    fn delete_row_test() {
+        let rows: u8 = 3;
+        let cols: u8 = 3;
+
+        let mut mat: Matrix = Matrix::new();
+        mat.init(rows, cols).unwrap();
+
+        mat.set_element(0, 0, 1.0).unwrap();
+        mat.set_element(0, 1, 2.0).unwrap();
+        mat.set_element(0, 2, 3.0).unwrap();
+
+        mat.set_element(1, 0, 4.0).unwrap();
+        mat.set_element(1, 1, 5.0).unwrap();
+        mat.set_element(1, 2, 6.0).unwrap();
+
+        mat.set_element(2, 0, 7.0).unwrap();
+        mat.set_element(2, 1, 8.0).unwrap();
+        mat.set_element(2, 2, 9.0).unwrap();
+
+        #[cfg(feature = "std")]
+        mat.print().unwrap();
+        let _deleted_row = mat.del_row(1).unwrap();
+        #[cfg(feature = "std")]
+        mat.print().unwrap();
     }
 }

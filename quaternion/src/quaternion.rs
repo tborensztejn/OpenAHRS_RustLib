@@ -68,6 +68,7 @@ pub trait Quaternion {
     /// Source: Hughes, Peter C. Spacecraft Attitude Dynamics. 1th ed. Mineola, New York: Dover Publications Inc., 1986, p. 18.
     fn hughes(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
     fn chiaverini(self: &mut Self, dcm: &Matrix) -> Result<(), LinalgError>;
+    fn sarabandi(self: &mut Self, dcm: &Matrix, eta: Option<f32>) -> Result<(), LinalgError>;
     /// This method is used to convert a quaternion into Tait-Bryan (Euler) angles.
     //fn convert_to_euler(self: &Self) -> Result<Vector<f32>, LinalgError>;
     fn convert_to_euler(self: &Self) -> Result<(f32, f32, f32), LinalgError>;
@@ -563,6 +564,11 @@ impl Quaternion for Vector<f32> {
         self.set_element(2, qy)?;
         self.set_element(3, qz)?;
 
+        // TODO: check if the quaternion is correct. ex: (0 0 0 0) is not force qw to 1 or return an error.
+        // Add some code here.
+
+        //self.normalize()?;
+
         Ok(())  // Return no error.
     }
 
@@ -611,6 +617,107 @@ impl Quaternion for Vector<f32> {
         // Add some code here.
 
         self.normalize()?;
+
+        Ok(())  // Return no error.
+    }
+
+    // This method is used to convert a DCM into a quaternion using Chiaverini's method.
+    // S. Saraband & F. Thomas, Accurate Computation of Quaternions from Rotation Matrices. Advances in Robot Kinematics, 2018.
+    // Caution! Here we assume that the matrix passed as a parameter to the method is a rotation matrix. If this is not the case, the algorithm will calculate aberrant results.
+    fn sarabandi(self: &mut Self, dcm: &Matrix, eta: Option<f32>) -> Result<(), LinalgError> {
+        // Check that it is a quaternion.
+        if !self.is_quaternion()? {
+            return Err(LinalgError::InvalidSize);   // Return an error.
+        }
+
+        /*
+        // Caution! Very costly in computing resources.
+        if !dcm.is_orthogonal()? {
+            return Err(LinalgError::NotDCM);    // Return an error.
+        }
+        */
+
+         let eta = eta.unwrap_or(0.0);
+
+        // Extract elements from given DCM.
+        let r11 = dcm.get_element(0, 0)?;
+        let r12 = dcm.get_element(0, 1)?;
+        let r13 = dcm.get_element(0, 2)?;
+
+        let r21 = dcm.get_element(1, 0)?;
+        let r22 = dcm.get_element(1, 1)?;
+        let r23 = dcm.get_element(1, 2)?;
+
+        let r31 = dcm.get_element(2, 0)?;
+        let r32 = dcm.get_element(2, 1)?;
+        let r33 = dcm.get_element(2, 2)?;
+
+        // Initializing common variables.
+        let mut nominator: f32 = 0.0;
+        let mut denominator: f32 = 0.0;
+
+        // Calculate qw component (eq. 23 on p. 5).
+        let dw = r11 + r22 + r33;
+        let mut qw: f32 = 0.0;
+
+        if dw > eta {
+            qw = 0.5 * sqrtf(1.0 + dw);
+        } else {
+            nominator = (r32 - r23) * (r32 - r23) + (r13 - r31) * (r13 - r31) + (r21 - r12) * (r21 - r12);
+            denominator = 3.0 - dw;
+
+            qw = 0.5 * sqrtf(nominator / denominator);
+        }
+
+        // Calculate qx component (eq. 24 on p. 5).
+        let dx = r11 - r22 - r33;
+        let mut qx: f32 = 0.0;
+
+        if dx > eta {
+            qx = 0.5 * sqrtf(1.0 + dx);
+        } else {
+            nominator = (r32 - r23) * (r32 - r23) + (r12 + r21) * (r12 + r21) + (r31 + r13) * (r31 + r13);
+            denominator = 3.0 - dx;
+
+            qx = 0.5 * sqrtf(nominator / denominator);
+        }
+
+        // Calculate qy component (eq. 25 on p. 5).
+        let dy = -r11 + r22 - r33;
+        let mut qy: f32 = 0.0;
+
+        if dy > eta {
+            qy = 0.5 * sqrtf(1.0 + dy);
+        } else {
+            nominator = (r13 - r31) * (r13 - r31) + (r12 + r21) * (r12 + r21) + (r23 + r32) * (r23 + r32);
+            denominator = 3.0 - dy;
+
+            qy = 0.5 * sqrtf(nominator / denominator);
+        }
+
+        // Calculate q7 component (eq. 26 on p. 5).
+        let dz = -r11 - r22 + r33;
+        let mut qz: f32 = 0.0;
+
+        if dz > eta {
+            qz = 0.5 * sqrtf(1.0 + dz);
+        } else {
+            nominator = (r21 - r12) * (r21 - r12) + (r31 + r13) * (r31 + r13) + (r23 + r32) * (r23 + r32);
+            denominator = 3.0 - dz;
+
+            qz = 0.5 * sqrtf(nominator / denominator);
+        }
+
+        // Fill the quaternion.
+        self.set_element(0, qw)?;
+        self.set_element(1, qx)?;
+        self.set_element(2, qy)?;
+        self.set_element(3, qz)?;
+
+        // TODO: check if the quaternion is correct. ex: (0 0 0 0) is not force qw to 1 or return an error.
+        // Add some code here.
+
+        //self.normalize()?;
 
         Ok(())  // Return no error.
     }

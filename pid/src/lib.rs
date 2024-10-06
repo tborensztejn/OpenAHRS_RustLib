@@ -1,4 +1,3 @@
-
 #[derive(Default)]
 pub struct PID {
     kp: f32,            // Gain of the proportional action.
@@ -15,7 +14,7 @@ pub struct PID {
 }
 
 impl PID {
-    // This function is used to create a new PID controller.
+    /// This method is used to create a new PID controller.
     pub fn new() -> Self {
         Self {
             ts: 0.1_f32,

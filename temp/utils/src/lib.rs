@@ -67,7 +67,7 @@ pub mod utils {
     }
 
     /// This function is used to calculate the factorial of a natural number.
-    pub const fn factorial(n: u8) -> u64 {
+    pub fn factorial(n: u8) -> u64 {
         match n {
             0 | 1 => 1,                         // Check for base cases: factorial of 0 and 1 is 1.
             _ => n as u64 * factorial(n - 1),   // Recursive call to calculate the factorial for n greater than 1.
